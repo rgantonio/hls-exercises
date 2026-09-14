@@ -1,0 +1,43 @@
+# Probe A: Version
+
+```bash
+****** Vitis HLS - High-Level Synthesis from C, C++ and OpenCL v2023.2.2 (64-bit)
+  **** SW Build 4101106 on Feb  9 2024
+  **** IP Build 4126054 on Fri Feb  9 11:39:09 MST 2024
+  **** SharedData Build 4115275 on Tue Jan 30 00:40:57 MST 2024
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+```
+
+# Probe B: Part
+
+Note that the `xcku5p-ffvb676-2-e` exists in the system.
+
+```bash
+INFO: [HLS 200-1510] Running: set_part xcku5p-ffvb676-2-e 
+INFO: [HLS 200-1611] Setting target device to 'xcku5p-ffvb676-2-e'
+INFO: [HLS 200-1510] Running: create_clock -period 3.33 -name default 
+INFO: [SYN 201-201] Setting up clock 'default' with a period of 3.33ns.
+INFO: [HLS 200-1510] Running: config_compile -pipeline_loops 0 
+INFO: [HLS 200-1510] Running: csim_design 
+```
+
+# Probe C: Clock Uncertainty
+
+You get this from `*_csynth.rpt`. So we have enough uncertainty.
+Note that this example was taken from `tiny_csynth.rpt`
+
+```bash
++ Timing: 
+    * Summary: 
+    +--------+---------+----------+------------+
+    |  Clock |  Target | Estimated| Uncertainty|
+    +--------+---------+----------+------------+
+    |ap_clk  |  3.33 ns|  1.016 ns|     0.90 ns|
+    +--------+---------+----------+------------+
+```
+
+# Probe D: 
+
+Check the `run_hls_probe.tcl` inside the `hls-exercises/s0_flow/01_project_anatomy` and you will see the comparison with and without the `config_compile -pipeline_loops 0`.
+
