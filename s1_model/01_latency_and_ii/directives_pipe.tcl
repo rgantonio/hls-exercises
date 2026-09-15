@@ -1,0 +1,1 @@
+set_directive_pipeline -II 1 "vec_scale/VS_LOOP"
