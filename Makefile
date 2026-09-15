@@ -6,6 +6,7 @@
 #   make check                dry run: list what clean would delete
 #   make clean                delete all generated tool output
 #   make clean EX=<dir>       delete generated output for one exercise
+#   make clean PROJ='<glob>'   narrow to matching project dirs (quote it)
 #
 # Generated output is anything the tool creates. Hand-written sources
 # (*.cpp, *.tcl, README.md, params.json) and everything under notes/
@@ -15,7 +16,7 @@
 SHELL := /bin/bash
 
 HLS   ?= vitis_hls
-PROJ  ?= hls_proj
+PROJ  ?= *_proj
 EX    ?=
 
 # Any directory holding a run_hls.tcl is an exercise.
@@ -29,8 +30,8 @@ else
 endif
 
 # --- what counts as junk ----------------------------------------------
-# Directories Vitis generates: the project itself, plus strays it drops
-# in the working directory (cosim and export add most of these).
+# Directories Vitis generates: any *_proj project dir, plus strays it
+# drops in the working directory (cosim and export add most of these).
 JUNK_DIRS  := $(PROJ) .Xil xsim.dir .crash_reporter .ipcache
 # Files Vitis generates.
 JUNK_FILES := vitis_hls.log vivado_hls.log run.log *.jou *.str *.wdb *.wcfg \
