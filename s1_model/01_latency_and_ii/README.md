@@ -750,7 +750,7 @@ That's the finding hiding in your table: you got 2.5× throughput for literally 
 
 **NOTE** A very important part of this work is to know that what changes, is how the order of all the steps change. Here is a nice visualization of this case:
 
-![alt text](image.png)
+<img width="614" height="448" alt="image" src="https://github.com/user-attachments/assets/a4d148f6-0bcf-497e-95d7-ab20f11f3e00" />
 
 ## 6. Questions
 
