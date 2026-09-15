@@ -1,0 +1,232 @@
+=================== default ===================
+== Interface
+================================================================
+* Summary: 
++------------+-----+-----+------------+--------------+--------------+
+|  RTL Ports | Dir | Bits|  Protocol  | Source Object|    C Type    |
++------------+-----+-----+------------+--------------+--------------+
+|ap_clk      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_rst      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_start    |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_done     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_idle     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_ready    |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|a           |   in|   32|     ap_none|             a|        scalar|
+|x_address0  |  out|    6|   ap_memory|             x|         array|
+|x_ce0       |  out|    1|   ap_memory|             x|         array|
+|x_q0        |   in|   32|   ap_memory|             x|         array|
+|y_address0  |  out|    6|   ap_memory|             y|         array|
+|y_ce0       |  out|    1|   ap_memory|             y|         array|
+|y_we0       |  out|    1|   ap_memory|             y|         array|
+|y_d0        |  out|   32|   ap_memory|             y|         array|
+|sum         |  out|   32|      ap_vld|           sum|       pointer|
+|sum_ap_vld  |  out|    1|      ap_vld|           sum|       pointer|
++------------+-----+-----+------------+--------------+--------------+
+
+=================== ctrl_chain ===================
+== Interface
+================================================================
+* Summary: 
++-------------+-----+-----+---------------+--------------+--------------+
+|  RTL Ports  | Dir | Bits|    Protocol   | Source Object|    C Type    |
++-------------+-----+-----+---------------+--------------+--------------+
+|ap_clk       |   in|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_rst       |   in|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_start     |   in|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_done      |  out|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_continue  |   in|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_idle      |  out|    1|  ap_ctrl_chain|         iface|  return value|
+|ap_ready     |  out|    1|  ap_ctrl_chain|         iface|  return value|
+|a            |   in|   32|        ap_none|             a|        scalar|
+|x_address0   |  out|    6|      ap_memory|             x|         array|
+|x_ce0        |  out|    1|      ap_memory|             x|         array|
+|x_q0         |   in|   32|      ap_memory|             x|         array|
+|y_address0   |  out|    6|      ap_memory|             y|         array|
+|y_ce0        |  out|    1|      ap_memory|             y|         array|
+|y_we0        |  out|    1|      ap_memory|             y|         array|
+|y_d0         |  out|   32|      ap_memory|             y|         array|
+|sum          |  out|   32|         ap_vld|           sum|       pointer|
+|sum_ap_vld   |  out|    1|         ap_vld|           sum|       pointer|
++-------------+-----+-----+---------------+--------------+--------------+
+
+=================== ctrl_none ===================
+== Interface
+================================================================
+* Summary: 
++------------+-----+-----+--------------+--------------+--------------+
+|  RTL Ports | Dir | Bits|   Protocol   | Source Object|    C Type    |
++------------+-----+-----+--------------+--------------+--------------+
+|ap_clk      |   in|    1|  ap_ctrl_none|         iface|  return value|
+|ap_rst      |   in|    1|  ap_ctrl_none|         iface|  return value|
+|a           |   in|   32|       ap_none|             a|        scalar|
+|x_address0  |  out|    6|     ap_memory|             x|         array|
+|x_ce0       |  out|    1|     ap_memory|             x|         array|
+|x_q0        |   in|   32|     ap_memory|             x|         array|
+|y_address0  |  out|    6|     ap_memory|             y|         array|
+|y_ce0       |  out|    1|     ap_memory|             y|         array|
+|y_we0       |  out|    1|     ap_memory|             y|         array|
+|y_d0        |  out|   32|     ap_memory|             y|         array|
+|sum         |  out|   32|        ap_vld|           sum|       pointer|
+|sum_ap_vld  |  out|    1|        ap_vld|           sum|       pointer|
++------------+-----+-----+--------------+--------------+--------------+
+
+=================== axilite ===================
+== Interface
+================================================================
+* Summary: 
++-----------------------+-----+-----+------------+--------------+--------------+
+|       RTL Ports       | Dir | Bits|  Protocol  | Source Object|    C Type    |
++-----------------------+-----+-----+------------+--------------+--------------+
+|s_axi_control_AWVALID  |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_AWREADY  |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_AWADDR   |   in|    5|       s_axi|       control|       pointer|
+|s_axi_control_WVALID   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_WREADY   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_WDATA    |   in|   32|       s_axi|       control|       pointer|
+|s_axi_control_WSTRB    |   in|    4|       s_axi|       control|       pointer|
+|s_axi_control_ARVALID  |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_ARREADY  |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_ARADDR   |   in|    5|       s_axi|       control|       pointer|
+|s_axi_control_RVALID   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_RREADY   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_RDATA    |  out|   32|       s_axi|       control|       pointer|
+|s_axi_control_RRESP    |  out|    2|       s_axi|       control|       pointer|
+|s_axi_control_BVALID   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_BREADY   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_BRESP    |  out|    2|       s_axi|       control|       pointer|
+|ap_clk                 |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_rst_n               |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|interrupt              |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|x_address0             |  out|    6|   ap_memory|             x|         array|
+|x_ce0                  |  out|    1|   ap_memory|             x|         array|
+|x_q0                   |   in|   32|   ap_memory|             x|         array|
+|y_address0             |  out|    6|   ap_memory|             y|         array|
+|y_ce0                  |  out|    1|   ap_memory|             y|         array|
+|y_we0                  |  out|    1|   ap_memory|             y|         array|
+|y_d0                   |  out|   32|   ap_memory|             y|         array|
++-----------------------+-----+-----+------------+--------------+--------------+
+
+=================== fifo ===================
+== Interface
+================================================================
+* Summary: 
++------------+-----+-----+------------+--------------+--------------+
+|  RTL Ports | Dir | Bits|  Protocol  | Source Object|    C Type    |
++------------+-----+-----+------------+--------------+--------------+
+|ap_clk      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_rst      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_start    |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_done     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_idle     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_ready    |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|a           |   in|   32|     ap_none|             a|        scalar|
+|x_dout      |   in|   32|     ap_fifo|             x|       pointer|
+|x_empty_n   |   in|    1|     ap_fifo|             x|       pointer|
+|x_read      |  out|    1|     ap_fifo|             x|       pointer|
+|y_din       |  out|   32|     ap_fifo|             y|       pointer|
+|y_full_n    |   in|    1|     ap_fifo|             y|       pointer|
+|y_write     |  out|    1|     ap_fifo|             y|       pointer|
+|sum         |  out|   32|      ap_vld|           sum|       pointer|
+|sum_ap_vld  |  out|    1|      ap_vld|           sum|       pointer|
++------------+-----+-----+------------+--------------+--------------+
+
+=================== maxi ===================
+== Interface
+================================================================
+* Summary: 
++-----------------------+-----+-----+------------+--------------+--------------+
+|       RTL Ports       | Dir | Bits|  Protocol  | Source Object|    C Type    |
++-----------------------+-----+-----+------------+--------------+--------------+
+|s_axi_control_AWVALID  |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_AWREADY  |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_AWADDR   |   in|    6|       s_axi|       control|       pointer|
+|s_axi_control_WVALID   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_WREADY   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_WDATA    |   in|   32|       s_axi|       control|       pointer|
+|s_axi_control_WSTRB    |   in|    4|       s_axi|       control|       pointer|
+|s_axi_control_ARVALID  |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_ARREADY  |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_ARADDR   |   in|    6|       s_axi|       control|       pointer|
+|s_axi_control_RVALID   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_RREADY   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_RDATA    |  out|   32|       s_axi|       control|       pointer|
+|s_axi_control_RRESP    |  out|    2|       s_axi|       control|       pointer|
+|s_axi_control_BVALID   |  out|    1|       s_axi|       control|       pointer|
+|s_axi_control_BREADY   |   in|    1|       s_axi|       control|       pointer|
+|s_axi_control_BRESP    |  out|    2|       s_axi|       control|       pointer|
+|ap_clk                 |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_rst_n               |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|interrupt              |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|m_axi_gmem_AWVALID     |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWREADY     |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWADDR      |  out|   64|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWID        |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWLEN       |  out|    8|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWSIZE      |  out|    3|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWBURST     |  out|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWLOCK      |  out|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWCACHE     |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWPROT      |  out|    3|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWQOS       |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWREGION    |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_AWUSER      |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WVALID      |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WREADY      |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WDATA       |  out|   32|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WSTRB       |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WLAST       |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WID         |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_WUSER       |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARVALID     |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARREADY     |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARADDR      |  out|   64|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARID        |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARLEN       |  out|    8|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARSIZE      |  out|    3|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARBURST     |  out|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARLOCK      |  out|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARCACHE     |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARPROT      |  out|    3|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARQOS       |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARREGION    |  out|    4|       m_axi|          gmem|       pointer|
+|m_axi_gmem_ARUSER      |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RVALID      |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RREADY      |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RDATA       |   in|   32|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RLAST       |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RID         |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RUSER       |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_RRESP       |   in|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_BVALID      |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_BREADY      |  out|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_BRESP       |   in|    2|       m_axi|          gmem|       pointer|
+|m_axi_gmem_BID         |   in|    1|       m_axi|          gmem|       pointer|
+|m_axi_gmem_BUSER       |   in|    1|       m_axi|          gmem|       pointer|
++-----------------------+-----+-----+------------+--------------+--------------+
+
+=================== scalar_vld ===================
+== Interface
+================================================================
+* Summary: 
++------------+-----+-----+------------+--------------+--------------+
+|  RTL Ports | Dir | Bits|  Protocol  | Source Object|    C Type    |
++------------+-----+-----+------------+--------------+--------------+
+|ap_clk      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_rst      |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_start    |   in|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_done     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_idle     |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|ap_ready    |  out|    1|  ap_ctrl_hs|         iface|  return value|
+|a           |   in|   32|      ap_vld|             a|        scalar|
+|a_ap_vld    |   in|    1|      ap_vld|             a|        scalar|
+|x_address0  |  out|    6|   ap_memory|             x|         array|
+|x_ce0       |  out|    1|   ap_memory|             x|         array|
+|x_q0        |   in|   32|   ap_memory|             x|         array|
+|y_address0  |  out|    6|   ap_memory|             y|         array|
+|y_ce0       |  out|    1|   ap_memory|             y|         array|
+|y_we0       |  out|    1|   ap_memory|             y|         array|
+|y_d0        |  out|   32|   ap_memory|             y|         array|
+|sum         |  out|   32|      ap_vld|           sum|       pointer|
+|sum_ap_vld  |  out|    1|      ap_vld|           sum|       pointer|
++------------+-----+-----+------------+--------------+--------------+
+

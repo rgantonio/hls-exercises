@@ -1,0 +1,1 @@
+set_directive_interface -mode ap_vld "iface" a
