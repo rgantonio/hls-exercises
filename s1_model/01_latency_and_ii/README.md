@@ -898,10 +898,10 @@ No testbench, csynth only.
 From the `Loop` table of each solution, the `Pipelined` and `Initiation Interval`
 columns for `L63` and `L64`:
 
-| solution | L63 Pipelined | L63 II | L64 Pipelined | L64 II |
-|----------|---------------|--------|---------------|--------|
-| auto     |             Y |      3 |             Y |      3 |
-| off      |             N |      3 |             N |      3 |
+| solution | L63 Pipelined | L63 II | L64 Pipelined | L64 II | L65 Pipelined | L65 II | L1024 Pipelined | L1024 II |
+|----------|---------------|--------|---------------|--------|---------------|--------|-----------------|----------|
+| auto     |             Y |      1 |             Y |      1 |             Y |      1 |               Y |        1 |
+| off      |             N |      - |             - |      - |             N |      - |               N |        - |
 
 If the documented default holds, `auto` shows `L63` unpipelined and `L64`
 pipelined, and `off` shows both unpipelined. That pins the threshold at exactly
