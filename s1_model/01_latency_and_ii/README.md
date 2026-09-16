@@ -925,6 +925,28 @@ is affected, and the note in `env.md` is the thing that catches it.
 
 ---
 
+## Some Additional Info
+
+One can use pragmas instead of the directives. Every `set_directive_*` tcl has an equivalent `#pragma`. For example:
+
+```c
+void vec_scale(data_t a, data_t b, const data_t x[N], data_t y[N]) {
+VS_LOOP:
+    for (int i = 0; i < N; i++) {
+        #pragma HLS PIPELINE II=1
+        y[i] = a * x[i] + b;
+    }
+}
+```
+
+Another example is:
+
+```c
+#pragma HLS LOOP_TRIPCOUNT min=1 max=1024 avg=512
+```
+
+Note the placement difference. The Tcl form names the loop by path (`"vec_scale/VS_LOOP"`); the pragma goes inside the loop body, at the top, and applies to the loop enclosing it. Note, however, with pragmas, `seq`, `pipe` and `pipe_ii2` need three different source files, and then any comparison between them is confounded — you can never be fully sure the only difference was the directive.
+
 ## References
 
 - de Fine Licht, Besta, Meierhans, Hoefler, "Transformations of High-Level
