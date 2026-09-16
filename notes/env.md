@@ -41,3 +41,19 @@ Note that this example was taken from `tiny_csynth.rpt`
 
 Check the `run_hls_probe.tcl` inside the `hls-exercises/s0_flow/01_project_anatomy` and you will see the comparison with and without the `config_compile -pipeline_loops 0`.
 
+# You can probe or see the RTL schematic in vivado
+
+Try:
+
+```tcl
+# schem.tcl
+# vivado -mode batch -source schem.tcl -tclargs fir_proj/pipe fir3
+set sol [lindex $argv 0]
+set top [lindex $argv 1]
+read_verilog [glob $sol/syn/verilog/*.v]
+synth_design -rtl -top $top -part xcku5p-ffvb676-2-e
+# Line below only works when available
+# write_schematic -format pdf -force $sol/${top}_rtl.pdf
+start_gui
+```
+
