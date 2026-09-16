@@ -510,15 +510,16 @@ If `pipe` also shows a `1` set, the tool gave the top-level array two ports by d
 
 Fill in:
 
-| row           | II tgt | II ach | Iter. Lat. (col) | loop C | Fn lat (max) | LUT | FF | DSP | BRAM | fadd lat |
-|---------------|--------|--------|------------------|--------|--------------|-----|----|-----|------|----------|
-| `accf/seq`    | —      |        |                  |        |              |     |    |     |      |          |
-| `accf/pipe`   | 1      |        |                  |        |              |     |    |     |      |          |
-| `acci/seq`    | —      |        |                  |        |              |     |    |     |      | —        |
-| `acci/pipe`   | 1      |        |                  |        |              |     |    |     |      | —        |
-| `fir/seq`     | —      |        |                  |        |              |     |    |     |      | —        |
-| `fir/pipe`    | 1      |        |                  |        |              |     |    |     |      | —        |
-| `fir/pipe_2p` | 1      |        |                  |        |              |     |    |     |      | —        |
+| row             | II tgt | II ach | Iter. Lat. (col) | loop C | Fn lat (max) | LUT | FF  | DSP | BRAM | fadd lat     |
+|-----------------|--------|--------|------------------|--------|--------------|-----|-----|-----|------|--------------|
+| `accf/seq`      | —      |      — |               14 | 14,336 |       14,337 | 356 | 491 |   2 |    0 | 10 (fulldsp) |
+| `accf/pipe`     | 1      |      7 |               10 |  7,170 |        7,172 | 541 | 460 |   0 |    0 | 7 (fabric)   |
+| `acci/seq`      | —      |      — |                3 |  3,072 |        3,073 | 120 |  79 |   0 |    0 | —            |
+| `acci/pipe`     | 1      |      1 |                3 |  1,025 |        1,027 | 136 |  81 |   0 |    0 | —            |
+| `fir/seq`       | —      |      — |                4 |  4,088 |        4,089 | 169 | 109 |   0 |    0 | —            |
+| `fir/pipe`      | 1      |      3 |                5 |  3,067 |        3,069 | 215 | 143 |   0 |    0 | —            |
+| `fir/pipe_auto` | 1      |      2 |                4 |  2,045 |        2,047 | 192 | 142 |   0 |    0 | —            |
+| `fir/pipe_2p`   | 1      |      2 |                4 |  2,045 |        2,047 | 192 | 142 |   0 |    0 | —            |
 
 Checks against stage B:
 
@@ -555,15 +556,16 @@ Read the latency line of each `<proj>/<sol>/sim/report/*cosim.rpt`. It reports f
 - For the pipelined rows, S1.1 found cosim equal to loop C. Check whether that holds again, especially on `accf/pipe`, where the float core is the new element.
 - Also confirm `accf` passes cosim at all. The testbench compares exactly, so a pass means the float core added in the same order as the C code.
 
-| row           | cosim min/avg/max | loop C (5.1) | cosim − loop C |
-|---------------|-------------------|--------------|----------------|
-| `accf/seq`    |                   |              |                |
-| `accf/pipe`   |                   |              |                |
-| `acci/seq`    |                   |              |                |
-| `acci/pipe`   |                   |              |                |
-| `fir/seq`     |                   |              |                |
-| `fir/pipe`    |                   |              |                |
-| `fir/pipe_2p` |                   |              |                |
+| row             | cosim min/avg/max     | loop C (5.1) | cosim − loop C |
+|-----------------|-----------------------|--------------|----------------|
+| `accf/seq`      | 14337 / 14337 / 14337 |       14,336 |             +1 |
+| `accf/pipe`     |  7170 /  7170 /  7170 |        7,170 |              0 |
+| `acci/seq`      |  3073 /  3073 /  3073 |        3,072 |             +1 |
+| `acci/pipe`     |  1025 /  1025 /  1025 |        1,025 |              0 |
+| `fir/seq`       |  4089 /  4089 /  4089 |        4,088 |             +1 |
+| `fir/pipe`      |  3067 /  3067 /  3067 |        3,067 |              0 |
+| `fir/pipe_auto` |  2045 /  2045 /  2045 |        2,045 |              0 |
+| `fir/pipe_2p`   |  2045 /  2045 /  2045 |        2,045 |              0 |
 
 Record the gap in absolute cycles (S1.1 convention).
 
