@@ -1,6 +1,6 @@
 # Directive reference
 
-Notes on the Vitis HLS directives used in this repo, written as they come up in the exercises. Tool version: Vitis HLS 2023.2.
+Notes on the Vitis HLS directives used in this repo, written as they come up in the exercises. Tool version: Vitis HLS 2023.2. We would find almost all directive documentation in [here](https://docs.amd.com/r/2023.2-English/ug1399-vitis-hls/HLS-Optimization-Directives).
 
 **General rules (repo conventions):**
 - Directives live in `directives_<top>_<solution>.tcl`, never as pragmas in the source, so the C code stays identical across solutions.
