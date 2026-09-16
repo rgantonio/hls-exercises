@@ -1,13 +1,29 @@
 #!/usr/bin/env bash
 # collect_resources.sh — dump the Utilization Estimates summary from every solution.
-# Companion to the interface dump in section 4. Override via environment:
-#   PROJ=iface_proj TOP=iface SOLS="a b c" OUT=resources.txt ./collect_resources.sh
+# Run from the exercise directory. Override via environment:
+#   PROJ=iface_proj TOP=iface SOLS="a b c" OUT=resources.txt ../../common/collect_resources.sh
+#
+#   PROJ   project directory                (default: iface_proj)
+#   TOP    top function name                (default: iface)
+#   SOLS   space-separated solution names   (default: every solution with syn/report)
+#   OUT    output file                      (default: resources.txt)
 set -u
 
 PROJ=${PROJ:-iface_proj}
 TOP=${TOP:-iface}
-SOLS=${SOLS:-"default ctrl_chain ctrl_none axilite fifo maxi scalar_vld"}
 OUT=${OUT:-resources.txt}
+
+[ -d "$PROJ" ] || { echo "error: project dir '$PROJ' not found" >&2; exit 1; }
+
+if [ -z "${SOLS:-}" ]; then
+  SOLS=""
+  for d in "$PROJ"/*/syn/report; do
+    [ -d "$d" ] || continue
+    s="${d#"$PROJ"/}"
+    SOLS="$SOLS ${s%%/*}"
+  done
+fi
+[ -n "${SOLS// /}" ] || { echo "error: no solutions found in '$PROJ'" >&2; exit 1; }
 
 rpt_of() { echo "$PROJ/$1/syn/report/${TOP}_csynth.rpt"; }
 
