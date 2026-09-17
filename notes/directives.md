@@ -76,6 +76,9 @@ set_directive_pipeline [-II <int>] [-off] [-rewind] [-style <stp|flp|frp>] <loca
 - **Depth readout:** on a pipelined loop, the report's `Iteration Latency` column and the log's `Depth` both read $L_p + 1$. Get $L_p$ from loop C instead (S1.1, S1.2).
 - **Core choice follows the target:** under a pipeline target the tool may pick a faster operator core than in `seq`. `fadd` went from latency 10 to 7 in S1.2, trading timing margin for a lower II. Record II together with the timing estimate and any HLS 200-871 warning.
 - **II between 2 and $L$ is free:** it reused `seq`'s register boundaries in S1.1 (`pipe_ii2` had the same area as `seq`). The area cost of pipelining came from the step to II=1.
+- **A directive on a one-trip loop is dropped silently (S2.1.2, $T = 1$).** `TCOL` with `TILE_T = 1` is removed before the directive is applied: no `Pipelining result` line, no warning, no pipelined loop in the report, and the design is S2.1.1 `naive/seq` to the cycle. Moving the directive to the enclosing loop (`gemm_tile/PROD`) fixed it. Always check for the `Pipelining result` line, not just the echoed `Running: set_directive_pipeline`.
+- **The fast core is kept once II is relaxed (S2.1.2).** The tool goes back to the slower `fadd` core only when II = 1 works. `t8/ram` stayed on the fast core at II 2, although the slow one would have fitted.
+- **Slack at a high II is not free timing margin (S2.1.2 `reg` rows).** At II 7 the tool packed the pipeline 2–3 stages shallower and chained memory reads into the `fadd`/`fmul` inputs. The estimates were 3.6–3.9 ns, over the 3.33 ns clock itself.
 
 ---
 
@@ -161,6 +164,8 @@ set_directive_array_partition [-type <complete|block|cyclic>] [-factor <int>] [-
 - **Shift form (S2.1.3):** every iteration writes all $K$ lanes, so $A \approx K$. As a RAM this would become a port blocker of about $K/2$; as registers it is $K$ register copies in one cycle.
 - **Measured FF cost (S2.1.3 shift form):** about 128 FF per 32-bit lane, not 32 ($K = 4 \to 7 \to 10$: +392, +385). The pipeline keeps extra copies of the lanes.
 - **Automatic partitioning of small arrays:** at $K = 4$ the tool partitioned `lane` on its own (`XFORM 203-102 Automatically partitioning small array 'lane' ... based on array size`); at $K = 10$ it did not. `config_array_partition -complete_threshold` (default 4) sets the limit. `set_directive_array_partition -off <location> <array>` keeps a specific array whole (2023.2 `help`: "Turn off auto array partition").
+- **A counter-indexed buffer loses its distance when partitioned (S2.1.2, measured at $T = 2 \dots 32$).** `acc[t]` in a flattened `PROD_TCOL` nest was split into `mux_case_*` registers (log: `HLS 214-248 Applying array_partition to 'acc'`). After if-conversion, each register is loaded and stored on every trip, so the tool reports `distance = 1` and II = $D$ = 7 at every tile size. The same array kept as a `ram_2p` was analysed correctly (`distance = T, offset = 1`). The shift-register form also stayed at II 7 in this nest (S2.1.2 extra 5.5c), unlike in S2.1.3's single loop.
+- **A pinned `bind_storage` is not overridden by auto-partitioning.** A 2-word `acc` with `bind_storage -type ram_2p` stayed a memory (S2.1.2 `t2/ram`).
 
 ---
 
@@ -207,6 +212,7 @@ Without it, Vitis sees `lane[c]` read and written in every iteration, cannot tel
   - `-dependent false` is safe only if no dependency exists at all, or if the code handles it (for example with forwarding).
 - **Always verify with cosim**, with directed test vectors that hit the dependency (for example, repeated values in the histogram case).
 - **Confirmed on 2023.2.2: a partitioned array loses the directive, silently.** With `lane` partitioned (explicitly, or automatically for small arrays) the violation lines name `mux_case_0` or `lane[2]`, II stays 7, and no warning is printed (S2.1.3). Keep the array whole, with `set_directive_array_partition -off` if needed.
+- **Confirmed again in S2.1.2** in a flattened nest: `-variable acc -distance $T` on `"gemm_tile/TCOL"` after `array_partition -type complete` gave reports identical to no directive at $T = 4$ and $T = 32$ (`reg_dist` = `reg`, 6 violations on `mux_case_05`).
 
 ### Full syntax
 
@@ -325,6 +331,9 @@ For S2.1.1's `acc` (one read, one write), `ram_2p`, `ram_s2p` and `ram_t2p` woul
 - **S2.1.1:** `acc` (32 words × 32 bits) went to 1 BRAM_18K as `RAM_2P_AUTO_1R1W`, read latency 1. The log prints `BIND 205-102` ("the specified resource core for memory 'acc' will be ignored if a simpler one can be used"): `ram_2p` was built as a simple 1R1W RAM, which is enough for one read and one write.
 - **S2.1.1 RTL:** `acc` is read at pipeline stage 8 and written at stage 21, so each element must be written at least 14 trips before it is read again. With $M = 32$ that holds at II = 1.
 - **The area cost of transposition is this buffer.** Its size grows with $M$, which is what tiling (S2.1.2) bounds.
+- **Small `ram_2p` arrays become LUTRAM (S2.1.2).** `acc` of 2, 4, 8 and 16 words × 32 bits: 0 BRAM, 64 FF, $T/2$ LUT, still `RAM_2P_AUTO_1R1W`. 32 words: 1 BRAM_18K. 1024 words: 2 BRAM_18K. No `-impl` was given; the tool chose.
+- **The storage type changes the read latency outside a pipeline.** A sequential copy loop (`WRITE`) takes 3 cycles per element from the BRAM, 2 from the LUTRAM and 1 from registers. That one cycle made `t16/ram` 224 cycles faster than `t32/ram` in S2.1.2.
+- **The tight RAM span is $D + 3$, not $D + 4$ (S2.1.2 `t2/ram` RTL, $D = 7$, II 5).** Read address at cycle 8, data through the `k == 0` mux into a register at 9, `fadd` at 10–16, write at 17. The S2.1.1 span of 14 at $D = 10$ (stages 8 → 21) had slack; S2.1.2's `t16/ram` and `t32/ram` show the same 8 → 21.
 
 ---
 
@@ -407,3 +416,4 @@ set_directive_loop_flatten [-off] <location>
 - **S2.1.1 measured:** flattened `trans/pipe` 36 641 cycles per call, `pipe_noflat` 61 537 (1.68×). Both have II = 1; the difference is 1024 − 32 pipeline runs × about 25 cycles each.
 - **Flattening costs a stage and clock margin:** depth 21 against 20, estimate 2.781 ns against 2.451 ns. In both S2.1.1 pipelines, the critical path is the flattened loop counter (compare → select → add → select).
 - **The `config_compile -pipeline_loops 0` line in `common/part.tcl`** only turns off automatic *pipelining*. It does not stop flattening of a nest whose inner loop is explicitly pipelined (confirmed in S2.1.1).
+- **Flattening above the pipeline does not merge runs (S2.1.2).** With $2 \le T \le 16$, `ROW` holds only `TILE`, so the tool flattened them into `ROW_TILE` ($NM/T$ trips). `TILE` still holds `PROD_TCOL` and `WRITE`, so there is still one pipeline run per tile. At $T = 1$ the one-trip loops vanish, and the nest is rewritten (HLS 200-2061) and flattened all the way to `ROW_TILE_PROD`, one run, identical to `naive/pipe`.
