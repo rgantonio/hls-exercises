@@ -34,7 +34,7 @@ endif
 # drops in the working directory (cosim and export add most of these).
 JUNK_DIRS  := $(PROJ) .Xil xsim.dir .crash_reporter .ipcache
 # Files Vitis generates.
-JUNK_FILES := vitis_hls.log vivado_hls.log run.log *.jou *.str *.wdb *.wcfg \
+JUNK_FILES := vitis_hls.log vivado_hls.log run.log run_*.log *.jou *.str *.wdb *.wcfg \
               *.pb hs_err_pid*.log .crash_report.log
 
 # Build the -name clauses.
