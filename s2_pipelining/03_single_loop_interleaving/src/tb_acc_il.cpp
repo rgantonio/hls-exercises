@@ -14,11 +14,9 @@
 #  error "tb_acc_il: compile with -DUSE_acc_shift or -DUSE_acc_index"
 #endif
 
-#ifdef __RTL_SIMULATION__
-static const int N_RANDOM = 4;
-#else
+// One count for csim and cosim: __RTL_SIMULATION__ is not defined for the
+// testbench during cosim on 2023.2.2 (notes/env.md, Probe E).
 static const int N_RANDOM = 64;
-#endif
 
 static const data_t POISON = (data_t)-12345;
 

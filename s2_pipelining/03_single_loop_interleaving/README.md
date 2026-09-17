@@ -1,349 +1,58 @@
 # S2.1.3 — Single-loop accumulation interleaving
 
-S1.2 left `accumulate` in float at II=7. The running sum `acc` is read and written in every iteration, and the float add takes 7 cycles, so each iteration has to wait for the previous iteration's add to finish.
+S1.2 left `accumulate` in float at II = 7. The running sum `acc` is read and written in every iteration and the float add takes 7 cycles, so each iteration waits for the previous one's add.
 
-This exercise removes that wait without touching the adder or the clock. It keeps $K$ running sums instead of one, so each sum is touched only once every $K$ iterations. The cost is $K$ registers, a second small loop, and a result that is no longer bit-identical to the sequential sum.
+This exercise removes that wait without touching the adder or the clock. It keeps $K$ running sums ("lanes") instead of one, so each sum is touched only once every $K$ iterations. The cost: lane registers, a second loop that combines the lanes, and a result that is no longer bit-identical to the sequential sum.
 
-This is the first S2 exercise, and the first exercise in the repo with a real sweep (over $K$).
+Kernel: `accumulate`, float, $N = 1024$, swept over $K$. Tool: Vitis HLS 2023.2.2.
 
-# Why single-loop accumulation interleaving exists
-
-## 1. Where the problem starts
-
-Take the simplest reduction there is: add up 1024 numbers.
-
-```cpp
-acc = 0;
-for (i = 0; i < 1024; i++)
-    acc = acc + x[i];
-```
-
-In software this is trivial. In hardware, `acc` is one register and `+` is one adder circuit. S1.1 showed what we want from a loop: pipeline it, so a new iteration starts every cycle (II=1) while the earlier ones are still moving through the stages.
-
-The trouble comes from the adder's speed. A float add is too big to finish in one 3.33 ns clock cycle, so Vitis splits it into stages. In S1.2, the fastest float adder it would use took 7 cycles.
-
-Now look at what iteration 1 needs. It computes `acc + x[1]`, where `acc` must already contain `x[0]`. That value is not ready until iteration 0's add finishes, 7 cycles after iteration 0 started.
-
-| iteration | wants to read `acc` at cycle | `acc` is ready at cycle | OK? |
-|---|---|---|---|
-| 0 | 0 | — (starts at 0) | yes |
-| 1 | 1 (if II=1) | 7 | **no**: it would read a stale value |
-| 1 | 7 (if II=7) | 7 | yes |
-
-So Vitis has to space the iterations 7 cycles apart. That is the II=7 measured in S1.2.
-
-The pipeline is mostly idle. Only one number is inside the adder at a time, and the other stages sit waiting. You get one input per 7 cycles, where you wanted one per cycle.
-
-This only happens because the add is slow. An int add fits in one cycle, which is why `acci` reached II=1 with the exact same loop.
-
----
-
-## 2. What is being solved
-
-The obvious fixes are not available:
-
-- **A faster adder.** 7 cycles is already the fastest float adder the tool would use at this clock.
-- **A slower clock.** That would slow down everything else in the design too.
-- **Letting the tool reorder the additions.** It refuses, because float addition is not associative, so a different order gives different bits (S1.2 Q1).
-
-So the adder stays 7 cycles. What we *can* change is **how soon an iteration needs the result of an earlier one**.
-
-S1.2's model says it exactly. If an iteration reads a value that was written $d$ iterations earlier, and producing that value takes $\delta$ cycles, then:
-
-$$I \cdot d \ge \delta$$
-
-Right now $d = 1$ (each iteration needs the previous one) and $\delta = 7$, so $I \ge 7$.
-
-We cannot shrink $\delta$. So the goal is to **make $d$ large**: arrange things so each iteration depends on one that started long enough ago that its add is already finished. If $d \ge 7$, then $I = 1$ satisfies the inequality.
-
----
-
-## 3. How to solve it
-
-Use several running sums instead of one. With $K = 7$ sums (call them "lanes"), iteration $i$ adds `x[i]` to lane $i \bmod 7$:
-
-- lane 0 collects `x[0], x[7], x[14], ...`
-- lane 1 collects `x[1], x[8], x[15], ...`
-- ... and so on up to lane 6.
-
-Each lane is touched only once every 7 iterations, so $d = 7$. With II=1, here is the timeline:
-
-| iteration | starts at cycle | lane | that lane's previous value is ready at cycle | OK? |
-|---|---|---|---|---|
-| 0 | 0 | 0 | — | yes |
-| 1 | 1 | 1 | — | yes |
-| ... | ... | ... | ... | ... |
-| 6 | 6 | 6 | — | yes |
-| 7 | 7 | **0** | 7 (from iteration 0) | yes, just in time |
-| 8 | 8 | **1** | 8 (from iteration 1) | yes |
-
-Every iteration now reads a lane whose last update has already come out of the adder. Seven numbers are inside the adder pipeline at once, one per stage, so the pipeline is full instead of mostly idle.
-
-After the loop, a second small loop adds the 7 lanes together to get the final sum. That is the "two stages" in the paper [1, Sec. 2.1.3]: stage one does the 1024 inputs at II=1, and stage two does only 7 additions.
-
-### The sweep over K
-
-The lesson also asks what happens when $K$ is too small. With $K = 2$, lane 0 is needed again after 2 iterations, so $I \cdot 2 \ge 7$ gives $I = 4$. The general rule is:
-
-$$I = \left\lceil \frac{7}{K} \right\rceil$$
-
-| $K$ | II |
-|---|---|
-| 1 | 7 |
-| 2 | 4 |
-| 4 | 2 |
-| 7 | 1 |
-
-Going beyond $K = 7$ buys no more cycles.
-
-### What you get and what you pay
-
-- **Speed:** the main loop goes from about 7170 cycles to about 1032, roughly 7× faster.
-- **Registers:** $K$ lanes of 32 bits each.
-- **A second loop:** it adds the lanes together.
-- **A slightly different answer:** the numbers are added in a different grouping, and float rounding depends on grouping. This is why it is a decision for the designer to make, not something the tool does automatically.
-
-### Where the two forms fit
-
-The shift form and the index form in `README.md` are just two ways of writing "use lane $i \bmod K$" in C.
-
-- **Index form:** stores the lane number in a counter.
-- **Shift form:** passes values along a chain of $K$ registers, so the one read now is always the one written $K$ iterations ago.
-
-The hardware idea is the same. The experiment checks which way of writing it Vitis actually understands.
-
-### What it is for in general
-
-Any running total over a long stream where the combining operator takes several cycles: float sums, dot products, norms, means, or even integer sums once the adder gets too wide for the clock.
-
-### A few things to know
-
-**It is not an input buffer**. The inputs go straight into the adder, one per cycle, and are never held back. What gets buffered is the running total: the single `acc` register is replaced by 7 registers, each holding a partial sum. They hold "the sum of everything so far that belongs to lane $r$", not the 7 most recent inputs.
-
-An input buffer would not help anyway. The problem was never fetching inputs fast enough. It was that each add had to wait for the previous add's result to come back around the feedback loop.
-
-**There is still only one adder**. The 7 lanes do not mean 7 adders. There is one float adder with 7 pipeline stages, which is why the README predicts the same DSP count for the main loop as base/pipe. What changes is how full that adder is:
-
-- Before: one addition moves through the 7 stages while the other 6 stages sit empty, because the next addition needs the result first.
-- After: a new addition enters every cycle, so all 7 stages are busy at once, each holding a different addition at a different point of completion.
-
-
-
-# Worked example: how the lanes add up
-
----
-
-## 1. A pipelined adder accepts a new input every cycle
-
-There are two ways to build an adder that takes 7 cycles:
-
-1. **Multi-cycle adder.** One block of logic works on a single addition for 7 cycles, with a small state machine keeping track. It really is busy until the addition finishes.
-2. **Pipelined adder.** The work is cut into 7 slices with a register between each. A float add roughly means: line up the exponents, add the mantissas, normalize, round. Each slice does its part in one cycle and passes its result into the next register.
-
-Vitis uses the second kind. With registers between the slices, stage 1 can take a new pair of numbers in the same cycle that stage 2 takes over the previous pair, like an assembly line. "Latency 7" means *one* addition needs 7 cycles to get through. It does not mean the adder is locked for 7 cycles.
-
-This has already appeared in the repo. In S1.1, `vec_scale`'s multiplier took more than one cycle, yet the loop ran at II=1, because several iterations were inside the multiplier at the same time.
-
-So the adder was never what forced II=7 in `accumulate`. The only thing forcing it was that each addition needed the *previous addition's answer* as its input. The example below shows that concretely.
-
----
-
-## 2. Setup for the example
-
-To keep the tables readable, everything is shrunk:
-
-- **the adder has 3 stages** (instead of 7);
-- **9 inputs:** `x = [5, 2, 8, 1, 7, 3, 4, 6, 9]`, whose true sum is **45**;
-- **integers**, so the numbers are easy to follow;
-- **one simplification:** the input read and the write-back are free. An iteration reads its register at the start of its cycle, and the result is written at the end of its 3rd stage.
-
-"S1 / S2 / S3" are the adder's pipeline stages. `a+b` in a stage means that addition is in progress there.
-
----
-
-## 3. Case A: one `acc` register, II=3 (what Vitis does now)
-
-Iteration 1 cannot enter until iteration 0's result is back in `acc`, so a new input enters only every 3 cycles.
-
-| cycle | new input | S1 | S2 | S3 | `acc` at end of cycle |
-|---|---|---|---|---|---|
-| 0 | x0=5 | 0+5 | – | – | 0 |
-| 1 | – | – | 0+5 | – | 0 |
-| 2 | – | – | – | 0+5 | **5** |
-| 3 | x1=2 | 5+2 | – | – | 5 |
-| 4 | – | – | 5+2 | – | 5 |
-| 5 | – | – | – | 5+2 | **7** |
-| 6 | x2=8 | 7+8 | – | – | 7 |
-| ... | | | | | |
-
-Only one stage is ever busy. The 9 inputs take $3 + 3 \cdot 8 = 27$ cycles, and the answer is correct: 45.
-
----
-
-## 4. Case B: one `acc` register, forced to II=1 (broken)
-
-Now push a new input in every cycle anyway. Each iteration reads whatever is in `acc` at the start of its cycle.
-
-| cycle | new input | reads `acc` = | S1 | S2 | S3 | `acc` at end of cycle |
-|---|---|---|---|---|---|---|
-| 0 | x0=5 | 0 | 0+5 | – | – | 0 |
-| 1 | x1=2 | 0 (stale) | 0+2 | 0+5 | – | 0 |
-| 2 | x2=8 | 0 (stale) | 0+8 | 0+2 | 0+5 | 5 |
-| 3 | x3=1 | 5 | 5+1 | 0+8 | 0+2 | 2 |
-| 4 | x4=7 | 2 | 2+7 | 5+1 | 0+8 | 8 |
-| 5 | x5=3 | 8 | 8+3 | 2+7 | 5+1 | 6 |
-| 6 | x6=4 | 6 | 6+4 | 8+3 | 2+7 | 9 |
-| 7 | x7=6 | 9 | 9+6 | 6+4 | 8+3 | 11 |
-| 8 | x8=9 | 11 | 11+9 | 9+6 | 6+4 | 10 |
-| 9 | – | | – | 11+9 | 9+6 | 15 |
-| 10 | – | | – | – | 11+9 | **20** |
-
-The final value is 20, not 45. But look at which iterations actually build on each other: each one reads the result written 3 iterations earlier. The register is really carrying **three separate running sums**:
-
-- iterations 0, 3, 6: $5 \to 6 \to 10$
-- iterations 1, 4, 7: $2 \to 9 \to 15$
-- iterations 2, 5, 8: $8 \to 11 \to 20$
-
-Each of those three sums is correct on its own, and $10 + 15 + 20 = 45$. The design fails only because all three share **one** register and keep overwriting each other, so only the last one (20) survives.
-
----
-
-## 5. Case C: three lane registers, II=1 (interleaving)
-
-The fix follows directly from Case B: give each of those three chains its own register. Iteration $i$ reads and writes lane $i \bmod 3$. The adder is exactly the same; only the register read and written changes.
-
-| cycle | new input | reads | S1 | S2 | S3 | written at end | lanes L0, L1, L2 after cycle |
-|---|---|---|---|---|---|---|---|
-| 0 | x0=5 | L0=0 | 0+5 | – | – | – | 0, 0, 0 |
-| 1 | x1=2 | L1=0 | 0+2 | 0+5 | – | – | 0, 0, 0 |
-| 2 | x2=8 | L2=0 | 0+8 | 0+2 | 0+5 | L0 ← 5 | 5, 0, 0 |
-| 3 | x3=1 | L0=5 | 5+1 | 0+8 | 0+2 | L1 ← 2 | 5, 2, 0 |
-| 4 | x4=7 | L1=2 | 2+7 | 5+1 | 0+8 | L2 ← 8 | 5, 2, 8 |
-| 5 | x5=3 | L2=8 | 8+3 | 2+7 | 5+1 | L0 ← 6 | 6, 2, 8 |
-| 6 | x6=4 | L0=6 | 6+4 | 8+3 | 2+7 | L1 ← 9 | 6, 9, 8 |
-| 7 | x7=6 | L1=9 | 9+6 | 6+4 | 8+3 | L2 ← 11 | 6, 9, 11 |
-| 8 | x8=9 | L2=11 | 11+9 | 9+6 | 6+4 | L0 ← 10 | 10, 9, 11 |
-| 9 | – | | – | 11+9 | 9+6 | L1 ← 15 | 10, 15, 11 |
-| 10 | – | | – | – | 11+9 | L2 ← 20 | 10, 15, 20 |
-
-**What to notice:**
-
-- **The S1/S2/S3 columns are identical in Case B and Case C.** One adder, all three stages full from cycle 2 onward, three different additions in flight at once.
-- **Every read is exactly on time.** Take cycle 3: iteration 3 reads L0, and L0 was written at the end of cycle 2. The result coming out of S3 each cycle is always the one the next entering iteration needs.
-- **The cycle count matches the model.** 9 inputs take $3 + 1 \cdot 8 = 11$ cycles, against 27 in Case A. That is $C = L + I(N-1)$ with $I = 1$ instead of $I = 3$.
-- **In the first 3 iterations the lane is still 0**, so the adder computes `0 + input`. From iteration 3 onward, it adds an input to a real partial sum.
-- **The main loop simply stops when the inputs run out.** After the last input enters at cycle 8, the additions still inside the adder finish over cycles 9 and 10 and land in their lanes.
-
-**Too few lanes.** Say you used only 2 lanes with the 3-stage adder. Then iteration 2 reads L0 at cycle 2, but iteration 0's result is not written until the end of cycle 2. That read is stale, so the tool must slow down to II=2, as $\lceil 3/2 \rceil = 2$ says.
-
----
-
-## 6. The second loop: COMBINE
-
-The main loop leaves three partial sums: L0 = 10, L1 = 15, L2 = 20. Every addition in the main loop is "one lane plus one input", so it has no way to add the lanes together. A separate loop does that:
-
-```cpp
-total = 0;
-for (k = 0; k < 3; k++)
-    total = total + lane[k];
-```
-
-| step | `total` so far | lane | result |
-|---|---|---|---|
-| 1 | 0 | L0 = 10 | 10 |
-| 2 | 10 | L1 = 15 | 25 |
-| 3 | 25 | L2 = 20 | **45** |
-
-So the design has two adders:
-
-- **adder 1**, inside `ACC`: lane + input, $N$ times, at II=1;
-- **adder 2**, inside `COMBINE`: total + lane, only $K$ times.
-
-That is why the README predicts DSP = 4 on the interleaved designs (two float adders at 2 DSP each), against DSP = 2 for `base/pipe`. If the tool reuses the idle `ACC` adder for `COMBINE`, DSP comes back as 2.
-
-`COMBINE` has the original problem: `total` needs the previous addition's result, so its additions run one after another at the full adder latency. That is acceptable because there are only $K$ of them. In the real lesson that is 10 additions of about 12 cycles, roughly 120 cycles, next to about 1032 cycles for the 1024 inputs (README Q2).
-
-### Two meanings of "stage"
-
-| term | what it means | in this example |
-|---|---|---|
-| **pipeline stage** | one slice of the adder circuit, with a register after it | S1, S2, S3 inside the adder |
-| **paper's "two stages"** | two separate loops that run one after the other | stage 1 = `ACC` over the inputs; stage 2 = `COMBINE` over the lanes |
-
----
-
-## 7. Summary
-
-- **Is it an input buffer?** No. Inputs are never held back. The extra registers hold partial *results*.
-- **Are there $K$ adders in the main loop?** No, there is one adder. All of its stages are busy at the same time, each with a different addition at a different point of completion.
-- **Is II=1 an illusion?** No. A new input really enters every cycle, and an addition really completes every cycle. The lanes just make sure each completed result goes to a register that the addition entering next can safely use.
-- **Scaling back up to the lesson.** 3 stages become 7, 3 lanes become $K = 7$, and 9 inputs become 1024.
-
----
-
-## References
-
-[1] J. de Fine Licht, M. Besta, S. Meierhans, T. Hoefler, "Transformations of High-Level Synthesis Codes for High-Performance Computing," *IEEE Trans. Parallel and Distributed Systems*, 32(5), 2021. arXiv:1805.08288. Sec. 2 (loop-carried dependencies), Sec. 2.1.3 and Lst. 2 (single-loop accumulation interleaving).
+**Result.** At $K = 7$: II 7 → 1, `ACC` loop 7170 → 1032 cycles (6.95×), function 7172 → 1128 cycles (6.36×), cosim pass. Cost: +1134 FF. $K = 2$ does not help at all, and $K > 7$ buys nothing.
 
 ---
 
 ## 0. Setup
 
-**Prerequisites:**
-- S1.2 run.
-- `common/part.tcl` in place (part `xcku5p-ffvb676-2-e`, 3.33 ns clock, `config_compile -pipeline_loops 0`).
-- `common/collect_latency.sh` and `common/collect_resources.sh`.
+**Prerequisites:** S1.2 run; `common/part.tcl` (`xcku5p-ffvb676-2-e`, 3.33 ns, `config_compile -pipeline_loops 0`); `common/collect_latency.sh`, `common/collect_resources.sh`.
 
-**Files in this directory**
+**Files**
 
 ```
 s2_pipelining/03_single_loop_interleaving/
-  README.md
-  run_hls.tcl
-  src/accumulate.h  src/accumulate.cpp  src/tb_accumulate.cpp     (copied from S1.2, header fixed)
+  README.md  run_hls.tcl
+  src/accumulate.h  src/accumulate.cpp  src/tb_accumulate.cpp     (S1.2 kernel; header and N_RANDOM fixed)
   src/acc_il.h      src/acc_shift.cpp   src/acc_index.cpp   src/tb_acc_il.cpp
   directives_accumulate_pipe.tcl
   directives_acc_shift_pipe.tcl
   directives_acc_index_pipe.tcl
   directives_acc_index_pipe_dist.tcl
+  directives_acc_index_pipe_lie.tcl      (extra 5.5a)
+  directives_acc_shift_pipe_comb.tcl     (extra 5.5b)
 ```
 
-Copy the S1.2 kernel and testbench, then replace the header with the fixed version in 4.1:
+**Projects.** $K$ is a compile-time constant passed with `-cflags` on `add_files`, which is project-level, so each $K$ needs its own project. Extras also get their own projects, because `open_project -reset` wipes every solution.
 
-```bash
-cp ../../s1_model/02_pipeline_blockers/src/{accumulate.cpp,tb_accumulate.cpp} src/
-```
+| project          | top          | $K$ | solution    | what it is                                                  |
+|------------------|--------------|-----|-------------|-------------------------------------------------------------|
+| `base_proj`      | `accumulate` | —   | `seq`       | S1.2 baseline                                               |
+| `base_proj`      | `accumulate` | —   | `pipe`      | S1.2 dependency blocker (II = 7)                            |
+| `shift_k1_proj`  | `acc_shift`  | 1   | `pipe`      | one lane: must behave like `base/pipe`                      |
+| `shift_k2_proj`  | `acc_shift`  | 2   | `pipe`      | sweep point                                                 |
+| `shift_k4_proj`  | `acc_shift`  | 4   | `pipe`      | sweep point                                                 |
+| `shift_k7_proj`  | `acc_shift`  | 7   | `pipe`      | $K$ = fast `fadd` latency                                   |
+| `shift_k10_proj` | `acc_shift`  | 10  | `pipe`      | $K$ = relaxed `fadd` latency                                |
+| `index_k10_proj` | `acc_index`  | 10  | `pipe`      | index form, no help given to the tool                       |
+| `index_k10_proj` | `acc_index`  | 10  | `pipe_dist` | index form + dependence directive, distance 10 (true)       |
+| `index_k4_proj`  | `acc_index`  | 4   | `pipe_lie`  | extra 5.5a: dependence directive, distance 10 (false)       |
+| `comb_k10_proj`  | `acc_shift`  | 10  | `pipe_comb` | extra 5.5b: `shift_k10/pipe` with `COMBINE` pipelined too   |
 
-**Solution roster.** There are seven projects in one `run_hls.tcl`. $K$ is a compile-time constant passed with `-cflags` on `add_files`, which is a project-level command, so each $K$ needs its own project.
+**Speedup baseline.** An interleaved kernel has no meaningful `seq`, so every speedup is against `base/seq` and `base/pipe`.
 
-| project          | top          | $K$ | solution    | what it is                                                          |
-|------------------|--------------|-----|-------------|---------------------------------------------------------------------|
-| `base_proj`      | `accumulate` | —   | `seq`       | S1.2 baseline, re-run                                               |
-| `base_proj`      | `accumulate` | —   | `pipe`      | S1.2 dependency blocker, re-run (II=7)                              |
-| `shift_k1_proj`  | `acc_shift`  | 1   | `pipe`      | shift form with one lane: must behave like `base/pipe`              |
-| `shift_k2_proj`  | `acc_shift`  | 2   | `pipe`      | sweep point                                                         |
-| `shift_k4_proj`  | `acc_shift`  | 4   | `pipe`      | sweep point                                                         |
-| `shift_k7_proj`  | `acc_shift`  | 7   | `pipe`      | sweep point: $K$ equal to the fast `fadd` latency                   |
-| `shift_k10_proj` | `acc_shift`  | 10  | `pipe`      | sweep point: $K$ equal to the relaxed `fadd` latency                |
-| `index_k10_proj` | `acc_index`  | 10  | `pipe`      | index form, no help given to the tool                               |
-| `index_k10_proj` | `acc_index`  | 10  | `pipe_dist` | index form, plus a dependence directive stating the distance is 10  |
-
-**Why `base_proj` is re-run.** In S1.2, `lat_accf.md` was never collected. So the two numbers every prediction below depends on are still expectations, not measurements:
-- the `fadd` latency under `pipe` (expected 7);
-- the loop C of `base/pipe` (expected 7170).
-
-Pass 1 measures them.
-
-**Speedup baseline.** In S1.2 the speedup column was always against the kernel's own `seq`. An interleaved kernel has no meaningful `seq`, so here every speedup is against `base/seq` and `base/pipe`. That compares the transformation against the code it replaces.
-
-**Conventions carried in from S1.2.** These are applied here and still pending in the S1.2 README:
+**Conventions** (from S1.2):
 - `accumulate.h` uses `#error` instead of a silent `DATA_T` fallback.
-- The `Bind Op Report` is read from the design-wide `syn/report/csynth.rpt` only.
-- $D_{\text{add}}$ is read per solution, never carried over from `seq`.
-- $L_p$ comes from stage counting and is cross-checked against loop C. Both the `Iteration Latency` column and the log's `Depth` read $L_p + 1$ on pipelined loops.
-- II is always recorded together with the clock estimate and whether HLS 200-871 was printed.
-
-**New in the script.** The `RUNS` dict gains `top`, `tb`, `K` and `cosim` keys. An `ONLY` list picks which projects to run, so pass 1 is a one-word edit. Directive files can use `$K`.
+- The `Bind Op Report` is only in the design-wide `syn/report/csynth.rpt`.
+- $D_{\text{add}}$ is read per solution.
+- $L_p = C - I \cdot 1023$. The `Iteration Latency` column reads $L_p + 1$.
+- II is recorded with the clock estimate and whether HLS 200-871 was printed.
 
 ---
 
@@ -351,211 +60,186 @@ Pass 1 measures them.
 
 **Source:** de Fine Licht et al. [1, Sec. 2.1.3, Lst. 2].
 
-**Idea.** Keep $K$ running sums ("lanes") instead of one. Iteration $i$ adds `x[i]` to lane $i \bmod K$. A given lane is touched once every $K$ iterations, so the dependency distance goes from $d = 1$ to $d = K$. A second loop then adds the $K$ lanes together.
+### The problem
 
-**The model from S1.2**, $I_{\text{dep}} = \lceil \delta / d \rceil$, with $d = K$ and $\delta = D_{\text{add}}$, gives:
+```cpp
+acc = 0;
+for (i = 0; i < 1024; i++) acc = acc + x[i];
+```
+
+Iteration $i+1$ needs `acc` with `x[i]` already in it. That value leaves the 7-cycle `fadd` 7 cycles after iteration $i$ started. S1.2's model: an iteration that reads a value written $d$ iterations earlier, produced by a $\delta$-cycle path, needs $I \cdot d \ge \delta$. Here $d = 1$ and $\delta = 7$, so $I = 7$, and the adder pipeline holds one addition at a time.
+
+The obvious fixes are not available:
+- **A faster adder:** 7 cycles is already the fastest `fadd` the tool uses at this clock.
+- **A slower clock:** it would slow down everything else.
+- **Letting the tool reorder:** float addition is not associative, so the tool will not regroup terms (S1.2 Q1).
+
+$\delta$ is fixed, so the only lever is $d$.
+
+### The fix
+
+Keep $K$ lanes. Iteration $i$ adds `x[i]` to lane $i \bmod K$. Each lane is touched once every $K$ iterations, so $d = K$:
 
 $$I = \max\left(1,\ \left\lceil \frac{D_{\text{add}}}{K} \right\rceil\right)$$
 
-So $K \ge D_{\text{add}}$ reaches $I = 1$. For $N \gg L_p$, the accumulation loop speeds up over `base/pipe` by about
+After the loop, `COMBINE` adds the $K$ lanes together. The paper calls these the two stages: stage one handles $N$ inputs at II = 1, stage two only $K$ additions [1, Sec. 2.1.3].
 
-$$\frac{C_{\text{base/pipe}}}{C_{K}} \approx \frac{D_{\text{add}}}{\lceil D_{\text{add}}/K \rceil}$$
+There is still **one adder** in `ACC`. At II = 1 its 7 stages each hold a different addition; the lanes make sure each finished result goes to a register that the next entering iteration can safely read. Appendix A walks through this cycle by cycle.
 
-which saturates at $D_{\text{add}}$ once $K \ge D_{\text{add}}$.
+### Two ways to write it
 
-**What it costs.**
-- **Registers:** $K$ lanes of 32 bits each.
-- **A second stage:** $K$ more additions, done after the main loop.
-- **A second `fadd` instance:** most likely, one for each stage.
-- **Different result bits.** Float addition is not associative (S1.2 Q1), so grouping the terms into lanes changes the rounding. This is why the tool will never do the transformation for you: it is a designer's decision to accept a different answer.
-
-**Two ways to write it.** Both hold the same lane contents. They ask the tool different questions, which is the second thing this exercise tests.
-
-- **Index form** (`acc_index`, the paper's Lst. 2): `lane[c] += x[i]`, with a wrap-around counter `c`.
-  - The paper uses $K = 16$ and `i % 16`, which is just a bit select for a power of two. For $K = 7$ or $10$, `%` would build a divider, so a counter is used instead.
-  - The paper also avoids a reset loop with a guard, `(i < 16) ? 0 : t[i % 16]`. This exercise uses an explicit `INIT` loop because it is easier to read. It costs about $K$ extra cycles.
-  - **What the tool must see:** that `lane[c]` in iteration $i$ and `lane[c]` in iteration $i+1$ are different elements. That requires knowing how `c` evolves.
-
-- **Shift form** (`acc_shift`): `s = lane[K-1] + x[i]`, shift every lane up by one, then `lane[0] = s`.
-  - A value written to `lane[0]` in iteration $i$ is in `lane[1]` at $i+1$, ..., in `lane[K-1]` at $i+K-1$, and is read by iteration $i+K$. So $d = K$.
-  - The distance is set by position in a register chain, not by an index value.
-  - **What the tool must see:** that each register hop between iterations gives $I$ cycles of slack, so $K$ hops give $K \cdot I \ge D_{\text{add}}$.
-
-
-Both cases do the same functionality but with subtle differences:
-
-## Shift form vs index form
-
-| | index form | shift form |
+| | index form (`acc_index`, paper Lst. 2) | shift form (`acc_shift`) |
 |---|---|---|
-| **how the right lane is found** | a counter `c` selects it | always the last register; the shift brings the right value there |
-| **how `lane` is stored** | kept as an array: a K-entry LUTRAM (`RAM_AUTO_1R1W`), one read and one write per iteration | partitioned into K registers, since every lane moves every iteration |
-| **what the tool must work out** | that `lane[c]` repeats every K iterations; it doesn't track `c`, so you state it with `-distance` | that K register hops give K cycles of slack; visible directly in the code |
+| **code** | `lane[c] += x[i]` with a wrap counter `c` | `s = lane[K-1] + x[i]`, shift the lanes up, `lane[0] = s` |
+| **how `lane` is stored** | an array: $K$-entry LUTRAM, one read + one write per iteration | partitioned into $K$ registers (every lane moves every iteration) |
+| **what the tool must see** | that `lane[c]` repeats every $K$ iterations. It does not track `c`, so you state it with `-distance` | $K$ register hops between write and read: visible in the code |
 | **final lane order** | class $j$ in lane $j$ | rotated: lane $j$ holds class $(N-1-j) \bmod K$ |
-| **measured area at K=10, II=1** | LUT 1086, FF 1091 | LUT 1241, FF 1979 |
-| **measured clock estimate** | 2.969 ns (RAM read in front of the `fadd`) | 2.719 ns |
 
-Both forms describe the same hardware idea. The shift form writes it in a way the tool can see; the index form is easier to read, but the tool needs the dependence directive to schedule it at II=1, and that directive only works while `lane` is still an array (see 4.3).
+- A counter replaces the paper's `i % 16`, because `%` builds a divider for $K = 7$ or 10.
+- An explicit `INIT` loop replaces the paper's `(i < 16) ? 0 : t[i % 16]` guard.
 
+**The cost of the transformation.**
+- Lane state that grows with $K$.
+- $K$ more additions in `COMBINE`.
+- **Different result bits:** grouping terms into lanes changes float rounding. That is why the tool never does this on its own; it is the designer's decision.
 
 ---
 
 ## 2. The blocker
 
-**What S1.2 measured on `accf`.**
-
-| solution | what was measured |
-|----------|-------------------|
-| `seq`  | `ACC` iteration latency 14; loop C 14336; `fadd` latency 10; est. 2.262 ns |
-| `pipe` | Final II 7; log `Depth` 10, so $L_p = 9$; 6 II-violation lines; est. 2.719 ns with HLS 200-871 |
-| `pipe`, expected but not collected | `fadd` latency 7; loop C $= 9 + 7 \cdot 1023 = 7170$ |
-
-**What holds II at 7.** `acc` has $d = 1$ and $\delta = D_{\text{add}}$. Under the II=1 target, the tool swapped the relaxed `fadd` core (latency 10) for a faster one (latency 7). That lowered II from 10 to 7 but took the timing estimate past the 2.43 ns effective budget. S1.2 found II was not lowered below 7, which suggests 7 is the fastest `fadd` the tool will use at this clock. Call it $D_{\min}$. Call the relaxed core's latency $D_{\text{seq}} = 10$.
+**`base/pipe`** (re-measured, same as S1.2): 6 × HLS 200-880 on `acc`, `distance = 1`; `Final II = 7, Depth = 10`. Under the II = 1 target the tool swaps the 10-cycle `fulldsp` `fadd` of `seq` for the 7-cycle `fabric` core. Call these $D_{\min} = 7$ and $D_{\text{seq}} = 10$.
 
 **What must not become a new blocker.**
-
-- **Ports.** `x[i]` is read once per iteration ($A = 1$), so the port bound stays at 1 with the default single port.
-- **Shift form: the lanes must be registers.** It touches every entry every iteration ($A \approx K$), so as a $K$-entry RAM it would hit a port blocker in place of the dependency blocker. The shift solutions therefore partition `lane` completely into registers. This is a one-line preview of S3.0.
-- **Index form: the lanes must stay an array.** It does one read and one write per iteration, which a 1R1W RAM serves at II=1, so there is no port blocker. More importantly, a complete partition breaks the dependence directive:
-  - the partition turns `lane[c]` into a K-to-1 read mux and K registers named `mux_case_0` … `mux_case_{K-1}`;
-  - `set_directive_dependence -variable lane` then matches nothing, and the tool prints no warning about it;
-  - the pipeline sees an ordinary register with $d = 1$ and stays at II=7.
-
-  The index solutions therefore do not partition `lane`.
+- **Ports on `x`:** one read per iteration.
+- **Shift form: lanes must be registers.** Every lane moves every iteration ($A \approx K$); as a RAM that would be a port blocker.
+- **Index form: `lane` must stay an array.** A 1R1W RAM serves one read and one write at II = 1, and the dependence directive is attached to the variable `lane`. If `lane` is partitioned, the directive matches nothing, silently, and II stays 7. Partitioning happens in two ways:
+  - explicitly, with `set_directive_array_partition`;
+  - **automatically for small arrays**: at $K = 4$ the tool prints `XFORM 203-102 Automatically partitioning small array 'lane'`. `set_directive_array_partition -off "acc_index" lane` prevents it (5.5a).
 
 ---
 
 ## 3. Predict
 
-Do all three stages before looking at any interleaved report.
+Do each stage before opening the matching reports. The results of the 2023.2.2 run are in the collapsed blocks.
 
-### Stage A — shape only (before any run)
+### Stage A — shape (before any run)
 
-| row                   | II achieved = 1? | HLS 200-871? | FF vs `base/pipe` | DSP |
-|-----------------------|------------------|--------------|-------------------|-----|
-| `shift_k1/pipe`       |                  |              |                   |     |
-| `shift_k2/pipe`       |                  |              |                   |     |
-| `shift_k4/pipe`       |                  |              |                   |     |
-| `shift_k7/pipe`       |                  |              |                   |     |
-| `shift_k10/pipe`      |                  |              |                   |     |
-| `index_k10/pipe`      |                  |              |                   |     |
-| `index_k10/pipe_dist` |                  |              |                   |     |
+| row                   | II = 1? | HLS 200-871? | FF vs `base/pipe` | DSP |
+|-----------------------|---------|--------------|-------------------|-----|
+| `shift_k1/pipe`       |         |              |                   |     |
+| `shift_k2/pipe`       |         |              |                   |     |
+| `shift_k4/pipe`       |         |              |                   |     |
+| `shift_k7/pipe`       |         |              |                   |     |
+| `shift_k10/pipe`      |         |              |                   |     |
+| `index_k10/pipe`      |         |              |                   |     |
+| `index_k10/pipe_dist` |         |              |                   |     |
 
-<details><summary>Expected shape</summary>
+<details><summary>Measured</summary>
 
-- **`shift_k1`:** the same loop as `base/pipe`, so II=7 with the timing warning. It has one extra `fadd` for `COMBINE`, so DSP 4.
-- **`shift_k2`, `shift_k4`:** refuse II=1 and settle at 4 and 2. FF above `base/pipe` by about $32K$. DSP 4.
-- **`shift_k7`, `shift_k10`:** reach II=1.
-  - `k7` must use the fast core, so expect the timing warning.
-  - `k10` has room for the relaxed core ($D \le 1 \cdot 10$). If the tool takes it, the warning disappears.
-- **`index_k10/pipe`:** refuses, at II=7. Without help, the tool cannot tell which lane `c` selects, so it assumes $d = 1$.
-- **`index_k10/pipe_dist`:** II=1. FF clearly below `shift_k10`, because the lanes sit in a 10 × 32-bit LUTRAM instead of 320 register bits plus their pipeline copies. LUT also below `shift_k10`. The clock estimate is worse than `shift_k10`, because the RAM read sits in front of the `fadd`.
+`base/pipe`: FF 460, DSP 0.
 
-The DSP prediction assumes the tool does not share one `fadd` between the pipelined `ACC` loop and the sequential `COMBINE` loop. A result of DSP 2 would mean it did.
+| row                   | II = 1?  | HLS 200-871?     | FF vs `base/pipe` | DSP |
+|-----------------------|----------|------------------|-------------------|-----|
+| `shift_k1/pipe`       | no, 7    | yes (2.719 ns)   | +383              | 2   |
+| `shift_k2/pipe`       | no, **7** | **no** (2.292 ns) | +517             | 2   |
+| `shift_k4/pipe`       | no, 2    | yes (2.719 ns)   | +742              | 2   |
+| `shift_k7/pipe`       | yes      | yes (2.719 ns)   | +1134             | 2   |
+| `shift_k10/pipe`      | yes      | yes (2.719 ns)   | +1519             | 2   |
+| `index_k10/pipe`      | no, 7    | yes (2.969 ns)   | +660              | 2   |
+| `index_k10/pipe_dist` | yes      | yes (2.969 ns)   | +631              | 2   |
+
+- **DSP is 2, not 4.** The `ACC` `fadd` is the fabric core (0 DSP) in every pipelined solution. The 2 DSPs belong to the unpipelined `COMBINE` `fadd` (`fulldsp`, 10 cycles).
+- **`shift_k2` stays at II = 7**, not 4 (Stage C).
+- **`shift_k10` does not take the relaxed core.** $D_{\text{ACC}} = 7$ and HLS 200-871 remain, although $10 \le 1 \cdot 10$ would allow it.
+- **The index form trades FF for timing:** at $K = 10$ it uses 888 fewer FF than the shift form, but the RAM read in front of the `fadd` costs 0.25 ns.
 
 </details>
 
-### Stage B — to the cycle (after the first pass)
+### Stage B — to the cycle (after pass 1)
 
-**First pass.** In `run_hls.tcl`, set `ONLY {base_proj}` and `DO_COSIM 0`, then run. This is S1.2's `accf_proj` again, and this time the numbers get collected:
+**Pass 1:** `base_proj` only, no cosim.
 
 ```bash
-C=../../common
-PROJ=base_proj TOP=accumulate OUT=lat_base.md bash $C/collect_latency.sh
+ONLY=base_proj DO_COSIM=0 vitis_hls -f run_hls.tcl 2>&1 | tee run_pass1.log
+PROJ=base_proj TOP=accumulate OUT=lat_base.md bash ../../common/collect_latency.sh
 ```
 
-**What to read.**
+| symbol | where | measured |
+|--------|-------|----------|
+| $D_{\text{seq}}$ | `fadd` row, `Bind Op Report`, `base_proj/seq/syn/report/csynth.rpt` | 10 (`fulldsp`) |
+| $D_{\min}$ | same, `base_proj/pipe` | 7 (`fabric`) |
+| $L_p$ | $7170 - 7 \cdot 1023$ | 9 $= D_{\min} + 2$ (read, add, store) |
 
-| quantity | where | what you expect |
-|----------|-------|-----------------|
-| $D_{\text{seq}}$ | `fadd` row of the `Bind Op Report` in `base_proj/seq/syn/report/csynth.rpt` | 10, as in S1.2 |
-| $D_{\min}$ | the same row in `base_proj/pipe/syn/report/csynth.rpt` | 7 |
-| $L_p$ | $L_p = C - 7 \cdot 1023$, from the loop C of `base/pipe` | 9 |
+**Model for each interleaved row.** Once $I$ is fixed, any core with $D \le I \cdot K$ fits, so predict the core as a range:
 
-Then check $L_p$ by counting stages:
-- the read of `x[i]` takes 1 cycle (address out, data back);
-- the add takes $D_{\min}$ cycles;
-- the store of the result takes 1 cycle.
+$$I = \max\left(1, \left\lceil \frac{D_{\min}}{K} \right\rceil\right), \quad D_{\text{ACC}} \in \left[D_{\min}, \min(D_{\text{seq}}, I K)\right], \quad L_p = D_{\text{ACC}} + 2, \quad C_{\text{ACC}} = L_p + 1023\, I$$
 
-That gives $L_p = D_{\min} + 2$. If the two disagree, use the value solved from C, and work out which stage you miscounted before going on.
+**Function latency.** The pipelined `ACC` is a submodule (+2 cycles). `COMBINE` is unpipelined, with one register or RAM read plus a relaxed `fadd` per trip. Predict:
 
-**How to predict each interleaved row.** The tool picks the core latency per solution, so predict it as a range:
+$$T = C_{\text{INIT}} + (C_{\text{ACC}} + 2) + C_{\text{COMBINE}} + 3$$
 
-$$I = \max\left(1, \left\lceil \frac{D_{\min}}{K} \right\rceil\right), \qquad D_{\text{ACC}} \in \left[D_{\min},\ \min\left(D_{\text{seq}},\ I \cdot K\right)\right]$$
+| row                   | $I$ | $D_{\text{ACC}}$ | $L_p$ | $C_{\text{ACC}}$ | vs `base/seq` | vs `base/pipe` | $T$ |
+|-----------------------|-----|------------------|-------|------------------|---------------|----------------|-----|
+| `base/pipe`           | 7   | 7                | 9     | 7170             | 2.00          | 1.00           | 7172 |
+| `shift_k1/pipe`       |     |                  |       |                  |               |                |     |
+| `shift_k2/pipe`       |     |                  |       |                  |               |                |     |
+| `shift_k4/pipe`       |     |                  |       |                  |               |                |     |
+| `shift_k7/pipe`       |     |                  |       |                  |               |                |     |
+| `shift_k10/pipe`      |     |                  |       |                  |               |                |     |
+| `index_k10/pipe`      |     |                  |       |                  |               |                |     |
+| `index_k10/pipe_dist` |     |                  |       |                  |               |                |     |
 
-$$L_p = D_{\text{ACC}} + 2, \qquad C_{\text{ACC}} = L_p + I \cdot 1023$$
+<details><summary>Measured (pass 2)</summary>
 
-The range exists because once $I$ is fixed, any core with $D \le I \cdot K$ fits the dependency. The tool may then prefer a slower core that meets timing. The model fixes $I$; it does not decide which core the tool picks, so record which one it chose.
+| row                   | $I$ (model) | $I$ | $D_{\text{ACC}}$ | $L_p$ | $C_{\text{ACC}}$ | vs `base/seq` | vs `base/pipe` | `INIT` C | `COMBINE` C | $T$ |
+|-----------------------|-------------|-----|------------------|-------|------------------|---------------|----------------|----------|-------------|-----|
+| `base/pipe`           | 7           | 7   | 7                | 9     | 7170             | 2.00          | 1.00           | —        | —           | 7172 |
+| `shift_k1/pipe`       | 7           | 7   | 7                | 9     | 7170             | 2.00          | 1.00           | —        | — (one `fadd`, 10) | 7184 |
+| `shift_k2/pipe`       | 4           | **7** | 7              | 9     | 7170             | 2.00          | 1.00           | —        | 26          | 7201 |
+| `shift_k4/pipe`       | 2           | 2   | 7                | 9     | 2055             | 6.98          | 3.49           | —        | 52          | 2112 |
+| `shift_k7/pipe`       | 1           | 1   | 7                | 9     | 1032             | 13.9          | 6.95           | —        | 91          | 1128 |
+| `shift_k10/pipe`      | 1           | 1   | 7                | 9     | 1032             | 13.9          | 6.95           | —        | 130         | 1167 |
+| `index_k10/pipe`      | 7           | 7   | 7                | 9     | 7170             | 2.00          | 1.00           | 10       | 140         | 7325 |
+| `index_k10/pipe_dist` | 1           | 1   | 7                | 9     | 1032             | 13.9          | 6.95           | 10       | 140         | 1187 |
 
-Speedups are for the `ACC` loop only: $14336 / C_{\text{ACC}}$ against `base/seq` and $7170 / C_{\text{ACC}}$ against `base/pipe`.
-
-| row                   | $I$ | $D_{\text{ACC}}$ range | $L_p$ | $C_{\text{ACC}}$ | vs `base/seq` | vs `base/pipe` |
-|-----------------------|-----|------------------------|-------|------------------|---------------|----------------|
-| `base/pipe`           |     |                        |       |                  |               |                |
-| `shift_k1/pipe`       |     |                        |       |                  |               |                |
-| `shift_k2/pipe`       |     |                        |       |                  |               |                |
-| `shift_k4/pipe`       |     |                        |       |                  |               |                |
-| `shift_k7/pipe`       |     |                        |       |                  |               |                |
-| `shift_k10/pipe`      |     |                        |       |                  |               |                |
-| `index_k10/pipe`      |     |                        |       |                  |               |                |
-| `index_k10/pipe_dist` |     |                        |       |                  |               |                |
-
-<details><summary>Expected values </summary>
-
-with $D_{\min} = 7$, $D_{\text{seq}} = 10$
-
-| row                   | $I$ | $D_{\text{ACC}}$ | $L_p$ | $C_{\text{ACC}}$ | vs `base/seq` | vs `base/pipe` |
-|-----------------------|-----|------------------|-------|------------------|---------------|----------------|
-| `base/pipe`           | 7   | 7                | 9     | 7170             | 2.00          | 1.00           |
-| `shift_k1/pipe`       | 7   | 7                | 9     | 7170             | 2.00          | 1.00           |
-| `shift_k2/pipe`       | 4   | 7–8              | 9–10  | 4101–4102        | 3.50          | 1.75           |
-| `shift_k4/pipe`       | 2   | 7–8              | 9–10  | 2055–2056        | 6.98          | 3.49           |
-| `shift_k7/pipe`       | 1   | 7                | 9     | 1032             | 13.9          | 6.95           |
-| `shift_k10/pipe`      | 1   | 7–10             | 9–12  | 1032–1035        | 13.9          | 6.93–6.95      |
-| `index_k10/pipe`      | 7   | 7                | 9     | 7170             | 2.00          | 1.00           |
-| `index_k10/pipe_dist` | 1   | 7–10             | 9–12  | 1032–1035        | 13.9          | 6.93–6.95      |
-
-**The saturation.** Beyond $K = D_{\min}$, a larger $K$ buys no cycles. It can only buy back timing margin, if the tool moves to a slower core. Beyond $K = D_{\text{seq}}$ it buys nothing at all, and costs 32 FF per lane plus a longer second stage.
+- **Every $C_{\text{ACC}}$ matches $L_p + 1023\, I$ with $L_p = 9$**, including `shift_k2` once its real II (7) is used.
+- **`COMBINE` per trip:** 13 cycles on the shift form (register read + 10-cycle `fadd` + 2), 14 on the index form (one more for the RAM read).
+- **`INIT`:** a real loop only in the index form (1 cycle per trip). In the shift form the zero initialisation of the lane registers is absorbed.
+- **$T$ matches the model on every row.**
+- **Function-level speedup over `base/pipe`:** 6.36× at $K = 7$, 6.15× at $K = 10$, 6.04× for `index_k10/pipe_dist`. `COMBINE` eats the difference.
 
 </details>
-
-**Function latency.** Do not predict it to the cycle. It is roughly `INIT` + `ACC` + `COMBINE` + a few control cycles.
-- `INIT`: expect about $K$ cycles.
-- `COMBINE`: $K$ sequential iterations. Each one probably uses the relaxed core and has no RAM read. If it schedules like `base/seq` minus the read, that is about $D_{\text{seq}} + 2$ per iteration, so around 120 cycles at $K = 10$.
-
-Write your estimate down and compare it with the `COMBINE` loop row later. At $K = 10$ the second stage is already about a tenth of the total, which is what Q2 is about.
 
 ### Stage C — the log
 
 For each solution, predict the number of `II Violation` lines, the reason text, and whether HLS 200-871 appears.
 
-<details><summary>Expected pattern (confirm on your install)</summary>
+<details><summary>Measured</summary>
 
-S1.2 confirmed that the number of violation lines equals $I - 1$.
+| solution | violation lines | reason | `Final II / Depth` | 200-871 |
+|----------|-----------------|--------|--------------------|---------|
+| `base/pipe` | 6 × HLS 200-880 | carried dependence on `acc`, `distance = 1` | 7 / 10 | yes |
+| `shift_k1/pipe` | 6 × HLS 200-880 | on `empty` (the renamed `lane[0]`), `distance = 1` | 7 / 10 | yes |
+| `shift_k2/pipe` | 6 × **HLS 200-881** | "unable to enforce a carried constraint between 'fadd' operation ('lane') and 'fadd' operation ('lane')" | 7 / 10 | **no** |
+| `shift_k4/pipe` | 1 × HLS 200-880 | on `empty`, `distance = 1` (a single register hop, not the chain) | 2 / 10 | yes |
+| `shift_k7/pipe`, `shift_k10/pipe` | 0 | — | 1 / 10 | yes |
+| `index_k10/pipe` | 6 × HLS 200-880 | 4 on `add` with `distance = 2, offset = 1`, then 2 on `reuse_reg` (the read-after-write bypass) with `distance = 1` | 7 / **11** | yes |
+| `index_k10/pipe_dist` | 0 | — | 1 / 10 | yes |
 
-| solution | violation lines | reason / note |
-|----------|-----------------|---------------|
-| `base/pipe` | 6 | carried dependence on `acc`, `distance = 1`. This matches S1.2. |
-| `shift_k1/pipe` | 6 | same as `base/pipe` |
-| `shift_k2/pipe` | 3 | Write down which variable and which `distance` the tool names. It may report a single register hop (`distance = 1`) rather than the whole chain. |
-| `shift_k4/pipe` | 1 | as for `k2` |
-| `shift_k7/pipe`, `shift_k10/pipe` | 0 | |
-| `index_k10/pipe` | 6 | carried dependence on array `lane`: 4 lines with `distance = 2, offset = 1`, then 2 lines on `reuse_reg` (the tool's read-after-write bypass register) with `distance = 1`. `Final II = 7, Depth = 11` |
-| `index_k10/pipe_dist` | 0 | `Final II = 1, Depth = 10` |
+- **Violation lines $= I - 1$** on every row.
+- **`shift_k2` is outside the model.** The tool does not name a variable dependence. It reports a carried constraint between two `fadd` operations and gives up at II = 7 instead of 4. The dependency model does not explain it; record it as a tool behavior.
+- **`index_k10/pipe` log `Depth` is 11,** but $L_p$ solved from C is 9 (iteration latency 10). Trust C.
+- **HLS 200-871 on every II = 1 design:** the fast `fadd` is kept even where $K = 10$ would allow the relaxed one.
 
-**HLS 200-871.** Expected wherever $D_{\text{ACC}} = 7$: `base/pipe`, `shift_k1`, `shift_k7`, and possibly `shift_k2` and `shift_k4`. Not expected on `shift_k10` or `index_k10/pipe_dist` if the tool took the relaxed core.
+**Did the dependence directive take effect?**
 
-**How to tell whether the dependence directive took effect** (measured on 2023.2):
-
-| indicator | directive applied | directive dropped |
+| indicator | applied | dropped |
 |---|---|---|
-| `Running: set_directive_dependence ...` in the log | present | present too, so it proves nothing |
-| variable named in the `HLS 200-880` lines | no violation lines | `local variable 'mux_case_0'` (lane was partitioned) |
+| `Running: set_directive_dependence ...` | present | present too: proves nothing |
+| HLS 200-880 variable names | no lines | `lane[2]` or `mux_case_0` (lane was partitioned) |
+| `XFORM 203-10[12]` partition lines for `lane` | none | present |
 | `Pipelining result` | `Final II = 1` | `Final II = 7` |
-| `* Memory:` table in `acc_index_csynth.rpt` | `lane_U` / `lane_RAM_AUTO_1R1W` | `N/A` (lane is registers) |
-| `Bind Op Report`, `ACC` `fadd` variable | `add` | `add` on both, so it proves nothing |
-
-**Measured for the shift form:** `shift_k7` and `shift_k10` do reach `Final II = 1` with no violation lines. The scheduler does reason across the register chain, so the shift-form prediction for $K \ge D_{\min}$ holds.
+| `* Memory:` in `acc_index_csynth.rpt` | `lane_U` / `lane_RAM_AUTO_1R1W` | `N/A` |
 
 </details>
 
@@ -578,7 +262,7 @@ const int N = 1024;
 void accumulate(const data_t x[N], data_t *sum);
 ```
 
-`src/accumulate.cpp` and `src/tb_accumulate.cpp` are the S1.2 files, unchanged.
+`src/accumulate.cpp` is the S1.2 file. `src/tb_accumulate.cpp` is the S1.2 file with a single `N_RANDOM = 64` (4.4).
 
 ```cpp
 // src/acc_il.h
@@ -624,9 +308,8 @@ COMBINE:
 }
 ```
 
-With $K = 1$, `SHIFT` has zero trips and `ACC` is exactly the S1.2 loop. That is the point of the `shift_k1` row.
-
-`SHIFT` sits inside the pipelined `ACC` loop, so the pipeline directive unrolls it automatically. `-pipeline_loops 0` does not affect that.
+- With $K = 1$, `SHIFT` has zero trips and `ACC` is the S1.2 loop.
+- `SHIFT` sits inside the pipelined `ACC`, so it is unrolled automatically; `-pipeline_loops 0` does not affect that.
 
 ```cpp
 // src/acc_index.cpp
@@ -653,7 +336,7 @@ COMBINE:
 }
 ```
 
-After the loop, lane `j` of the index form holds residue class $j$. The shift form holds the same classes in a rotated order: `lane[j]` holds class $(N-1-j) \bmod K$. `COMBINE` adds them in lane order in both forms, so the two forms can produce different bits for the same input. Each testbench reference mirrors its own form.
+Both forms hold the same residue classes, but in a different lane order, and `COMBINE` adds them in lane order. So the two forms can produce different bits for the same input, and each testbench reference mirrors its own form.
 
 ### 4.2 The script
 
@@ -662,10 +345,14 @@ After the loop, lane `j` of the index form holds residue class $j$. The shift fo
 # Run:  vitis_hls -f run_hls.tcl 2>&1 | tee run.log
 
 # ---- knobs ------------------------------------------------------------
-# Pass 1 (stage B): ONLY {base_proj}, DO_COSIM 0.
-# Pass 2:           ONLY {} (every project), DO_COSIM 1.
-set ONLY     {base_proj}
-set DO_COSIM 0
+# Pass 1 (stage B): ONLY=base_proj DO_COSIM=0
+# Pass 2:           the defaults below (main projects, with cosim)
+# Extras (5.5):     ONLY="index_k4_proj comb_k10_proj" DO_COSIM=1
+# Environment variables ONLY and DO_COSIM override these.
+set ONLY     {base_proj shift_k1_proj shift_k2_proj shift_k4_proj shift_k7_proj shift_k10_proj index_k10_proj}
+set DO_COSIM 1
+if {[info exists ::env(ONLY)]}     { set ONLY     $::env(ONLY) }
+if {[info exists ::env(DO_COSIM)]} { set DO_COSIM $::env(DO_COSIM) }
 
 # K     = number of lanes (0 for the untransformed kernel)
 # cosim = solutions that also run cosim_design when DO_COSIM is 1
@@ -677,7 +364,12 @@ set RUNS {
     shift_k7_proj  {top acc_shift  tb tb_acc_il     K 7  sols {pipe}           cosim {pipe}}
     shift_k10_proj {top acc_shift  tb tb_acc_il     K 10 sols {pipe}           cosim {pipe}}
     index_k10_proj {top acc_index  tb tb_acc_il     K 10 sols {pipe pipe_dist} cosim {pipe_dist}}
+    index_k4_proj  {top acc_index  tb tb_acc_il     K 4  sols {pipe_lie}       cosim {pipe_lie}}
+    comb_k10_proj  {top acc_shift  tb tb_acc_il     K 10 sols {pipe_comb}      cosim {}}
 }
+# Extras live in their own projects, because open_project -reset wipes every solution.
+#   index_k4_proj: extra 5.5a (false distance promise)
+#   comb_k10_proj: extra 5.5b (COMBINE pipelined)
 # -----------------------------------------------------------------------
 
 foreach {proj cfg} $RUNS {
@@ -718,10 +410,9 @@ foreach {proj cfg} $RUNS {
 exit
 ```
 
-**Notes on the script.**
-- **Cosim scope:** cosim runs on four solutions only. These are the baseline, the two $I = 1$ shift points, and the directive-assisted index form. The directive is a promise the tool does not check, so its cosim matters most.
-- **`make clean`:** every project name ends in `_proj`, so it already covers them.
-- **Pass 2:** re-runs `base_proj` as well. `-reset` makes that safe, and the cost is small.
+- **Cosim** covers `base/pipe`, the two II = 1 shift points, `index_k10/pipe_dist` and the false promise. The directive is unchecked by the tool, so its cosim matters most.
+- **Runtime:** about 6 minutes for pass 2 and 5 for the extras. The failing cosim of 5.5a writes a very large log (≈ 85 MB).
+- **`make clean`** covers every `*_proj` and `run_*.log`.
 
 ### 4.3 The directives
 
@@ -752,32 +443,34 @@ set_directive_pipeline -II 1 "acc_index/ACC"
 set_directive_dependence -variable lane -type inter -dependent true -distance $K "acc_index/ACC"
 ```
 
-`-distance` is only used when `-dependent true` is given [2]. It tells the tool that a read of `lane` depends on the write from $K$ iterations earlier, not from the previous iteration.
+```tcl
+# directives_acc_index_pipe_lie.tcl
+# K = 4 is small enough that Vitis partitions lane into registers on its own
+# (XFORM 203-102), which silently drops the dependence directive. -off keeps
+# lane an array, so the false distance actually reaches the scheduler.
+set_directive_array_partition -off "acc_index" lane
+set_directive_pipeline -II 1 "acc_index/ACC"
+set_directive_dependence -variable lane -type inter -dependent true -distance 10 "acc_index/ACC"
+```
 
-**Why the index form is not partitioned (measured on 2023.2, K=10).** An earlier version partitioned `lane` in both index solutions. Both came out identical: `Final II = 7`, 6 violation lines naming `local variable 'mux_case_0'`, 3.046 ns. The partition had replaced `lane` before the dependence directive was applied, and the tool gave no warning. Even `-dependent false` was dropped the same way. Without the partition:
+```tcl
+# directives_acc_shift_pipe_comb.tcl
+set_directive_array_partition -type complete -dim 1 "acc_shift" lane
+set_directive_pipeline -II 1 "acc_shift/ACC"
+set_directive_pipeline -II 1 "acc_shift/COMBINE"
+```
 
-| index_k10 variant | II | `ACC` C | Fn lat | est. ns | LUT | FF | cosim |
-|---|---|---|---|---|---|---|---|
-| partition + `-distance 10` (old `pipe_dist`) | 7 | 7170 | 7305 | 3.046 | 1269 | 1317 | Pass |
-| partition + `-dependent false` | 7 | 7170 | 7305 | 3.046 | 1269 | 1317 | — |
-| no partition, no directive (`pipe`) | 7 | 7170 | 7325 | 2.969 | 1233 | 1120 | — |
-| no partition + `-distance 10` (`pipe_dist`) | **1** | **1032** | **1187** | 2.969 | 1086 | 1091 | Pass (1185) |
-
-Use the indicator table in Stage C to confirm the directive took effect on your run.
+- `-distance` is only used with `-dependent true` [2]: a read of `lane` depends on the write from $K$ iterations earlier.
+- **Partitioned `lane` drops the directive (measured, $K = 10$).** An earlier version partitioned `lane` in both index solutions: both came out at II = 7, 6 violation lines on `mux_case_0`, 3.046 ns, LUT 1269, FF 1317, with `-distance 10` or `-dependent false` alike, and no warning.
+- **`set_directive_array_partition -off`** (2023.2 `help`: "Turn off auto array partition") is needed for $K \le 4$.
 
 ### 4.4 Testbench
 
-`tb_accumulate.cpp` is the S1.2 file. The interleaved testbench keeps the repo shape:
-- a separate `ref()` model;
-- POISON in the output before each call;
-- directed vectors first, then seeded random vectors;
-- errors counted, not stopped at the first;
-- a non-zero return on any failure;
-- `__RTL_SIMULATION__` to cut the random count in cosim.
+`tb_accumulate.cpp` is the S1.2 file with a single `N_RANDOM`. The interleaved testbench keeps the repo shape: a separate `ref()` model, POISON in the output, directed then seeded random vectors, errors counted, non-zero return on failure.
 
-The reference computes the lane sums independently, in index order, then combines them in the same lane order as the form under test. The comparison is exact: same groupings and same order means bit-exact is expected.
-
-It also computes the plain sequential sum, for information only. The difference between the two is printed, never checked.
+- **Reference:** computes the lane sums independently, in index order, then combines them in the lane order of the form under test. The compare is exact.
+- **Sequential sum:** printed for information only (`cancel:` and `random:` lines), never checked.
+- **One `N_RANDOM = 64`:** `__RTL_SIMULATION__` is not defined for the testbench in cosim (68 transactions per cosim; `notes/env.md`, Probe E).
 
 ```cpp
 // src/tb_acc_il.cpp
@@ -796,11 +489,9 @@ It also computes the plain sequential sum, for information only. The difference 
 #  error "tb_acc_il: compile with -DUSE_acc_shift or -DUSE_acc_index"
 #endif
 
-#ifdef __RTL_SIMULATION__
-static const int N_RANDOM = 4;
-#else
+// One count for csim and cosim: __RTL_SIMULATION__ is not defined for the
+// testbench during cosim on 2023.2.2 (notes/env.md, Probe E).
 static const int N_RANDOM = 64;
-#endif
 
 static const data_t POISON = (data_t)-12345;
 
@@ -889,23 +580,18 @@ int main() {
 }
 ```
 
-**Why these vectors catch a wrong kernel.** On small integers every grouping gives the same float sum, so `zeros`, `ones` and `alt` cannot catch a wrong lane mapping. The `cancel` vector and the fractional random vectors can:
-- a wrong distance (for example $K-1$) changes which terms share a lane;
-- a wrong combine order changes the order the lanes are added in.
-
-Either change moves the rounding.
+**Which vectors catch a wrong kernel.** On small integers every grouping gives the same float sum, so `zeros`, `ones` and `alt` only catch gross errors (5.5a: `ones` returns 344). `cancel` and the fractional random vectors catch a wrong lane distance or a wrong combine order, because either one moves the rounding.
 
 ---
 
 ## 5. Measure
 
-**Second pass:** set `ONLY {}` and `DO_COSIM 1`, then run.
-
-### 5.1 csynth
-
-**Collect.**
+**Pass 2 and extras:**
 
 ```bash
+vitis_hls -f run_hls.tcl 2>&1 | tee run.log
+ONLY="index_k4_proj comb_k10_proj" DO_COSIM=1 vitis_hls -f run_hls.tcl 2>&1 | tee run_extras.log
+
 C=../../common
 PROJ=base_proj TOP=accumulate OUT=lat_base.md bash $C/collect_latency.sh
 PROJ=base_proj TOP=accumulate OUT=res_base.md bash $C/collect_resources.sh
@@ -913,170 +599,133 @@ for K in 1 2 4 7 10; do
     PROJ=shift_k${K}_proj TOP=acc_shift OUT=lat_shift_k${K}.md bash $C/collect_latency.sh
     PROJ=shift_k${K}_proj TOP=acc_shift OUT=res_shift_k${K}.md bash $C/collect_resources.sh
 done
-PROJ=index_k10_proj TOP=acc_index OUT=lat_index_k10.md bash $C/collect_latency.sh
-PROJ=index_k10_proj TOP=acc_index OUT=res_index_k10.md bash $C/collect_resources.sh
+PROJ=index_k10_proj TOP=acc_index OUT=lat_index_k10.md    bash $C/collect_latency.sh
+PROJ=index_k10_proj TOP=acc_index OUT=res_index_k10.md    bash $C/collect_resources.sh
+PROJ=index_k4_proj  TOP=acc_index OUT=lat_index_k4_lie.md bash $C/collect_latency.sh
+PROJ=comb_k10_proj  TOP=acc_shift OUT=lat_comb_k10.md     bash $C/collect_latency.sh
+PROJ=comb_k10_proj  TOP=acc_shift OUT=res_comb_k10.md     bash $C/collect_resources.sh
 ```
 
-**First real test of the submodule path in `collect_latency.sh`.** The interleaved kernels have three loops in one function, so Vitis will probably extract the pipelined `ACC` loop into its own module, named something like `acc_shift_Pipeline_ACC`. Its loop row then lives in `acc_shift_Pipeline_ACC_csynth.rpt`, and the top report lists it only as an instance.
+The pipelined `ACC` is extracted into `<top>_Pipeline_ACC`, with its own report; the collector picks it up. Each interleaved `Bind Op Report` has two `fadd` rows: `ACC` (in the submodule) and `COMBINE` (variable `total`).
 
-In S1.2 every loop stayed in the top module, so this layout is still untested against real reports. Compare one `lat_shift_k7.md` against the raw reports by eye before trusting the rest.
+### 5.1 csynth
 
-**Two `fadd` rows.** The `Bind Op Report` in `csynth.rpt` should now list two `fadd` rows per interleaved solution: one in `ACC` and one in `COMBINE`. Tell them apart by the `Variable` and module columns. $D_{\text{ACC}}$ is the one in `ACC`.
+**Timing**
 
-**Fill in timing:**
+| row                   | II tgt | II ach | Iter. Lat. | $C_{\text{ACC}}$ | `INIT` C | `COMBINE` C | Fn lat | est. ns | 200-871 | $D_{\text{ACC}}$ | $D_{\text{COMBINE}}$ |
+|-----------------------|--------|--------|------------|------------------|----------|-------------|--------|---------|---------|------------------|----------------------|
+| `base/seq`            | —      | —      | 14         | 14336            | —        | —           | 14337  | 2.262   | no      | 10               | —                    |
+| `base/pipe`           | 1      | 7      | 10         | 7170             | —        | —           | 7172   | 2.719   | yes     | 7                | —                    |
+| `shift_k1/pipe`       | 1      | 7      | 10         | 7170             | —        | — (1 trip)  | 7184   | 2.719   | yes     | 7                | 10                   |
+| `shift_k2/pipe`       | 1      | 7      | 10         | 7170             | —        | 26          | 7201   | 2.292   | no      | 7                | 10                   |
+| `shift_k4/pipe`       | 1      | 2      | 10         | 2055             | —        | 52          | 2112   | 2.719   | yes     | 7                | 10                   |
+| `shift_k7/pipe`       | 1      | 1      | 10         | 1032             | —        | 91          | 1128   | 2.719   | yes     | 7                | 10                   |
+| `shift_k10/pipe`      | 1      | 1      | 10         | 1032             | —        | 130         | 1167   | 2.719   | yes     | 7                | 10                   |
+| `index_k10/pipe`      | 1      | 7      | 10         | 7170             | 10       | 140         | 7325   | 2.969   | yes     | 7                | 10                   |
+| `index_k10/pipe_dist` | 1      | 1      | 10         | 1032             | 10       | 140         | 1187   | 2.969   | yes     | 7                | 10                   |
 
-| row                   | II tgt | II ach | Iter. Lat. (col) | $C_{\text{ACC}}$ | `INIT` C | `COMBINE` C | Fn lat (max) | est. ns | 200-871? | $D_{\text{ACC}}$ | $D_{\text{COMBINE}}$ |
-|-----------------------|--------|--------|------------------|------------------|----------|-------------|--------------|---------|----------|------------------|----------------------|
-| `base/seq`            | —      | —      | 14               | 14336            | —        | —           | 14337        | 2.262   | no       | 10               | —                    |
-| `base/pipe`           | 1      | 7      | 10               | 7170             | —        | —           | 7172         | 2.719   | yes      | 7                | —                    |
-| `shift_k1/pipe`       | 1      | 7      | 10               | 7170             | n/a      | n/a         | 7184         | 2.719   | yes      | 7                | 10                   |
-| `shift_k2/pipe`       | 1      | 7      | 10               | 7170             | n/a      | 26          | 7201         | 2.292   | no       | 7                | 10                   |
-| `shift_k4/pipe`       | 1      | 2      | 10               | 2055             | n/a      | 52          | 2112         | 2.719   | yes      | 7                | 10                   |
-| `shift_k7/pipe`       | 1      | 1      | 10               | 1032             | n/a      | 91          | 1128         | 2.719   | yes      | 7                | 10                   |
-| `shift_k10/pipe`      | 1      | 1      | 10               | 1032             | n/a      | 130         | 1167         | 2.719   | yes      | 7                | 10                   |
-| `index_k10/pipe`      | 1      | 7      | 10               | 7170             | 10       | 140         | 7325         | 2.969   | yes      | 7                | 10                   |
-| `index_k10/pipe_dist` | 1      | 1      | 10               | 1032             | 10       | 140         | 1187         | 2.969   | yes      | 7                | 10                   |
+**Area** (Total row)
 
-- **`INIT` C:** n/a on the shift rows. With `lane` partitioned into registers there is no `INIT` loop row; the zero initialization was absorbed. The index rows keep `lane` as a RAM, so `INIT` is a real loop: 10 trips × 1 cycle.
-- **`COMBINE` C at K=1:** n/a. With one trip there is no loop row; the `total` `fadd` (latency 10) is still in the top module.
-- **`COMBINE` iteration latency:** 13 on the shift rows (register read), 14 on the index rows (one extra cycle for the RAM read).
-- **`shift_k2`:** II=7 with 6 `HLS 200-881` lines (carried constraint between two `fadd` operations on `lane`), not `HLS 200-880` lines. No 200-871.
-- **`index_k10` rows:** from the unpartitioned directives in 4.3, measured in a csynth-only debug run of `acc_index` at K=10. Rerunning `index_k10_proj` should reproduce them. The directive took effect on `pipe_dist`: `Final II = 1`, no violation lines, and `lane_RAM_AUTO_1R1W` in the Memory table.
+| row                   | LUT  | FF   | DSP | BRAM | FF − `shift_k1` |
+|-----------------------|------|------|-----|------|-----------------|
+| `base/seq`            | 356  | 491  | 2   | 0    | —               |
+| `base/pipe`           | 541  | 460  | 0   | 0    | —               |
+| `shift_k1/pipe`       | 831  | 843  | 2   | 0    | 0               |
+| `shift_k2/pipe`       | 925  | 977  | 2   | 0    | 134             |
+| `shift_k4/pipe`       | 946  | 1202 | 2   | 0    | 359             |
+| `shift_k7/pipe`       | 1097 | 1594 | 2   | 0    | 751             |
+| `shift_k10/pipe`      | 1241 | 1979 | 2   | 0    | 1136            |
+| `index_k10/pipe`      | 1233 | 1120 | 2   | 0    | —               |
+| `index_k10/pipe_dist` | 1086 | 1091 | 2   | 0    | —               |
 
-**Fill in area** (Utilization Estimates, Total row):
+`index_k10` `lane`: `lane_RAM_AUTO_1R1W`, 10 × 32 bits, 64 FF + 5 LUT (the Storage Report lists it as `ram_s2p array`, `Impl auto`).
 
-| row                   | LUT  | FF   | DSP | BRAM | FF − `shift_k1` FF |
-|-----------------------|------|------|-----|------|--------------------|
-| `base/pipe`           | 541  | 460  | 0   | 0    | —                  |
-| `shift_k1/pipe`       | 831  | 843  | 2   | 0    | 0                  |
-| `shift_k2/pipe`       | 925  | 977  | 2   | 0    | 134                |
-| `shift_k4/pipe`       | 946  | 1202 | 2   | 0    | 359                |
-| `shift_k7/pipe`       | 1097 | 1594 | 2   | 0    | 751                |
-| `shift_k10/pipe`      | 1241 | 1979 | 2   | 0    | 1136               |
-| `index_k10/pipe`      | 1233 | 1120 | 2   | 0    | —                  |
-| `index_k10/pipe_dist` | 1086 | 1091 | 2   | 0    | —                  |
+**Checks**
 
-- **DSP:** the `ACC` `fadd` is the fabric core (`no_dsp`, latency 7) in every pipelined solution; the 2 DSPs are the `COMBINE` `fadd` (`fulldsp`, latency 10). For reference, `base/seq` is LUT 356, FF 491, DSP 2, BRAM 0.
-
-**Checks against Stage B.**
-
-1. **II:** achieved II equals $\lceil D_{\min}/K \rceil$ on every shift row.
-2. **Core choice:** $D_{\text{ACC}}$ lies in $[D_{\min}, \min(D_{\text{seq}}, I \cdot K)]$. Where the range allowed a choice, write down which core the tool took and whether HLS 200-871 disappeared with it.
-3. **Depth:** $L_p = C_{\text{ACC}} - I \cdot 1023$ equals $D_{\text{ACC}} + 2$, and the column reads $L_p + 1$.
-4. **The K=1 row:** `shift_k1` has the same $C_{\text{ACC}}$ as `base/pipe`. If it does not, the extra partition or loop structure changed the `ACC` schedule. Find the stage that moved.
-5. **Lane cost:** FF − `shift_k1` FF grows by about 32 per extra lane. The lanes are the only state that scales with $K$, apart from a few counter bits.
-6. **Storage cost:** `index_k10/pipe_dist` is below `shift_k10/pipe` in both FF (1091 vs 1979) and LUT (1086 vs 1241), because its lanes are a 10 × 32-bit LUTRAM (Memory table: 64 FF, 5 LUT) instead of partitioned registers. It pays in timing instead: 2.969 ns vs 2.719 ns.
-7. **Sharing:** DSP is 4 on every interleaved row. A 2 means the tool shared the `fadd`.
+1. **II:** $\lceil D_{\min}/K \rceil$ holds for $K = 1, 4, 7, 10$. **$K = 2$ fails** (7, not 4).
+2. **Core choice:** $D_{\text{ACC}} = 7$ on every pipelined row. At $K = 10$ the tool did not move to the relaxed core, so HLS 200-871 stays.
+3. **Depth:** $L_p = C_{\text{ACC}} - I \cdot 1023 = 9 = D_{\text{ACC}} + 2$ on every row. The iteration latency reads 10.
+4. **$K = 1$:** same $C_{\text{ACC}}$ as `base/pipe` (7170). The function is 12 cycles longer, for the lone `COMBINE` add.
+5. **Lane cost:** FF grows by about **128 per lane** ($K = 4 \to 7 \to 10$: +392, +385), not 32. Each lane costs about four 32-bit words (the lane register plus copies the pipeline keeps; not traced in the RTL).
+6. **Storage:** at $K = 10$, `index_k10/pipe_dist` uses 1091 FF / 1086 LUT against 1979 / 1241 for the shift form, but its estimate is 2.969 ns against 2.719 ns.
+7. **Sharing:** DSP is 2 on every interleaved row. The pipelined `ACC` and the unpipelined `COMBINE` use different `fadd` cores (fabric against `fulldsp`), so they are not shared. When both are pipelined, they are (5.5b).
 
 ### 5.2 Log diagnostics
 
 ```bash
-grep -nE "Running: open_(project|solution)|II Violation|Pipelining result|WARNING: \[HLS 200-871\]" run.log
+grep -nE "Running: open_(project|solution)|II Violation|HLS 200-881|Pipelining result|WARNING: \[HLS 200-871\]|XFORM 203-10[12]" run.log
 ```
 
-The `Running:` lines split the log into project and solution blocks. As in S1.2, match `WARNING: [HLS 200-871]` rather than `HLS 200-871`, or the Resolution lines are counted twice.
-
-For each pipelined solution, record:
-- the number of violation lines;
-- the reason text;
-- the named variable;
-- the `distance` value;
-- `Final II` and `Depth`.
-
-For the shift form, the variable and distance the tool names are the interesting part. Do they describe the whole chain ($d = K$), or a single hop?
+The results are in Stage C. Match `WARNING: [HLS 200-871]`, or the Resolution lines are counted twice.
 
 ### 5.3 Cosim
 
-For each cosim'd solution, read the Verilog latency row of `sim/report/*cosim.rpt`. Also confirm the testbench printed `PASSED` in the cosim section of `run.log`.
+| row                   | cosim min / avg / max | Fn lat (5.1) | cosim − Fn lat | calls | tb     |
+|-----------------------|-----------------------|--------------|----------------|-------|--------|
+| `base/pipe`           | 7170 / 7170 / 7170    | 7172         | −2             | 68    | PASSED |
+| `shift_k7/pipe`       | 1126 / 1126 / 1126    | 1128         | −2             | 68    | PASSED |
+| `shift_k10/pipe`      | 1165 / 1165 / 1165    | 1167         | −2             | 68    | PASSED |
+| `index_k10/pipe_dist` | 1185 / 1185 / 1185    | 1187         | −2             | 68    | PASSED |
+| `index_k4/pipe_lie`   | 1095 / 1095 / 1095    | 1097         | −2             | 68    | **FAILED** (66 errors) |
 
-| row                   | cosim min/avg/max | Fn lat (5.1) | cosim − Fn lat | tb result |
-|-----------------------|-------------------|--------------|----------------|-----------|
-| `base/pipe`           | 7170/7170/7170    | 7172         | −2             | PASSED    |
-| `shift_k7/pipe`       | 1126/1126/1126    | 1128         | −2             | PASSED    |
-| `shift_k10/pipe`      | 1165/1165/1165    | 1167         | −2             | PASSED    |
-| `index_k10/pipe_dist` | 1185/1185/1185    | 1187         | −2             | PASSED    |
+Zero variance and a gap of −2 everywhere, as in S1.1 and S1.2. The three-loop structure does not change the gap.
 
-- **`index_k10/pipe_dist`:** from the unpartitioned debug run (4.3), matching the current directives. The `index_k10_proj` in this directory still holds the old partitioned run (cosim 7304, Pass).
-- **`N_RANDOM`:** every cosim section of the log prints `N_RANDOM=64`, not 4, so `__RTL_SIMULATION__` is not in effect for either testbench. The results are still valid; cosim just runs all 64 random vectors.
+**`cancel:` and `random:` lines** (csim; Q1 uses them). The exact answer on `cancel` is 1022.
 
-**What to expect.**
-- **Variance:** zero, as in S1.1 and S1.2. The kernels are fully static.
-- **Gap:** the function-level gap is recorded in absolute cycles. S1.1 found cosim 0–2 cycles *below* csynth; check the sign again now that the function has three loops.
-- **`index_k10/pipe_dist` must pass.** The distance promise is true there. 5.5a shows what happens when it is not.
+| row         | `cancel:` interleaved | `cancel:` sequential | `random:` max rel. diff |
+|-------------|-----------------------|----------------------|-------------------------|
+| `shift_k1`  | 0                     | 0                    | 0                       |
+| `shift_k2`  | 512                   | 0                    | 0.00463                 |
+| `shift_k4`  | 768                   | 0                    | 0.00363                 |
+| `shift_k7`  | 874                   | 0                    | 0.00391                 |
+| `shift_k10` | 924                   | 0                    | 0.00629                 |
+| `index_k10` | 924                   | 0                    | 0.00557                 |
+| `index_k4`  | 768                   | 0                    | 0.00344                 |
 
-**Measured:** zero variance on every row, and cosim is exactly 2 cycles below the csynth function latency on all four, the same sign as S1.1. The three-loop structure did not change the gap.
-
-Also copy the two `cancel:` and `random:` lines from the csim part of `run.log` for each $K$. Q1 uses them.
-
-| row              | `cancel:` interleaved | `cancel:` sequential | `random:` max rel. diff |
-|------------------|-----------------------|----------------------|-------------------------|
-| `shift_k1`       | 0                     | 0                    | 0                       |
-| `shift_k2`       | 512                   | 0                    | 0.00463                 |
-| `shift_k4`       | 768                   | 0                    | 0.00363                 |
-| `shift_k7`       | 874                   | 0                    | 0.00391                 |
-| `shift_k10`      | 924                   | 0                    | 0.00629                 |
-| `index_k10`      | 924                   | 0                    | 0.00557                 |
-
-Exact answer on `cancel` is 1022. `shift_k1` reproduces the sequential sum bit for bit, as it should. `shift_k10` and `index_k10` give the same `cancel` result but different random deviations, because the two forms combine the lanes in a different order (4.1).
+`shift_k1` reproduces the sequential sum bit for bit. `shift_k10` and `index_k10` give the same `cancel` result but different random deviations, because they combine the lanes in a different order.
 
 ### 5.4 results.csv
 
-This is the first sweep in the repo. `sweep_param` is `K` on the shift rows, because only $K$ changes between them. The index rows have a fixed $K$, so it goes in `notes`.
+`sweep_param` is `K` on the shift rows. The index and extra rows have a fixed $K$, recorded in `notes`. `fmax_est` is 1000 / estimated ns.
 
 ```csv
-exercise,kernel,variant,dtype,N,sweep_param,sweep_value,II_target,II_achieved,latency_est,latency_cosim,LUT,FF,DSP,BRAM,fmax_est,fmax_impl,notes
 s2.1.3,accumulate,seq,float,1024,,,,14,14337,,356,491,2,0,442,?,unpipelined; II_achieved=L by substitution; S1.2 re-run; fadd lat=10 (fulldsp)
 s2.1.3,accumulate,pipe,float,1024,,,1,7,7172,7170,541,460,0,0,368,?,S1.2 re-run; fadd lat=7 (fabric); 200-871=y
 s2.1.3,acc_shift,pipe,float,1024,K,1,1,7,7184,,831,843,2,0,368,?,fadd ACC lat=7 (fabric); COMBINE fadd lat=10 (fulldsp); 200-871=y
-s2.1.3,acc_shift,pipe,float,1024,K,2,1,7,7201,,925,977,2,0,436,?,fadd ACC lat=7 (fabric); 200-871=n; II=7 from 6x HLS 200-881 (fadd-fadd on lane) not 200-880
+s2.1.3,acc_shift,pipe,float,1024,K,2,1,7,7201,,925,977,2,0,436,?,fadd ACC lat=7 (fabric); 200-871=n; II=7 from 6x HLS 200-881 (fadd-fadd on lane) not 200-880; model says 4
 s2.1.3,acc_shift,pipe,float,1024,K,4,1,2,2112,,946,1202,2,0,368,?,fadd ACC lat=7 (fabric); 200-871=y
 s2.1.3,acc_shift,pipe,float,1024,K,7,1,1,1128,1126,1097,1594,2,0,368,?,fadd ACC lat=7 (fabric); 200-871=y
 s2.1.3,acc_shift,pipe,float,1024,K,10,1,1,1167,1165,1241,1979,2,0,368,?,fadd ACC lat=7 (fabric; relaxed core not taken); 200-871=y
 s2.1.3,acc_index,pipe,float,1024,,,1,7,7325,,1233,1120,2,0,337,?,K=10; no dependence directive; lane unpartitioned (LUTRAM); 200-871=y
 s2.1.3,acc_index,pipe_dist,float,1024,,,1,1,1187,1185,1086,1091,2,0,337,?,K=10; dependence inter true distance=10; lane unpartitioned (LUTRAM); 200-871=y
+s2.1.3,acc_index,pipe_lie,float,1024,,,1,1,1097,1095,1079,1087,2,0,337,?,extra 5.5a; K=4; distance=10 (false); array_partition -off; csim PASS; cosim FAIL 66/68
+s2.1.3,acc_shift,pipe_comb,float,1024,,,1,7,1111,,1096,1579,0,0,368,?,extra 5.5b; K=10; COMBINE pipelined II=7 C=71; one fabric fadd shared by ACC and COMBINE
 ```
 
-- **`fmax_est`:** 1000 / estimated clock period in ns, rounded to MHz, as in S1.2.
-- **`index_k10` rows:** from the unpartitioned debug run (4.3). The partitioned version measured II=7, 7305, cosim 7304, LUT 1269, FF 1317, 328 MHz, for both `pipe` and `pipe_dist`.
+For the `pipe_comb` row, `II_achieved` is that of `COMBINE`; `ACC` is at II = 1.
 
-`latency_cosim` is blank on rows that were not cosim'd. Blank means "not measured"; `?` is kept for "the tool could not say".
+### 5.5 Extras
 
-### 5.5 Optional extras
+**a. A false distance promise** (`index_k4_proj/pipe_lie`). The lanes really repeat every 4 iterations, but the directive says 10.
 
-**a. A false distance promise.** Add this project and directive file:
+| attempt | partition lines | II | $C_{\text{ACC}}$ | Fn lat | est. ns | csim | cosim |
+|---|---|---|---|---|---|---|---|
+| without `-off` | `XFORM 203-102` auto-partition of `lane` | 7 (6 × HLS 200-880 on `lane[2]`) | 7170 | 7232 | 2.817 | PASS | PASS (7230) |
+| with `-off` | none | **1**, 0 violations | 1032 | 1097 | 2.969 | PASS | **FAIL: 66 of 68 calls** |
 
-```tcl
-    index_k4_proj  {top acc_index  tb tb_acc_il     K 4  sols {pipe_lie}       cosim {pipe_lie}}
-```
+- **Without `-off`:** the tool silently dropped the lie with the partition, so the design is slow but correct.
+- **With `-off`:** the tool believes the promise. csim passes because C runs one iteration at a time. The RTL overlaps iterations and reads stale lanes: `ones` returns 344 instead of 1024. Only `zeros` and `alt` survive.
 
-```tcl
-# directives_acc_index_pipe_lie.tcl
-# No array_partition, for the same reason as pipe_dist.
-set_directive_pipeline -II 1 "acc_index/ACC"
-set_directive_dependence -variable lane -type inter -dependent true -distance 10 "acc_index/ACC"
-```
+**b. Pipeline the second stage** (`comb_k10_proj/pipe_comb`).
 
-The lanes really repeat every 4 iterations, but the directive says 10.
+| | `COMBINE` II | `COMBINE` C | $L_p$ | Fn lat | est. ns | LUT / FF / DSP | `fadd` cores |
+|---|---|---|---|---|---|---|---|
+| `shift_k10/pipe`      | — (unpipelined) | 130 | — | 1167 | 2.719 | 1241 / 1979 / 2 | fabric in `ACC` + `fulldsp` in `COMBINE` |
+| `comb_k10/pipe_comb`  | 7 (6 × HLS 200-880 on `total`) | 71 | 8 | **1111** | 2.719 | **1096 / 1579 / 0** | **one fabric core, shared** |
 
-**Predict before running:** csim result, achieved II, number of violation lines, and cosim result.
-
-**Expected:**
-- csim PASS. The C code runs sequentially, so it cannot see the overlap.
-- II=1 with no violations. The tool believes the promise.
-- cosim FAIL. See Q3.
-
-**b. Pipeline the second stage.** Add `pipe_comb` to `shift_k10_proj`'s `sols`, with this directive file:
-
-```tcl
-# directives_acc_shift_pipe_comb.tcl
-set_directive_array_partition -type complete -dim 1 "acc_shift" lane
-set_directive_pipeline -II 1 "acc_shift/ACC"
-set_directive_pipeline -II 1 "acc_shift/COMBINE"
-```
-
-`COMBINE` is itself a running sum with $d = 1$, so it should come back at II $= D_{\min}$ with $D_{\min} - 1$ violation lines. It is the S1.2 blocker again, over $K$ trips instead of $N$.
-
-Compare its `COMBINE` loop C, and its function latency, with `shift_k10/pipe`. Q2 discusses the result.
+- **`COMBINE` is the S1.2 blocker again:** II = 7, $C = 8 + 7 \cdot 9 = 71$.
+- **56 cycles saved (4.8%).**
+- **The area also drops.** Both pipelined loops now use the same 7-cycle fabric `fadd`, and they run one after the other, so the tool instantiates one core in the top module and muxes it between the two submodules (`acc_shift.v`: `grp_fu_256`). That saves the `fulldsp` core: −2 DSP, −400 FF, −145 LUT. The shared core is not listed in the `Bind Op Report`; it shows in the top module's instance table.
 
 ---
 
@@ -1086,63 +735,156 @@ Compare its `COMBINE` loop C, and its function latency, with `shift_k10/pipe`. Q
 
 <details><summary>Answer</summary>
 
-**`shift_k2` returns 512.** The ones are split into two lanes of 511 each.
+**`shift_k2` returns 512.** The ones are split into two lanes of 511 each. In single precision, values between $2^{26}$ and $2^{27}$ are 8 apart, and $10^8$ is in that range.
+- **The lane holding `x[0]`** starts at $10^8$. Every $+1$ rounds back, so all 511 ones are lost.
+- **The lane holding `x[1023]`** sums its 511 ones exactly first, then meets $-10^8$. $511 - 10^8$ rounds to $-99\,999\,488$, losing only 1.
+- **Combined:** $10^8 - 99\,999\,488 = 512$, exactly.
 
-In single precision, representable values between $2^{26}$ and $2^{27}$ are 8 apart, and $10^8$ lies in that range. Each lane goes like this:
+**None of the three is right in float32:** the format cannot hold $10^8 + 1$. Interleaving only changes which small terms meet the large ones, and when. $K = 4, 7, 10$ give 768, 874 and 924. So "interleaving is more accurate" is not a rule. On the random vectors the difference is at the rounding level (up to 0.63%). That difference is the price of the transformation, and the reason the tool will not apply it [1, Sec. 2.1].
 
-- **The lane holding `x[0]` (even indices).** It starts at $10^8$. Each $+1$ rounds straight back to $10^8$, so all 511 ones in this lane are lost. The lane ends at $10^8$.
-- **The lane holding `x[1023]` (odd indices).** It sums its 511 ones exactly first, reaching 511. Only then does it meet $-10^8$. The value $511 - 10^8 = -99999489$ rounds to the nearest multiple of 8, which is $-99999488$. Only 1 is lost.
-- **Combining.** $10^8 + (-99999488) = 512$, which is exact. It does not matter which lane is added first.
-
-**None of the three answers is right in float32.** The format cannot represent $10^8 + 1$. What interleaving changes is which small terms meet the large ones, and when. The sequential order loses all 1022 ones. This grouping loses 510. A different $K$, or large values in different positions, gives a different result. So "interleaving is more accurate" is not a rule; it is just what happens on this vector.
-
-On the random vectors the difference is only at the rounding level; the `random:` line gives its size. That difference is the price of the transformation, and the reason the tool will not apply it on its own [1, Sec. 2.1].
-
-**If a result must match a CPU reference exactly,** there are two options:
-- write the reference with the same lane grouping, as this testbench does; or
-- use a type whose addition is associative, such as int or `ap_fixed` (S4.4), where interleaving does not change the answer at all.
+**To match a CPU reference exactly:** write the reference with the same lane grouping (as this testbench does), or use a type with associative addition (int, `ap_fixed`, S4.4).
 
 </details>
 
-**Q2.** `COMBINE` adds $K$ values into one running sum, which is exactly the pattern this exercise set out to fix. Why is it left unpipelined, and what would a much larger $K$ need?
+**Q2.** `COMBINE` adds $K$ values into one running sum, the same pattern this exercise set out to fix. Should it be pipelined? What would a much larger $K$ need?
 
 <details><summary>Answer</summary>
 
-**At $K = 10$ it is not worth pipelining.** Unpipelined, `COMBINE` takes about $K$ times its iteration latency, on the order of 100–120 cycles. Pipelined, it hits the same dependency: $I = D_{\min}$, so $C \approx L_p + 7 \cdot 9 \approx 72$ cycles (extra 5.5b measures this).
+**At $K = 10$, yes, and not for speed.** Unpipelined, `COMBINE` takes $13K = 130$ cycles. Pipelined, it hits the same dependency at II = 7: $C = 71$. That saves 56 cycles of 1167 (4.8%). The real gain is area: with both loops on the fast fabric core, the tool shares one `fadd` and drops the 2-DSP `fulldsp` core (5.5b). The earlier expectation that pipelining `COMBINE` "costs extra registers" was wrong on 2023.2.2.
 
-That saves around 50 cycles out of a function latency of roughly 1150, about 4%, for extra pipeline registers. The main loop has $N = 1024$ trips; the second stage has only $K$. That asymmetry is why the paper splits the work into two stages: stage one does almost all the work at $I = 1$ [1, Sec. 2.1.3].
-
-**For a large $K$** (say, interleaving across hundreds of lanes because the operator is very slow), the second stage stops being negligible. There are three ways to handle it:
-
-- **Interleave again.** `COMBINE` is a single loop with a slow add, so the same transformation applies to it, with fewer lanes.
-- **Use a balanced adder tree.** $K - 1$ adders arranged in $\lceil \log_2 K \rceil$ levels. Latency is about $D_{\text{add}} \lceil \log_2 K \rceil$, but it costs $K - 1$ `fadd` cores instead of 1, and it changes the rounding once more.
-- **Run the two stages as separate dataflow processes** (S3.3). Stage one starts the next input while stage two collapses the previous lanes. This helps throughput across calls, not the latency of a single call. The paper mentions this option for exactly this kernel [1, Sec. 2.1.3].
+**For a large $K$** the second stage stops being negligible ($13K$ cycles unpipelined, $\approx 7K$ pipelined). Options:
+- **Interleave again:** `COMBINE` is a single loop with a slow add, so the same transformation applies with fewer lanes.
+- **A balanced adder tree:** $K - 1$ adders in $\lceil \log_2 K \rceil$ levels; latency about $D_{\text{add}} \lceil \log_2 K \rceil$, but $K - 1$ `fadd` cores, and the rounding changes again.
+- **Separate dataflow processes (S3.3):** helps throughput across calls, not the latency of one call [1, Sec. 2.1.3].
 
 </details>
 
-**Q3.** `index_k10/pipe` stays at II=7, and a dependence directive fixes it. Why can't the tool see the distance by itself? And in extra 5.5a, why does csim pass while cosim fails?
+**Q3.** `index_k10/pipe` stays at II = 7, and a dependence directive fixes it. Why can't the tool see the distance itself? And in 5.5a, why does csim pass while cosim fails?
 
 <details><summary>Answer</summary>
 
-**Why the tool assumes $d = 1$.** In the index form, iteration $i$ reads and writes `lane[c]`. The tool's dependency analysis looks at the array accesses, not at how `c` changes from one iteration to the next. It cannot prove that `c` never selects the same element in consecutive iterations. So it takes the safe assumption, $d = 1$, and schedules as if every iteration touched the same lane.
+**Why $d = 1$ is assumed.** Iteration $i$ reads and writes `lane[c]`. The dependency analysis looks at the array accesses, not at how `c` evolves, so it cannot prove that consecutive iterations touch different elements. The violation lines show it: distance 2 on the add, then distance 1 on `reuse_reg`, the read-after-write bypass.
 
-**What the directive does.** `-dependent true -distance K` replaces that assumption with the stated distance. The tool then only needs $I \cdot K \ge D_{\text{ACC}}$. The shift form never needs this, because its distance is visible in the code as a chain of register copies.
+**What the directive does.** `-dependent true -distance K` replaces that assumption, so the tool only needs $I \cdot K \ge$ its read-to-write span. The shift form never needs it: the distance is a visible chain of registers.
 
-**Why it only works on the unpartitioned array.** The directive is attached to the variable `lane`. A complete partition replaces `lane` with a read mux and registers named `mux_case_*` before scheduling, so the directive has nothing left to attach to, and no warning is printed. The violation lines then name `mux_case_0`, not `lane`. That name is the indicator that the directive was dropped.
+**Why it only works on an unpartitioned array.** The directive is attached to the variable `lane`. A partition replaces `lane` with registers (`mux_case_*` when explicit, `lane[j]` when automatic) before scheduling. The directive then matches nothing, with no warning. At $K = 4$ this happens automatically, which is why 5.5a needs `-off`.
 
-**Why the tool believes a false promise.** The tool does not check the promise. In 5.5a the real distance is 4 but the directive says 10. The tool schedules $I = 1$ with a 7-cycle add. The iteration four steps later reads the same lane only 4 cycles after the earlier iteration read it, but the earlier write lands about 8 cycles after that read. So the later iteration reads a stale value, and one input is dropped from that lane. The final sum is wrong.
+**Why the false promise breaks only cosim.** The tool does not check the promise. With `-distance 10` it schedules II = 1. Each iteration reads its lane at the start of the pipeline, but the write from the iteration 4 steps earlier lands about 9 cycles after that one started, so the read is stale and that iteration's input is lost. csim runs the C code one iteration at a time, so nothing overlaps; the RTL overlaps them. Measured: 66 of 68 cosim calls fail, and `ones` returns 344.
 
-**Why only cosim sees it.**
-- **csim** compiles the C code and runs it one iteration at a time, so no two iterations overlap and the result is correct.
-- **cosim** runs the scheduled RTL, where they do overlap.
-
-A dependence directive is therefore only safe when the stated distance is *less than or equal to* the real one:
-- stating 4 when the real distance is 10 is safe, but may cost II;
-- stating 10 when it is 4 produces wrong hardware.
-
-S2.3 uses the stronger form, `-dependent false`, together with a forwarding buffer that makes the promise true.
+**Rule:** a stated distance is safe only if it is $\le$ the real one. Stating 4 when the truth is 10 may cost II; stating 10 when it is 4 builds wrong hardware. S2.3 uses `-dependent false` together with a forwarding buffer that makes the promise true.
 
 </details>
+
+---
+
+## 7. Conclusions
+
+### What we set out to show
+
+The claim from [1, Sec. 2.1.3]: a single accumulation loop blocked by a slow carried operator can reach II = 1 by splitting the running sum into $K \ge D_{\text{add}}$ lanes, followed by a short combine stage. It trades bit-exactness with the sequential sum for speed. The exercise also asked two practical questions:
+- Does the tool see the new distance, and does that depend on how the code is written?
+- What happens when the distance is stated wrongly?
+
+### How we tested it
+
+- **A sweep** $K \in \{1, 2, 4, 7, 10\}$ on the shift form, against the re-measured S1.2 baseline (`base/seq`, `base/pipe`). The prediction was $I = \lceil D_{\min}/K \rceil$, $L_p = D_{\text{ACC}} + 2$ and $T = C_{\text{INIT}} + C_{\text{ACC}} + 2 + C_{\text{COMBINE}} + 3$.
+- **The same idea written two ways** at $K = 10$: shift form against index form, with and without the dependence directive.
+- **Correctness:** a reference that mirrors each form's lane grouping, compared exactly, in csim and cosim (68 calls). The sequential sum is printed to measure how far the answer moves.
+- **Two extras:** a false distance promise ($K = 4$, stated 10), and pipelining the second stage.
+
+### What the data shows
+
+1. **The claim holds for $K \ge D_{\min}$.** At $K = 7$: II 7 → 1, `ACC` 7170 → 1032 cycles (6.95×), function 7172 → 1128 (6.36×), cosim pass. The adder, the clock and the core are unchanged.
+2. **The ceiling model is only partly reliable.** $K = 1, 4, 7, 10$ match $\lceil 7/K \rceil$. $K = 2$ does not: the tool reports a carried constraint between two `fadd` operations (HLS 200-881) and stays at II = 7 instead of 4. Below about $K = 4$, run it before trusting the model.
+3. **There is no gain past $K = D_{\min}$.** $K = 10$ has the same $C_{\text{ACC}}$ as $K = 7$, costs +385 FF and +39 `COMBINE` cycles, and the tool did not use the extra slack to take the relaxed core. Choose $K = D_{\min}$.
+4. **Lanes cost more than their bits.** The shift form grows by about 128 FF per lane, not 32. The index form keeps the lanes in a LUTRAM (1091 against 1979 FF at $K = 10$), but pays 0.25 ns in the clock estimate and needs the directive.
+5. **The answer changes, deterministically.** `cancel` gives 0 (sequential), 512 / 768 / 874 / 924 (interleaved) against 1022 exact. Random vectors move by up to 0.63%. The result is only reproducible against a reference with the same grouping.
+6. **How you write it decides whether the tool sees it.** The shift form's distance is visible (no directive). The index form needs `set_directive_dependence`, and that directive disappears silently whenever `lane` is partitioned, explicitly or automatically for small arrays ($K = 4$).
+7. **The directive is a promise the tool never checks.** A false distance gave II = 1, a clean csim and 66 of 68 failing cosim calls. Cosim is the only check that catches it.
+8. **Pipelining the combine stage pays off.** It saves 56 cycles (4.8%). Because both loops then use the same fabric `fadd`, the tool shares one core: −2 DSP, −400 FF.
+
+### Limits of this evidence
+
+- **One design point:** $N = 1024$, one part, one clock, one tool version (2023.2.2).
+- **The $K = 2$ result is measured but not explained.** Neither the dependency model nor the log names a variable-level cause.
+- **Timing is estimated only.** Every II = 1 design reports HLS 200-871; closure after implementation is not shown.
+- **The per-lane FF cost is measured, not traced** to specific registers.
+- **Correctness is shown for the tested vectors** (4 directed + 64 random, fixed seed).
+
+### Rules of thumb
+
+- **When to use it:** a single loop whose II equals the latency of the operator on its running value, and a slightly different float result is acceptable.
+- **Choosing $K$:** $K = D_{\text{add}}$ under pipeline pressure (the fast core, 7 here). More lanes buy nothing; fewer lanes do not scale down smoothly ($K = 2$).
+- **Prefer the shift form** when the tool must find the distance by itself and $K$ is small. Use the index form with the directive when FF matters more than clock margin, and keep the array unpartitioned (`array_partition -off` for small $K$).
+- **Treat every dependence directive as a claim to verify in cosim**, with vectors that make stale reads visible.
+- **Pipeline the combine stage too,** and check the Bind Op Report and the top-level instance table for sharing.
+
+---
+
+## Appendix A — Worked example: how the lanes add up
+
+A shrunk version: **a 3-stage adder**, 9 integer inputs `x = [5, 2, 8, 1, 7, 3, 4, 6, 9]` (sum 45). Reads and write-backs are free: an iteration reads its register at the start of its cycle, and the result is written at the end of its 3rd stage. S1/S2/S3 are the adder's pipeline stages.
+
+A pipelined adder accepts a new pair every cycle: "latency 3" means one addition needs 3 cycles to get through, not that the adder is locked for 3 cycles. What forces a high II is only that each addition needs the previous addition's answer.
+
+### Case A: one `acc`, II = 3
+
+| cycle | new input | S1 | S2 | S3 | `acc` at end |
+|---|---|---|---|---|---|
+| 0 | x0=5 | 0+5 | – | – | 0 |
+| 1 | – | – | 0+5 | – | 0 |
+| 2 | – | – | – | 0+5 | **5** |
+| 3 | x1=2 | 5+2 | – | – | 5 |
+| ... | | | | | |
+
+Only one stage is busy at a time: $3 + 3 \cdot 8 = 27$ cycles, and the answer is correct (45).
+
+### Case B: one `acc`, forced to II = 1 (broken)
+
+| cycle | new input | reads `acc` | S1 | S2 | S3 | `acc` at end |
+|---|---|---|---|---|---|---|
+| 0 | x0=5 | 0 | 0+5 | – | – | 0 |
+| 1 | x1=2 | 0 (stale) | 0+2 | 0+5 | – | 0 |
+| 2 | x2=8 | 0 (stale) | 0+8 | 0+2 | 0+5 | 5 |
+| 3 | x3=1 | 5 | 5+1 | 0+8 | 0+2 | 2 |
+| 4 | x4=7 | 2 | 2+7 | 5+1 | 0+8 | 8 |
+| 5 | x5=3 | 8 | 8+3 | 2+7 | 5+1 | 6 |
+| 6 | x6=4 | 6 | 6+4 | 8+3 | 2+7 | 9 |
+| 7 | x7=6 | 9 | 9+6 | 6+4 | 8+3 | 11 |
+| 8 | x8=9 | 11 | 11+9 | 9+6 | 6+4 | 10 |
+| 9 | – | | – | 11+9 | 9+6 | 15 |
+| 10 | – | | – | – | 11+9 | **20** |
+
+The result is 20, not 45. Each iteration builds on the one written 3 iterations earlier, so the register really carries three running sums (5 → 6 → 10, 2 → 9 → 15, 8 → 11 → 20). They add up to 45, but they overwrite each other in one register. This is also what 5.5a's false promise builds.
+
+### Case C: three lanes, II = 1 (interleaving)
+
+Iteration $i$ reads and writes lane $i \bmod 3$. The adder is unchanged.
+
+| cycle | new input | reads | S1 | S2 | S3 | written | L0, L1, L2 after |
+|---|---|---|---|---|---|---|---|
+| 0 | x0=5 | L0=0 | 0+5 | – | – | – | 0, 0, 0 |
+| 1 | x1=2 | L1=0 | 0+2 | 0+5 | – | – | 0, 0, 0 |
+| 2 | x2=8 | L2=0 | 0+8 | 0+2 | 0+5 | L0 ← 5 | 5, 0, 0 |
+| 3 | x3=1 | L0=5 | 5+1 | 0+8 | 0+2 | L1 ← 2 | 5, 2, 0 |
+| 4 | x4=7 | L1=2 | 2+7 | 5+1 | 0+8 | L2 ← 8 | 5, 2, 8 |
+| 5 | x5=3 | L2=8 | 8+3 | 2+7 | 5+1 | L0 ← 6 | 6, 2, 8 |
+| 6 | x6=4 | L0=6 | 6+4 | 8+3 | 2+7 | L1 ← 9 | 6, 9, 8 |
+| 7 | x7=6 | L1=9 | 9+6 | 6+4 | 8+3 | L2 ← 11 | 6, 9, 11 |
+| 8 | x8=9 | L2=11 | 11+9 | 9+6 | 6+4 | L0 ← 10 | 10, 9, 11 |
+| 9 | – | | – | 11+9 | 9+6 | L1 ← 15 | 10, 15, 11 |
+| 10 | – | | – | – | 11+9 | L2 ← 20 | 10, 15, 20 |
+
+- **The S1/S2/S3 columns are identical to Case B:** one adder, all stages full.
+- **Every read is just in time:** at cycle 3, L0 was written at the end of cycle 2.
+- **$3 + 1 \cdot 8 = 11$ cycles against 27.** With only 2 lanes, iteration 2 would read L0 one cycle too early, forcing II = $\lceil 3/2 \rceil = 2$.
+
+`COMBINE` then adds L0 + L1 + L2 = 45 in a separate loop. In the real design that is the second `fadd` (unpipelined: $K$ trips of 13 cycles) or the same shared core when `COMBINE` is pipelined too (5.5b).
+
+| term | meaning |
+|---|---|
+| **pipeline stage** | one slice of the adder, with a register after it (S1, S2, S3) |
+| **paper's "two stages"** | two loops run one after the other: `ACC` over the inputs, `COMBINE` over the lanes |
 
 ---
 
@@ -1156,6 +898,6 @@ S2.3 uses the stronger form, `-dependent false`, together with a forwarding buff
 
 [2] AMD, *Vitis High-Level Synthesis User Guide* (UG1399), version matching 2023.2. Reference pages for:
 - `set_directive_pipeline`;
-- `set_directive_array_partition` (`-type complete`, `-dim`);
+- `set_directive_array_partition` (`-type complete`, `-dim`, `-off`);
 - `set_directive_dependence` (`-variable`, `-type inter`, `-dependent`, `-distance`);
 - the Bind Op section of the synthesis report.

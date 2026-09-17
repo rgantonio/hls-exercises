@@ -7,11 +7,9 @@
 #define STR_(s) #s
 #define STR(s)  STR_(s)
 
-#ifdef __RTL_SIMULATION__
-static const int N_RANDOM = 4;
-#else
+// One count for csim and cosim: __RTL_SIMULATION__ is not defined for the
+// testbench during cosim on 2023.2.2 (notes/env.md, Probe E).
 static const int N_RANDOM = 64;
-#endif
 
 static const data_t POISON = (data_t)-12345;
 // Integer builds use raw ints; float builds scale to fractional values.
