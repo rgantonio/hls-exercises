@@ -231,3 +231,176 @@ set_directive_dependence [-variable <name> | -class <array|pointer>] [-type <int
 
 - **Shift form needs no directive (S2.1.3):** the distance is visible to the tool as a chain of register copies. Only the index form needs the promise.
 - **The promise rule:** stated distance $\le$ real distance is safe; stated distance $>$ real distance is a bug the tool will not report (S2.1.3 Q3 and extra 5.5a).
+- **Fallback in S2.1.1 (`gemm_trans/pipe_dist`):** `-variable acc -distance 32` on `"gemm_trans/COL"`, used only if the tool does not prove the distance on its own after `PROD`·`COL` is flattened. 32 is the true distance, so the promise is safe. Not needed on 2023.2.2: `trans/pipe` reached II = 1 with no violations, so whether the directive survives flattening is still untested.
+
+---
+
+## `set_directive_bind_storage`
+
+**As used in S2.1.1:**
+
+```tcl
+set_directive_bind_storage -type ram_2p "gemm_trans" acc
+```
+
+### What it does
+
+Chooses the kind of memory an array is built from: how many ports it has and which FPGA resource implements it. Without it, Vitis picks both by itself, usually a one-port RAM (`ram_1p`) for a local array that is only accessed once per cycle.
+
+The number of ports matters for pipelining. S1.2's rule is $I \ge \lceil A/P \rceil$ ($A$ accesses per iteration, $P$ ports). A read and a write of `acc` in the same iteration give $A = 2$. On `ram_1p` ($P = 1$) that forces II = 2. On `ram_2p` ($P = 2$) the read and the write each have a port, so II = 1 is possible.
+
+Like `array_partition`, it does not change what the C code computes. Unlike `array_partition`, it keeps the array as one memory and only changes that memory's ports and implementation.
+
+### Arguments in our command
+
+| part | meaning |
+|---|---|
+| `set_directive_bind_storage` | choose the memory type for a variable |
+| `-type ram_2p` | a dual-port RAM: one port can only read, the other can read and write |
+| `"gemm_trans"` | the function where the array is declared |
+| `acc` | the array variable |
+
+`-impl` is not given, so the tool decides. In S2.1.1 it chose BRAM for a 32 × 32 `acc` (`RAM_2P_AUTO_1R1W`, 1 BRAM_18K); S4.5 varies it.
+
+### When to use it
+
+- **A memory port limit is the II blocker**, and the array is too large to partition into registers. One read and one write per iteration, as with an accumulator buffer (S2.1.1 `acc`) or the FIR delay line on a RAM (S1.2 `fir3_pipe_2p`).
+- **To keep solutions comparable.** S2.1.1 puts the same `ram_2p` line in `trans/seq` and `trans/pipe`, so that going from `seq` to `pipe` changes only the pipelining, not the memory.
+- **To choose the resource** (`-impl`): BRAM for large arrays, LUTRAM for small ones or to save BRAM blocks, URAM for very large ones on UltraScale+ (S4.5).
+- **To set the read latency** (`-latency`) when a larger memory needs an output register to meet timing.
+
+### Where it applies
+
+- **Local arrays** inside a function, including `static` arrays. The location is the function where the array is declared.
+- **Top-level array arguments** with an `ap_memory` interface. Here it does not create a memory. It tells Vitis what kind of external memory the port connects to (for example `ram_2p` gives the port a second address/data set).
+- **Not on arrays that are partitioned with `complete`.** They become registers, so there is no memory left to bind.
+- **Not on `m_axi` arguments.** Their memory is outside the design.
+- **Two ports is the maximum for a RAM.** If an iteration needs more than 2 accesses, `bind_storage` alone cannot reach II = 1; partition the array (or restructure the code) instead.
+
+### Full syntax
+
+```tcl
+set_directive_bind_storage [-type <type>] [-impl <impl>] [-latency <int>] <location> <variable>
+```
+
+| argument | description | possible values | default |
+|---|---|---|---|
+| `-type <type>` | the memory's behaviour and port count (see table below) | `fifo`, `ram_1p`, `ram_1wnr`, `ram_2p`, `ram_s2p`, `ram_t2p`, `rom_1p`, `rom_2p`, `rom_np` *(check `help`)* | chosen by the tool |
+| `-impl <impl>` | the FPGA resource used to build it | `bram`, `lutram`, `uram`, `srl`, `memory`, `auto`; not every combination with `-type` is allowed *(check `help`)* | `auto` (tool decides) |
+| `-latency <int>` | read latency in cycles. Higher values add output registers, which helps timing on large memories but deepens the pipeline | non-negative integer | depends on type and impl |
+| `<location>` | the function where the variable is declared (or the top function, for an argument) | `"function"` | required |
+| `<variable>` | the array (or FIFO stream) name | variable name | required |
+
+**The RAM types:**
+
+| type | ports | what each port can do |
+|---|---|---|
+| `ram_1p` | 1 | read or write, one access per cycle |
+| `ram_1wnr` | 1 write + N read | one write port and several read-only ports *(check `help`)* |
+| `ram_2p` | 2 | port 0 reads and writes, port 1 only reads |
+| `ram_s2p` | 2 | simple dual port: one port only writes, the other only reads |
+| `ram_t2p` | 2 | true dual port: both ports can read and write |
+
+For S2.1.1's `acc` (one read, one write), `ram_2p`, `ram_s2p` and `ram_t2p` would all give II = 1. `ram_2p` is the one the README uses.
+
+**Argument order confirmed on 2023.2.2** (options, then location, then variable): the log echoes `set_directive_bind_storage -type ram_2p gemm_trans acc`.
+
+### How to confirm
+
+- **Log:** the directive is echoed when the directives file is sourced. A wrong variable name or location prints a warning; grep for the variable name.
+- **Report, Memory section:** the array appears as one memory instance with its words × bits. Look in the top module report first, then the other `*_csynth.rpt` files if the loop was extracted into a submodule:
+
+  ```bash
+  grep -n -A8 "+ Memory" <proj>/<sol>/syn/report/<top>_csynth.rpt
+  ```
+
+- **Report, `== Storage Report`** in the design-wide `syn/report/csynth.rpt`: usage (`ram_2p array`), `Pragma = yes`, `Impl` (`auto`), latency, and bitwidth/depth/banks. The chosen resource shows in the BRAM/URAM columns and in the per-module Memory section.
+- **II:** if the directive did not take effect and the array stayed on `ram_1p`, the log shows II = 2 with a reason naming the array and a port or resource limitation (S2.1.1 section 3.C, risk 3).
+
+### Notes from the exercises
+
+- **S2.1.1:** `acc` (32 words × 32 bits) went to 1 BRAM_18K as `RAM_2P_AUTO_1R1W`, read latency 1. The log prints `BIND 205-102` ("the specified resource core for memory 'acc' will be ignored if a simpler one can be used"): `ram_2p` was built as a simple 1R1W RAM, which is enough for one read and one write.
+- **S2.1.1 RTL:** `acc` is read at pipeline stage 8 and written at stage 21, so each element must be written at least 14 trips before it is read again. With $M = 32$ that holds at II = 1.
+- **The area cost of transposition is this buffer.** Its size grows with $M$, which is what tiling (S2.1.2) bounds.
+
+---
+
+## `set_directive_loop_flatten`
+
+**As used in S2.1.1 (extra 5.5a):**
+
+```tcl
+set_directive_loop_flatten -off "gemm_trans/COL"
+```
+
+### What it does
+
+Loop flattening turns a nest of loops into one loop whose trip count is the product of the individual trip counts. For example, `PROD` (32) around `COL` (32) becomes one loop of 1024 trips.
+
+When the inner loop is pipelined, flattening means the pipeline runs once per iteration of the *remaining* outer loop instead of once per iteration of the loop it was flattened into. Each run pays the pipeline fill and drain, plus the cycles to enter and leave the loop. So fewer, longer runs save cycles:
+
+| design (S2.1.1) | pipeline runs per call | trips per run |
+|---|---|---|
+| `naive/pipe` (auto-flattened, 3 levels) | 1 | $N \cdot M \cdot K = 32\,768$ |
+| `trans/pipe` (flattened) | $N = 32$ | $K \cdot M = 1024$ |
+| `trans/pipe_noflat` | $N \cdot K = 1024$ | $M = 32$ |
+
+**Vitis flattens automatically** when the inner loop of a perfect or semi-perfect nest is pipelined. So in practice this directive is mostly used **with `-off`**, to stop that, or to force flattening where the tool would not do it on its own.
+
+Flattening can also change which dependencies the tool has to prove. In S2.1.1, `acc[m]` is only reused across different `k`. Without flattening, each `COL` run drains before the next `k`, so there is no carried dependency inside the pipeline. With flattening, consecutive `k` share one pipeline, and the tool must prove distance $M$ (Q4).
+
+### Arguments in our command
+
+| part | meaning |
+|---|---|
+| `set_directive_loop_flatten` | control flattening of a loop nest |
+| `-off` | do **not** flatten this loop into its parent |
+| `"gemm_trans/COL"` | the loop labelled `COL` in function `gemm_trans` (the inner loop of the nest) |
+
+### When to use it
+
+- **To measure what flattening buys** (S2.1.1 extra 5.5a): the same design with and without it, so the II and the number of pipeline runs can be compared separately.
+- **To keep a loop hierarchy on purpose**, for example when a flattened loop's combined exit condition makes the critical path longer, or when the outer loop body must stay a separate state.
+- **To flatten where the tool did not** (without `-off`), after making the nest perfect or semi-perfect. Pipelined loop flattening is S2.5.
+
+### Where it applies
+
+- **Loops only.** The location is `"function/LABEL"`, normally the **innermost** loop of the nest.
+- **Which nests can be flattened:**
+
+  | nest | definition | flattened? |
+  |---|---|---|
+  | perfect | only the innermost loop has a body; all bounds are constant | yes |
+  | semi-perfect | only the innermost loop has a body; the innermost bound is constant, outer bounds may be variable | yes |
+  | imperfect | code between the loop headers (before or after an inner loop) | often yes on 2023.2.2: the tool first moves that code into the inner loop behind conditions (HLS 200-2061). Not when a second loop follows the inner loop |
+
+- **S2.1.1 examples:** `gemm_trans` `PROD`·`COL` is perfect, because `k == 0` and the `A[n][k]` read are *inside* `COL`. `gemm_naive` `COL`·`PROD` is imperfect, because `acc = C[n][m]` comes before `PROD` and `C[n][m] = acc` comes after it, yet 2023.2.2 converted it (HLS 200-2061) and flattened all three levels into `ROW_COL_PROD`. `gemm_trans` `ROW` is not flattened into `PROD_COL`, because the `WRITE` loop follows `PROD`.
+- **`-off` placement (confirmed on 2023.2.2):** `-off` on the inner loop `COL` alone is enough. `pipe_noflat` shows `COL` (32 trips) inside `PROD`.
+
+### Full syntax
+
+```tcl
+set_directive_loop_flatten [-off] <location>
+```
+
+| argument | description | possible values | default |
+|---|---|---|---|
+| `-off` | prevent flattening at this location, while other loops may still be flattened | flag | not set (flattening allowed) |
+| `<location>` | the loop, normally the innermost loop of the nest | `"function/LABEL"` | required |
+
+### How to confirm
+
+- **Log:** `HLS 200-2061` (nest converted to perfect) and `XFORM 203-541 Flattening a loop nest '<outer>'`. Check this for every pipelined nest:
+
+  ```bash
+  grep -nE "200-2061|[Ff]latten" run.log
+  ```
+
+- **Loop table:** a flattened nest shows **one** pipelined loop with the product trip count (1024) and the labels joined outer to inner (`PROD_COL`, `ROW_COL_PROD`). The pipeline may be extracted into a submodule `<top>_Pipeline_<name>` with its own report. An unflattened nest shows the inner loop (32 trips) indented under the outer one.
+- **Function latency:** the flattened design is shorter by about (fill/drain + entry/exit cycles) × (runs saved).
+
+### Notes from the exercises
+
+- **S2.1.1 measured:** flattened `trans/pipe` 36 641 cycles per call, `pipe_noflat` 61 537 (1.68×). Both have II = 1; the difference is 1024 − 32 pipeline runs × about 25 cycles each.
+- **Flattening costs a stage and clock margin:** depth 21 against 20, estimate 2.781 ns against 2.451 ns. In both S2.1.1 pipelines, the critical path is the flattened loop counter (compare → select → add → select).
+- **The `config_compile -pipeline_loops 0` line in `common/part.tcl`** only turns off automatic *pipelining*. It does not stop flattening of a nest whose inner loop is explicitly pipelined (confirmed in S2.1.1).
