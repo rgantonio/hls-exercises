@@ -107,7 +107,7 @@ for s in $SOLS; do
     rows+="$(awk -v sol="$s" -v mod="$m" "$TRIM"'
       /^[ \t]*\* Loop:/ { inl = 1; next }
       inl && (/^=====/ || /^\+ / || /^[ \t]*\* /) { inl = 0 }
-      inl && /^[ \t]*\|[ \t]*[-+] / {
+      inl && /^[ \t]*\|[ \t]*[-+]+ / {
         split($0, f, "|")
         printf "| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n", sol, mod,
                trim(f[2]), trim(f[3]), trim(f[4]), trim(f[5]), trim(f[6]), trim(f[7]), trim(f[8]), trim(f[9])
