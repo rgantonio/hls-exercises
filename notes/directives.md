@@ -121,7 +121,7 @@ It changes nothing about what the C code computes; it removes the port limit tha
 ### Full syntax
 
 ```tcl
-set_directive_array_partition [-type <complete|block|cyclic>] [-factor <int>] [-dim <int>] <location> <array>
+set_directive_array_partition [-type <complete|block|cyclic>] [-factor <int>] [-dim <int>] [-off] <location> <array>
 ```
 
 | argument | description | possible values | default |
@@ -129,6 +129,7 @@ set_directive_array_partition [-type <complete|block|cyclic>] [-factor <int>] [-
 | `-type` | how elements are divided into pieces | `complete`, `block`, `cyclic` | `complete` |
 | `-factor <int>` | number of pieces for `block` and `cyclic`. Ignored for `complete` | positive integer | required for `block` and `cyclic` |
 | `-dim <int>` | which dimension of a multi-dimensional array to split | `1`, `2`, ... for that dimension; `0` for all dimensions | `1` |
+| `-off` | keep this array whole: turns off automatic partitioning for it (S2.1.3 extra 5.5a) | flag | not set |
 | `<location>` | the function where the array is declared (or, for a top-level argument, the top function) | `"function"` | required |
 | `<array>` | the array variable name | variable name | required |
 
@@ -158,7 +159,8 @@ set_directive_array_partition [-type <complete|block|cyclic>] [-factor <int>] [-
 ### Notes from the exercises
 
 - **Shift form (S2.1.3):** every iteration writes all $K$ lanes, so $A \approx K$. As a RAM this would become a port blocker of about $K/2$; as registers it is $K$ register copies in one cycle.
-- **Expected FF cost:** about $32K$ extra flip-flops for $K$ 32-bit lanes. This is the "FF grows about 32 per lane" check in S2.1.3 section 5.1.
+- **Measured FF cost (S2.1.3 shift form):** about 128 FF per 32-bit lane, not 32 ($K = 4 \to 7 \to 10$: +392, +385). The pipeline keeps extra copies of the lanes.
+- **Automatic partitioning of small arrays:** at $K = 4$ the tool partitioned `lane` on its own (`XFORM 203-102 Automatically partitioning small array 'lane' ... based on array size`); at $K = 10$ it did not. `config_array_partition -complete_threshold` (default 4) sets the limit. `set_directive_array_partition -off <location> <array>` keeps a specific array whole (2023.2 `help`: "Turn off auto array partition").
 
 ---
 
@@ -204,7 +206,7 @@ Without it, Vitis sees `lane[c]` read and written in every iteration, cannot tel
   - `-dependent true -distance d` is safe if $d \le$ the real distance. A smaller $d$ may cost II; a larger $d$ produces wrong hardware (S2.1.3 extra 5.5a).
   - `-dependent false` is safe only if no dependency exists at all, or if the code handles it (for example with forwarding).
 - **Always verify with cosim**, with directed test vectors that hit the dependency (for example, repeated values in the histogram case).
-- *Not yet confirmed on this install:* whether `-variable lane` is still found after `lane` has been partitioned into `lane_0` ... `lane_9` (S2.1.3 section 4.3 note).
+- **Confirmed on 2023.2.2: a partitioned array loses the directive, silently.** With `lane` partitioned (explicitly, or automatically for small arrays) the violation lines name `mux_case_0` or `lane[2]`, II stays 7, and no warning is printed (S2.1.3). Keep the array whole, with `set_directive_array_partition -off` if needed.
 
 ### Full syntax
 
@@ -231,6 +233,7 @@ set_directive_dependence [-variable <name> | -class <array|pointer>] [-type <int
 
 - **Shift form needs no directive (S2.1.3):** the distance is visible to the tool as a chain of register copies. Only the index form needs the promise.
 - **The promise rule:** stated distance $\le$ real distance is safe; stated distance $>$ real distance is a bug the tool will not report (S2.1.3 Q3 and extra 5.5a).
+- **Measured false promise (S2.1.3 extra 5.5a):** real distance 4, stated 10: II = 1, 0 violations, csim PASS, cosim FAIL on 66 of 68 calls (`ones` returned 344 instead of 1024).
 - **Fallback in S2.1.1 (`gemm_trans/pipe_dist`):** `-variable acc -distance 32` on `"gemm_trans/COL"`, used only if the tool does not prove the distance on its own after `PROD`·`COL` is flattened. 32 is the true distance, so the promise is safe. Not needed on 2023.2.2: `trans/pipe` reached II = 1 with no violations, so whether the directive survives flattening is still untested.
 
 ---

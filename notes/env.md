@@ -60,4 +60,4 @@ start_gui
 
 # Probe E: `__RTL_SIMULATION__` in cosim
 
-Not defined for the testbench on 2023.2.2. In S2.1.1 the testbench guarded `N_RANDOM` with `#ifdef __RTL_SIMULATION__` (1 in cosim, 16 in csim). Cosim still printed `N_RANDOM=16` and ran 20 transactions (`// RTL Simulation : 0 / 20`), and the preprocessed copy in `<proj>/<sol>/sim/wrapc/*_pre.cpp.tb.cpp` holds `N_RANDOM = 16`. Use one constant sized for cosim instead of the `#ifdef`.
+Not defined for the testbench on 2023.2.2. In S2.1.1 the testbench guarded `N_RANDOM` with `#ifdef __RTL_SIMULATION__` (1 in cosim, 16 in csim). Cosim still printed `N_RANDOM=16` and ran 20 transactions (`// RTL Simulation : 0 / 20`), and the preprocessed copy in `<proj>/<sol>/sim/wrapc/*_pre.cpp.tb.cpp` holds `N_RANDOM = 16`. Use one constant sized for cosim instead of the `#ifdef`. Confirmed again in S2.1.3: every cosim ran 68 transactions (4 directed + 64 random) although the `#ifdef` asked for 4 random vectors.
