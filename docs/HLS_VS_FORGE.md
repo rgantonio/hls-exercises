@@ -125,7 +125,7 @@ so it is reported per target, not per HLS run.
 - **The device file is plain Vitis C++ with pragmas in it.** Every map already has `PIPELINE II=1` and `LOOP_FLATTEN`. So `asic.tcl`'s `pipeline_loops 0` doesn't matter for this case; what DaCe chose is what runs.
 - **DaCe's entry function is a DATAFLOW region over raw pointers,** with `m_axi` and `s_axilite` pragmas and hlslib macros. Its device file is kept unchanged as `dace/<size>_w<W>/<kernel>_0_0.cpp`, and that entry function is left unused.
 - **The generator writes a small top, `dace/<size>_w<W>/<kernel>_dace.cpp`.** It has the same arguments as the hand-written top in `src/<kernel>.h`, so the ports (axis) and the testbench are the same as in cases 1 and 2, and it calls DaCe's `module_<kernel>_0_0` function directly.
-- **Includes and flags.** The device file includes `<dace/fpga_device.h>`. So the generator copies DaCe's runtime headers and hlslib into `bench/gen/dace_include/`, and the Vitis machine needs no DaCe install. The case compiles with DaCe's own synthesis flags: `-DDACE_SYNTHESIS -DDACE_XILINX -DDACE_XILINX_DEVICE_CODE -DHLSLIB_SYNTHESIS`. Every case includes `bench/gen/dace_include/` anyway, for `vec_t`.
+- **Includes and flags.** The device file includes `<dace/fpga_device.h>`. So the generator copies DaCe's runtime headers and hlslib into `bench/gen/dace_include/`, and the Vitis machine needs no DaCe install. The case compiles with DaCe's own synthesis flags, `-DDACE_SYNTHESIS -DDACE_XILINX -DDACE_XILINX_DEVICE_CODE`. Every case includes `bench/gen/dace_include/` anyway, for `vec_t`, and gets `-DHLSLIB_SYNTHESIS`: without it hlslib's `DataPack` bounds-checks with `std::stringstream`, which Vitis's csynth front end rejects (csim still passes). `lanes.h` stops the build when the flag is missing.
 - **Reductions** (`vsum`, `dot`). `np.sum` becomes a loop at II = 1 that writes through DaCe's write-conflict resolution into a scalar transient, which DaCe's module takes by value. DaCe's `dot` is two loops: `A * B` into a transient array of N, then the sum over it, which is forge's "vmul then vsum through L1" inside one block.
 - **Transients in the generated top.** A scalar is a local variable. An array is a local static array, so it is a RAM inside the block.
 - **Library nodes** (tier A) expand into loops. `atax`'s transpose is written out to a transient, which DaCe treats as global memory. For now the generated top keeps every transient as a local array inside the block. Tier A decides whether transients become ports instead, which is closer to forge chaining accelerators through L1 (forge D105). `MatMul` expands to `Gemv` first, so an FPGA implementation of `Gemv` (`FPGA_Accumulate`, `FPGA_TilesByColumn`) has to be chosen after that first expansion step.
@@ -209,7 +209,7 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
   "W": [1, 4, 8],
   "iface": "axis",
   "axis": ["A", "B", "C"],
-  "cflags": ["-std=c++14", "-I{bench}/include", "-I{bench}/gen/dace_include"],
+  "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_vecadd.cpp",
   "cases": {
     "unopt": {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true},
@@ -219,7 +219,7 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
       "per_w": true,
       "W": [1, 4, 8],
       "src": ["dace/{size}_w{W}/vecadd_dace.cpp", "dace/{size}_w{W}/vecadd_0_0.cpp"],
-      "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE", "-DHLSLIB_SYNTHESIS"]
+      "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE"]
     }
   },
   "dace": {"vectorize": true, "passes": [], "expansions": {}}

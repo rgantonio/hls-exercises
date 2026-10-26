@@ -8,6 +8,13 @@
 // hlslib::DataPack<T, W> (one ap_uint<W*64>) above, so case 3's generated module
 // takes exactly the type cases 1 and 2 use.
 #pragma once
+
+// hlslib's DataPack bounds-checks Get/Set with std::stringstream unless
+// HLSLIB_SYNTHESIS is set, and Vitis's csynth front end cannot parse that.
+// params.json passes -DHLSLIB_SYNTHESIS to every case.
+#ifndef HLSLIB_SYNTHESIS
+#error "HLSLIB_SYNTHESIS must be set (params.json cflags); hlslib's DataPack does not synthesize without it"
+#endif
 #include "dace/xilinx/vec.h"
 
 #ifndef W
