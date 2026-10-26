@@ -101,3 +101,7 @@ notes/figures/
 !bench/**/data.h
 !rtl/
 !rtl/**
+
+# --- Synthesis (syn/README.md) ------------------------------------------
+# Every DC run stays local: work library, logs, reports, netlists, summary.
+syn/runs/

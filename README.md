@@ -70,11 +70,11 @@ python3 bench/bench.py collect --tier done  # re-read the projects that still ex
 python3 bench/bench.py check                # portability of the generated Verilog
 ```
 
-The Vitis projects (`<case>_<size>[_w<W>]_c<clock>_proj` in each kernel's folder) and their logs (`run_<project>.log`) are scratch. Git ignores them and `make clean` removes them. To look at one in detail before cleaning:
+The Vitis projects (`<case>_<size>_w<W>_proj` in each kernel's folder) and their logs (`run_<project>.log`) are scratch. Git ignores them and `make clean` removes them. To look at one in detail before cleaning:
 
 ```bash
 cd bench/tier_done/vecadd
-PROJ=opt_n64_w4_c3p33_proj TOP=vecadd SOLS=sol OUT=/tmp/lat.md ../../../common/collect_latency.sh
+PROJ=opt_n64_w4_proj TOP=vecadd SOLS=sol OUT=/tmp/lat.md ../../../common/collect_latency.sh
 ```
 
 To run one point by hand, take the `export` lines that `--dry-run` prints, then:
@@ -83,6 +83,17 @@ To run one point by hand, take the `export` lines that `--dry-run` prints, then:
 cd bench/tier_done/vecadd
 vitis_hls -f ../../run_bench.tcl 2>&1 | tee run_manual.log
 ```
+
+## Synthesis
+
+ASIC synthesis of the points in `rtl/` with Design Compiler on FreePDK45, which sits next to hls-exercises. Results stay local in `syn/runs/`:
+
+```bash
+python3 syn/syn.py run done/vecadd/unopt_n512_w8     # one point, 10 ns
+python3 syn/syn.py summary                           # area, slack, power of every run
+```
+
+More in [`syn/README.md`](syn/README.md).
 
 ## Layout
 
@@ -93,5 +104,6 @@ common/      part.tcl (exercises), asic.tcl (bench), report scripts
 notes/       env.md, directive reference, exercise results.csv
 bench/       bench.py, run_bench.tcl, gen/, tier_<T>/<kernel>/
 results/     bench summaries: hls_cycles.csv, hls_loops.csv, report_<tier>.md
-rtl/         Vitis's generated Verilog per bench point
+rtl/         Vitis's generated Verilog per bench point, with a filelist.f each
+syn/         ASIC synthesis: syn.py, scripts/ (DC on FreePDK45); runs/ stays local
 ```
