@@ -39,7 +39,7 @@ syn/runs/summary.csv   one row per point and clock: area, cells, critical path, 
 | File | What it is |
 |---|---|
 | `syn.py` | The driver: picks points, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv` |
-| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f`, links against `gscl45nm.db` and DesignWare, `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
+| `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f`, links against `gscl45nm.db` and DesignWare, lifts the library's zero `max_capacitance` limits (below), `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
 | `scripts/constraints.sdc` | Clock on `ap_clk` at `$clock_ns`, uncertainties, `INVX4` input drive, output load, small IO delays, and the synchronous reset `ap_rst_n` kept as an ideal network (its tree belongs to place and route) |
 
 ## The filelist
@@ -51,3 +51,9 @@ syn/runs/summary.csv   one row per point and clock: area, cells, critical path, 
 vecadd_regslice_both.v
 vecadd.v
 ```
+
+## The library's zero max-cap limits
+
+`gscl45nm.db` sets `max_capacitance = 0` on the outputs of AOI21X1, AOI22X1, NAND2X1, NAND3X1, NOR2X1, DFFSR and TBUFX1. Every net those cells drive is then a max-cap violation whatever its load: 522 of 3,988 nets in the first `opt_n512_w8` run. Design rules come before timing in DC, so compile would spend effort and buffers on limits it can never meet.
+
+`dc_syn.tcl` removes those zero limits after linking. If DC refuses to remove a library attribute, it raises them to 10 instead. The log says how many pins it touched, and `summary.csv`'s `maxcap_nets` column shows what is left.

@@ -80,6 +80,23 @@ link
 check_design > logs/check_design.log
 
 #-----------------------------
+# Library fix: gscl45nm.db sets max_capacitance = 0 on some output pins (AOI21X1,
+# AOI22X1, NAND2X1, NAND3X1, NOR2X1, DFFSR, TBUFX1). Every net those pins drive is
+# then a max-cap violation whatever its load, and compile spends effort and buffers
+# on limits it can never meet. Drop the zero limits (or, if DC refuses to remove a
+# library attribute, raise them out of the way); the other pins keep theirs.
+#-----------------------------
+set zero_cap_pins [get_lib_pins -quiet -filter "max_capacitance == 0" */*/*]
+set n_zero_cap [sizeof_collection $zero_cap_pins]
+if {$n_zero_cap > 0} {
+    if {[catch {remove_attribute $zero_cap_pins max_capacitance} msg]} {
+        puts "dc_syn.tcl: remove_attribute refused ($msg); setting max_capacitance = 10 instead"
+        set_attribute $zero_cap_pins max_capacitance 10.0 -type float
+    }
+}
+puts "dc_syn.tcl: lifted max_capacitance = 0 on $n_zero_cap library pins"
+
+#-----------------------------
 # Add constraints (reads $clock_ns)
 #-----------------------------
 source [file join $script_dir constraints.sdc]

@@ -45,7 +45,7 @@ DEFAULT_LIB = ROOT.parent / "FreePDK45" / "osu_soc" / "lib" / "files" / "gscl45n
 DEFAULT_CLOCK = "10"
 
 COLUMNS = ["point", "top", "clock_ns", "status", "errors", "area", "comb_area", "seq_area", "cells",
-           "crit_path_ns", "slack_ns", "dyn_power", "leak_power", "date", "run"]
+           "crit_path_ns", "slack_ns", "maxcap_nets", "dyn_power", "leak_power", "date", "run"]
 
 
 # ---------------------------------------------------------------- points
@@ -102,6 +102,7 @@ def read_run(point: str, clock: str) -> dict:
         "cells": _first(area, r"Number of cells:\s*([0-9]+)"),
         "crit_path_ns": _first(qor, r"Critical Path Length:\s*([0-9.-]+)"),
         "slack_ns": _first(qor, r"Critical Path Slack:\s*([0-9.-]+)"),
+        "maxcap_nets": _first(qor, r"Max Cap Violations:\s*([0-9]+)"),
         "dyn_power": _power(power, "Total Dynamic Power"),
         "leak_power": _power(power, "Cell Leakage Power"),
         "date": dt.datetime.now().isoformat(timespec="seconds"),
@@ -131,7 +132,8 @@ def write_summary(rows: list[dict]) -> None:
 
 
 def print_rows(rows: list[dict]) -> None:
-    cols = ["point", "clock_ns", "status", "area", "cells", "crit_path_ns", "slack_ns", "dyn_power", "leak_power"]
+    cols = ["point", "clock_ns", "status", "area", "cells", "crit_path_ns", "slack_ns", "maxcap_nets",
+            "dyn_power", "leak_power"]
     t = [[str(r.get(c, "")) for c in cols] for r in rows]
     w = [max(len(c), *(len(x[i]) for x in t)) for i, c in enumerate(cols)] if t else [len(c) for c in cols]
     print("  ".join(c.ljust(n) for c, n in zip(cols, w)))
