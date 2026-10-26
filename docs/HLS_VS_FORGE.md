@@ -48,6 +48,7 @@ These keep the two sides comparable. Where a difference can't be removed, it is 
 **Known differences.** These are kept, not removed:
 - HLS has no CSR file. Its latency runs from `ap_start` to `ap_done`. Forge's per-task counter (for example `add_acc`) also leaves the CSR programming out, so the two are compared. Forge's whole-program window (`forge cycles`) is not. Forge's CSR module is shown apart in area (its split into control, CSR and datapath modules).
 - Cosim feeds a beat every cycle. Forge's streamers feed from the TCDM, so their start-up and any bank conflicts land in forge's counter. The `overhead` column (cycles minus beats) shows that cost on both sides.
+- **Open, for the analysis:** where forge's extra cycles come from. Without register slices, HLS `opt` has no overhead on elementwise kernels (vecadd n64 W = 4: 16 cycles for 16 beats), while forge's `add_acc` counts 19. The likely parts are streamer fill and drain, the start and done handshakes, and bank conflicts that depend on placement. SNAX-GVSoC's `--trace stall` can split them. A shared harness that drives both units with the same ideal or stalled streams would compare the units alone.
 
 **Same arithmetic.** Multipliers go in fabric. There is no DSP on either side, in Vivado or in DC.
 

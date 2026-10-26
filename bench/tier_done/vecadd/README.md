@@ -27,6 +27,8 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
+**Update, commit 4fea150: register slices off.** The tables below are from the axis run with Vitis's register slices (bb9ca4c). Since 4fea150 the ports have none: `opt` and `dace` are 2 cycles shorter (1 for some reductions), and `unopt` saves up to one cycle per beat. `results/report_done.md` has the current numbers.
+
 First axis run: 26 Oct 2026, commit bb9ca4c. All 18 points pass csim and cosim with timing met, DSP 0 and portable Verilog; the tables are in `results/report_done.md`.
 
 | Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead (cycles − beats) |
