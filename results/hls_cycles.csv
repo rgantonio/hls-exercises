@@ -1,0 +1,9 @@
+tier,kernel,case,dtype,size,W,clock_ns,status,csim_errors,clock_est_ns,lat_min,lat_max,ii_min,ii_max,pipeline,cosim_status,cosim_lat_min,cosim_lat_avg,cosim_lat_max,LUT,FF,DSP,BRAM_18K,portable,vitis,git,date,proj
+done,vecadd,unopt,int64,n64,,3.33,ok,0,2.322,193,193,194,194,no,Pass,193,193,193,135,82,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:08:16,bench/tier_done/vecadd/unopt_n64_c3p33_proj
+done,vecadd,unopt,int64,n512,,3.33,ok,0,2.322,1537,1537,1538,1538,no,Pass,1537,1537,1537,141,88,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:08:15,bench/tier_done/vecadd/unopt_n512_c3p33_proj
+done,vecadd,opt,int64,n64,4,3.33,ok,0,2.322,19,19,20,20,no,Pass,17,17,17,338,276,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:08:21,bench/tier_done/vecadd/opt_n64_w4_c3p33_proj
+done,vecadd,opt,int64,n64,8,3.33,ok,0,1.762,11,11,12,12,no,Pass,9,9,9,622,530,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:08:23,bench/tier_done/vecadd/opt_n64_w8_c3p33_proj
+done,vecadd,opt,int64,n512,4,3.33,ok,0,2.322,131,131,132,132,no,Pass,129,129,129,341,285,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:08:59,bench/tier_done/vecadd/opt_n512_w4_c3p33_proj
+done,vecadd,opt,int64,n512,8,3.33,ok,0,2.322,67,67,68,68,no,Pass,65,65,65,625,539,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:09:02,bench/tier_done/vecadd/opt_n512_w8_c3p33_proj
+done,vecadd,dace,int64,n64,,3.33,ok,0,2.322,67,67,68,68,no,Pass,65,65,65,140,90,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:09:19,bench/tier_done/vecadd/dace_n64_c3p33_proj
+done,vecadd,dace,int64,n512,,3.33,ok,0,2.322,515,515,516,516,no,Pass,513,513,513,146,99,0,0,yes,v2023.2.2,0ebddb1,2026-10-26T14:09:19,bench/tier_done/vecadd/dace_n512_c3p33_proj

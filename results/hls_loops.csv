@@ -1,0 +1,9 @@
+tier,kernel,case,size,W,clock_ns,module,loop,lat_min,lat_max,iter_lat,ii_achieved,ii_target,trips,pipelined
+done,vecadd,unopt,n64,,3.33,vecadd,ADD,192,192,3,-,-,64,no
+done,vecadd,unopt,n512,,3.33,vecadd,ADD,1536,1536,3,-,-,512,no
+done,vecadd,opt,n64,4,3.33,vecadd,ADD,17,17,3,1,1,16,yes
+done,vecadd,opt,n64,8,3.33,vecadd,ADD,9,9,3,1,1,8,yes
+done,vecadd,opt,n512,4,3.33,vecadd,ADD,129,129,3,1,1,128,yes
+done,vecadd,opt,n512,8,3.33,vecadd,ADD,65,65,3,1,1,64,yes
+done,vecadd,dace,n64,,3.33,vecadd_dace,VITIS_LOOP_21_1,65,65,3,1,1,64,yes
+done,vecadd,dace,n512,,3.33,vecadd_dace,VITIS_LOOP_21_1,513,513,3,1,1,512,yes
