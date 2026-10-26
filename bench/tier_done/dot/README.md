@@ -25,4 +25,13 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-`results/report_done.md`. Findings from the axis runs go here. The earlier `ap_memory` run is in git history (commits 4b7b617 and 99e6c80).
+First axis run: 26 Oct 2026, commit bb9ca4c. All 14 points pass, DSP 0, portable; all miss 3.33 ns on the FPGA (the 64-bit fabric multiplier, as in `vecmul`).
+
+| Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead |
+|---|---|---|---|
+| `unopt` | 194 / 226 / 210 | 1538 / 1794 / 1666 | — |
+| `opt` | 69 / 21 / 14 | 517 / 133 / 70 | 5 (6 at W = 8) |
+| `dace` | 136 | 1032 | about $N + 8$ |
+
+- `opt` is the fused form: W multipliers, an adder tree and one accumulator at II = 1, one beat per cycle plus 5. At W = 8 the tree is one stage deeper.
+- DaCe's `dot` takes 2 cycles per element. Its two loops run one after the other, and `A*B` sits between them in a RAM inside the block (`BRAM_18K` = 2, `dot_dace_p_tmp0_RAM_AUTO_1R1W.v` in `rtl/`). That breaks the plan's rule that memory stays outside the block. It is DaCe's default, which is forge's "vmul then vsum through L1" with the L1 moved inside.

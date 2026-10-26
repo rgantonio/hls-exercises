@@ -27,4 +27,16 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-`results/report_done.md`. Findings from the axis runs go here. The earlier `ap_memory` run is in git history (commits 4b7b617 and 99e6c80).
+First axis run: 26 Oct 2026, commit bb9ca4c. All 18 points pass csim and cosim with timing met, DSP 0 and portable Verilog; the tables are in `results/report_done.md`.
+
+| Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead (cycles − beats) |
+|---|---|---|---|
+| `unopt` | 129 / 241 / 217 | 1025 / 1921 / 1729 | — (2 cycles per element at W = 1, about 3.5–4 above) |
+| `opt` | 66 / 18 / 10 | 514 / 130 / 66 | 2 |
+| `dace` | 66 / 19 / 11 | 514 / 131 / 67 | 2 at W = 1, 3 vectorized |
+| forge `add_acc` | — / 19 / — | — | 3 (W = 4) |
+
+- The ports are as planned: `A_TDATA`, `B_TDATA`, `C_TDATA` of 256 bits at W = 4 with `TVALID`/`TREADY`, and an active-low synchronous reset `ap_rst_n` (Vitis fixes that once AXI ports exist).
+- `opt` runs one beat per cycle plus 2. Forge's unit runs one beat per cycle plus 3, so at n64 W = 4 it is 18 cycles against 19.
+- DaCe's vectorized loop reaches one beat per cycle too, one cycle behind `opt`, because its module is a function call from the generated top.
+- `unopt` at W = 4 and 8 is slower than at W = 1: each beat runs its W lanes one after the other, with loop overhead on top (15 cycles per beat at W = 4). So "vs unopt" at W > 1 uses a slower baseline than at W = 1.

@@ -47,7 +47,7 @@ python3 bench/bench.py list                                          # every ker
 python3 bench/bench.py run --kernel vecadd --case unopt --dry-run    # print the commands only
 python3 bench/bench.py run --kernel vecadd --case unopt              # one case
 python3 bench/bench.py run --kernel vecadd                           # every case, size and W
-python3 bench/bench.py run --tier done -j 4                          # a whole tier, 4 Vitis runs at once
+python3 bench/bench.py run --tier done -j$(nproc)                    # a whole tier, one Vitis run per core
 python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower and faster
 ```
 

@@ -25,4 +25,7 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-`results/report_done.md`. Findings from the axis runs go here. The earlier `ap_memory` run is in git history (commits 4b7b617 and 99e6c80).
+First axis run: 26 Oct 2026, commit bb9ca4c. All 18 points pass, DSP 0, portable. Cycles are the same as `vecadd`'s except `unopt` at W = 1 (3 per element against 2), because the multiplier takes the extra cycle when nothing overlaps.
+
+- **Every point misses 3.33 ns on the FPGA.** Vitis estimates the 64-bit fabric multiplier (`mul_64s_64s_64_1_1`, one stage) at 3.648 ns against a budget of 2.431 ns. The cycle counts belong to a schedule with a one-cycle 64-bit multiply, which an ASIC at 300 MHz closes easily but this FPGA does not.
+- `opt` and `dace` still run one beat per cycle plus 2 and 3, the same as `vecadd`. In these pipelines the multiplier only adds depth if it gets more stages.

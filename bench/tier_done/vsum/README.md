@@ -26,4 +26,16 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-`results/report_done.md`. Findings from the axis runs go here. The earlier `ap_memory` run is in git history (commits 4b7b617 and 99e6c80).
+First axis run: 26 Oct 2026, commit bb9ca4c. All 14 points pass with timing met, DSP 0, portable. Every loop reaches its II.
+
+| Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead |
+|---|---|---|---|
+| `unopt` | 66 / 162 / 146 | 514 / 1282 / 1154 | 2 at W = 1 |
+| `opt` | 68 / 20 / 12 | 516 / 132 / 68 | 4 |
+| `dace` | 68 | 516 | 4 |
+| forge `sum_acc` (W = 1) | — | 515 | 3 |
+
+- At W = 1 even `unopt` runs one element per cycle: Vitis schedules the read and the add in one state, so a loop that is not pipelined already does what pipelining would. `opt` pays 2 cycles more for the pipeline's fill.
+- At W = 4 and 8, `opt` adds the W lanes in a tree and keeps `BEAT` at II = 1 (iteration latency 2), with no code change. That is forge's adder tree.
+- `opt` costs 4 cycles beyond the beats, one more than forge's accumulator (516 against 515 at n512 W = 1). The extra cycles are the result's write on the `out` stream.
+- DaCe's reduction gives exactly `opt` W = 1. It cannot go wider.

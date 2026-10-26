@@ -347,7 +347,7 @@ Claude Code runs and reports; it does not redesign kernels or directives on its 
   pixi run --manifest-path $FORGE/pixi.toml python $PWD/bench/gen/gen_data.py --forge $FORGE --tier done
   ```
 
-- **Order of runs.** One kernel and one case first with `--dry-run`, then for real, then the rest of the tier. Use `-j N` only once a single run is known to work.
+- **Order of runs.** One kernel and one case first with `--dry-run`, then for real, then the rest of the tier. Once a single run works, run the rest with `-j$(nproc)` (each Vitis run with cosim holds about 1–2 GB of memory, so use less on a machine short of RAM).
 - **What counts as done.** Every row has `status ok` and `portable yes`, or the kernel README says why not.
 - **Hands off.** `common/part.tcl` and `exercises/` are never changed by bench work.
 - **Commits.** Short, one line per step, no co-author trailer.
