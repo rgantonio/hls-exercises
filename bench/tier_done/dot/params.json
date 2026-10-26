@@ -1,0 +1,55 @@
+{
+  "kernel": "dot",
+  "tier": "done",
+  "forge_kernel": "polybench/dot",
+  "forge_recipe": "recipes/dot.json (adder tree), recipes/dot_serial.json (accumulator); parked in forge until M13",
+  "dtype": "int64",
+  "seed": 0,
+  "sizes": [
+    {
+      "n": 64
+    },
+    {
+      "n": 512
+    }
+  ],
+  "W": [
+    4,
+    8
+  ],
+  "tb": "src/tb_dot.cpp",
+  "cases": {
+    "unopt": {
+      "top": "dot",
+      "src": [
+        "src/dot.cpp"
+      ]
+    },
+    "opt": {
+      "top": "dot",
+      "src": [
+        "src/dot.cpp"
+      ],
+      "per_w": true
+    },
+    "dace": {
+      "top": "dot_dace",
+      "src": [
+        "dace/{size}/dot_dace.cpp",
+        "dace/{size}/dot_0_0.cpp"
+      ],
+      "cflags": [
+        "-std=c++14",
+        "-DDACE_SYNTHESIS",
+        "-DDACE_XILINX",
+        "-DDACE_XILINX_DEVICE_CODE",
+        "-DHLSLIB_SYNTHESIS",
+        "-I{bench}/gen/dace_include"
+      ]
+    }
+  },
+  "dace": {
+    "passes": [],
+    "expansions": {}
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "kernel": "vecmul",
+  "tier": "done",
+  "forge_kernel": "polybench/vecmul",
+  "forge_recipe": "recipes/vecmul.json",
+  "dtype": "int64",
+  "seed": 0,
+  "sizes": [
+    {
+      "n": 64
+    },
+    {
+      "n": 512
+    }
+  ],
+  "W": [
+    4,
+    8
+  ],
+  "tb": "src/tb_vecmul.cpp",
+  "cases": {
+    "unopt": {
+      "top": "vecmul",
+      "src": [
+        "src/vecmul.cpp"
+      ]
+    },
+    "opt": {
+      "top": "vecmul",
+      "src": [
+        "src/vecmul.cpp"
+      ],
+      "per_w": true
+    },
+    "dace": {
+      "top": "vecmul_dace",
+      "src": [
+        "dace/{size}/vecmul_dace.cpp",
+        "dace/{size}/vecmul_0_0.cpp"
+      ],
+      "cflags": [
+        "-std=c++14",
+        "-DDACE_SYNTHESIS",
+        "-DDACE_XILINX",
+        "-DDACE_XILINX_DEVICE_CODE",
+        "-DHLSLIB_SYNTHESIS",
+        "-I{bench}/gen/dace_include"
+      ]
+    }
+  },
+  "dace": {
+    "passes": [],
+    "expansions": {}
+  }
+}
