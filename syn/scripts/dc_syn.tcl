@@ -105,8 +105,6 @@ report_power -verbose -hierarchy > reports/power_verbose_hierarchy.rpt
 # Outputs
 #-----------------------------
 write_file -format verilog -hierarchy -output out/${target_design}_mapped.v
-write_file -format ddc -hierarchy -output out/${target_design}_mapped.ddc
 write_sdf out/${target_design}_mapped.sdf
-write_sdc out/${target_design}_mapped.sdc
 
 exit

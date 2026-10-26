@@ -30,7 +30,7 @@ syn/runs/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only when not 10 ns)
   WORK/            DC's work library
   logs/            dc_shell.log, dc_stdout.log, check_design.log
   reports/         qor, area, area_hierarchy, timing, constraint_setup, power, power_hierarchy, ...
-  out/             <top>_mapped.v, .ddc, .sdf, .sdc
+  out/             <top>_mapped.v, .sdf
 syn/runs/summary.csv   one row per point and clock: area, cells, critical path, slack, power
 ```
 

@@ -11,7 +11,7 @@ bench/bench.py writes. Patterns are shell globs over those names.
 
 Each run works in syn/runs/<tier>/<kernel>/<point>[_c<clock>]/ (the clock tag
 only for a clock other than the default): WORK/, logs/, reports/ and out/ (the
-mapped netlist, ddc, sdf and sdc). Every run also writes one row into
+mapped netlist and sdf). Every run also writes one row into
 syn/runs/summary.csv: area, critical path, slack and power. git ignores
 syn/runs/ entirely, so nothing here is committed.
 
