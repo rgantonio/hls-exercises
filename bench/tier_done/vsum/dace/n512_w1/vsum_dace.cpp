@@ -8,7 +8,7 @@
 
 void module_vsum_0_0(int64_t __tmp0, int64_t *fpga_A, int64_t *fpga_out);
 
-void vsum_dace(const data_t A[N], data_t out[1]) {
+void vsum_dace(const vec_t A[NB], data_t out[1]) {
     int64_t __tmp0 = 0;  // DaCe transient scalar, passed by value
     module_vsum_0_0(__tmp0, (int64_t *)A, (int64_t *)out);
 }

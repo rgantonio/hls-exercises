@@ -6,6 +6,6 @@
 
 void module_vecmul_0_0(int64_t *fpga_A, int64_t *fpga_B, int64_t *fpga_C);
 
-void vecmul_dace(const data_t A[N], const data_t B[N], data_t C[N]) {
+void vecmul_dace(const vec_t A[NB], const vec_t B[NB], vec_t C[NB]) {
     module_vecmul_0_0((int64_t *)A, (int64_t *)B, (int64_t *)C);
 }

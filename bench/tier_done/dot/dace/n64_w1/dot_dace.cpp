@@ -8,7 +8,7 @@
 
 void module_dot_0_0(int64_t *__tmp0, int64_t __tmp1, int64_t *fpga_A, int64_t *fpga_B, int64_t *fpga_out);
 
-void dot_dace(const data_t A[N], const data_t B[N], data_t out[1]) {
+void dot_dace(const vec_t A[NB], const vec_t B[NB], data_t out[1]) {
     static int64_t __tmp0[64];  // DaCe transient array, kept inside the block
     int64_t __tmp1 = 0;  // DaCe transient scalar, passed by value
     module_dot_0_0(__tmp0, __tmp1, (int64_t *)A, (int64_t *)B, (int64_t *)out);

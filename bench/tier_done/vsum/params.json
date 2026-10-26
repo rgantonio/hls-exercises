@@ -2,55 +2,25 @@
   "kernel": "vsum",
   "tier": "done",
   "forge_kernel": "polybench/vsum",
-  "forge_recipe": "recipes/vsum.json (W = 1), recipes/vsum_tree.json (W = 4)",
+  "forge_recipe": "recipes/vsum.json (W = 1, accumulator), recipes/vsum_tree.json (W = 4, adder tree)",
   "dtype": "int64",
   "seed": 0,
-  "sizes": [
-    {
-      "n": 64
-    },
-    {
-      "n": 512
-    }
-  ],
-  "W": [
-    1,
-    4,
-    8
-  ],
+  "sizes": [{"n": 64}, {"n": 512}],
+  "W": [1, 4, 8],
+  "iface": "axis",
+  "axis": ["A", "out"],
+  "cflags": ["-std=c++14", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_vsum.cpp",
   "cases": {
-    "unopt": {
-      "top": "vsum",
-      "src": [
-        "src/vsum.cpp"
-      ]
-    },
-    "opt": {
-      "top": "vsum",
-      "src": [
-        "src/vsum.cpp"
-      ],
-      "per_w": true
-    },
+    "unopt": {"top": "vsum", "src": ["src/vsum.cpp"], "per_w": true},
+    "opt": {"top": "vsum", "src": ["src/vsum.cpp"], "per_w": true},
     "dace": {
       "top": "vsum_dace",
-      "src": [
-        "dace/{size}/vsum_dace.cpp",
-        "dace/{size}/vsum_0_0.cpp"
-      ],
-      "cflags": [
-        "-std=c++14",
-        "-DDACE_SYNTHESIS",
-        "-DDACE_XILINX",
-        "-DDACE_XILINX_DEVICE_CODE",
-        "-DHLSLIB_SYNTHESIS",
-        "-I{bench}/gen/dace_include"
-      ]
+      "per_w": true,
+      "W": [1],
+      "src": ["dace/{size}_w{W}/vsum_dace.cpp", "dace/{size}_w{W}/vsum_0_0.cpp"],
+      "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE", "-DHLSLIB_SYNTHESIS"]
     }
   },
-  "dace": {
-    "passes": [],
-    "expansions": {}
-  }
+  "dace": {"vectorize": false, "passes": [], "expansions": {}}
 }

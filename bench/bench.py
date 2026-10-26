@@ -22,6 +22,9 @@ make clean removes them). What is kept is the summary in results/:
   hls_loops.csv      one row per loop per point: trips, II, iteration latency
   report_<tier>.md   tables made from the two CSVs (and forge_cycles.csv)
 
+and Vitis's generated Verilog of every point, copied to
+rtl/<tier>/<kernel>/<point>/ for later synthesis runs.
+
 run and collect replace the rows with the same key and write the report again.
 """
 
@@ -44,6 +47,8 @@ ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
 RUN_TCL = BENCH / "run_bench.tcl"
 RESULTS = ROOT / "results"
+RTL = ROOT / "rtl"
+RTL_SUFFIXES = (".v", ".sv", ".vh", ".svh", ".dat")
 CSV_PATH = RESULTS / "hls_cycles.csv"
 LOOPS_PATH = RESULTS / "hls_loops.csv"
 FORGE_PATH = RESULTS / "forge_cycles.csv"
@@ -54,8 +59,8 @@ CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "i
 DEFAULT_CLOCK = "3.33"
 
 COLUMNS = [
-    "tier", "kernel", "case", "dtype", "size", "W", "clock_ns",
-    "status", "csim_errors", "clock_est_ns",
+    "tier", "kernel", "case", "iface", "dtype", "size", "W", "clock_ns",
+    "status", "csim_errors", "clock_est_ns", "clock_unc_ns", "timing",
     "lat_min", "lat_max", "ii_min", "ii_max", "pipeline",
     "cosim_status", "cosim_lat_min", "cosim_lat_avg", "cosim_lat_max",
     "LUT", "FF", "DSP", "BRAM_18K", "portable",
@@ -107,7 +112,7 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
             sys.exit(f"{kdir}: unknown case '{case}' (cases are {', '.join(CASES)})")
         if args.case and case not in args.case:
             continue
-        ws = params.get("W", [1]) if cfg.get("per_w", False) else [None]
+        ws = cfg.get("W", params.get("W", [1])) if cfg.get("per_w", False) else [None]
         for size, w, clock in itertools.product(params["sizes"], ws, clocks):
             tag = size_tag(size)
             if args.size and tag not in args.size:
@@ -138,7 +143,7 @@ def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
     if w is not None:
         flags.append(f"-DW={w}")
     flags += [f"-I{kdir.resolve() / 'src'}", f"-I{kdir.resolve() / 'vectors' / tag}"]
-    flags += [f.format(**fmt) for f in cfg.get("cflags", [])]
+    flags += [f.format(**fmt) for f in params.get("cflags", []) + cfg.get("cflags", [])]
 
     directives = cfg.get("directives", f"directives_{pt['case']}.tcl")
     dpath = kdir / directives.format(**fmt)
@@ -152,6 +157,7 @@ def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
         "CFLAGS": " ".join(flags),
         "DIRECTIVES": str(dpath.resolve()) if dpath.is_file() else "",
         "W": "" if w is None else str(w),
+        "AXIS": " ".join(params.get("axis", [])) if params.get("iface") == "axis" else "",
         "DO_CSIM": "1" if do_csim else "0",
         "DO_COSIM": "1" if do_cosim else "0",
         "CLOCK_NS": pt["clock"],
@@ -196,8 +202,15 @@ def parse_csynth(rpt: Path) -> dict:
             section = None
         if section == "timing" and "|ap_clk" in line.replace(" ", ""):
             c = _cells(line)
-            if len(c) >= 3:
+            if len(c) >= 4:
                 row["clock_est_ns"] = _num(c[2])
+                row["clock_unc_ns"] = _num(c[3])
+                try:
+                    # Vitis's own rule (HLS 200-871): the estimate must fit in target - uncertainty.
+                    met = float(row["clock_est_ns"]) <= float(_num(c[1])) - float(row["clock_unc_ns"]) + 1e-9
+                    row["timing"] = "met" if met else "missed"
+                except ValueError:
+                    pass
         elif section == "latency" and "lat_min" not in row and re.match(r"^\s*\|\s*[0-9?]", line):
             c = _cells(line)
             if len(c) >= 7:
@@ -291,6 +304,23 @@ def git_rev() -> str:
         return ""
 
 
+def dump_rtl(kdir: Path, proj: str, tier: str) -> str:
+    """Copy the point's generated Verilog to rtl/<tier>/<kernel>/<point>/ (replacing what was there)."""
+    vdir = kdir / proj / "sol" / "syn" / "verilog"
+    if not vdir.is_dir():
+        return ""
+    dst = RTL / tier / kdir.name / proj.removesuffix("_proj")
+    if dst.exists():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
+    n = 0
+    for f in sorted(vdir.iterdir()):
+        if f.is_file() and f.suffix in RTL_SUFFIXES:
+            shutil.copy2(f, dst / f.name)
+            n += 1
+    return f"{dst.relative_to(ROOT)} ({n} files)"
+
+
 def read_point(kdir: Path, proj: str) -> dict | None:
     """One CSV row from an existing project folder (None if it has no point.json)."""
     pj = kdir / proj / "point.json"
@@ -300,6 +330,7 @@ def read_point(kdir: Path, proj: str) -> dict | None:
     sol = kdir / proj / "sol"
     row = {k: "" for k in COLUMNS}
     row.update({k: meta[k] for k in ("tier", "kernel", "case", "dtype", "size", "W", "clock_ns", "date", "git")})
+    row["iface"] = meta.get("iface", "ap_memory")
     row["proj"] = f"{kdir.relative_to(ROOT)}/{proj}"
     row.update(parse_log(kdir / f"run_{proj}.log"))
     row.update(parse_csynth(sol / "syn" / "report" / f"{meta['top']}_csynth.rpt"))
@@ -400,8 +431,13 @@ def write_reports(tiers: set[str]) -> None:
                "- **cycles**: cosim latency (RTL simulation, Verilog), or the csynth estimate (marked `est`) "
                "when cosim did not run.",
                "- **cyc/elem**: cycles divided by the elements the size names (n, or m x n).",
-               "- **vs unopt**: the unopt cycles at the same size and clock divided by this row's.",
-               "- **II**: the top's interval from csynth. The loop table below has each loop's II.", ""]
+               "- **overhead**: cycles minus the beats, elements / W: what a run costs beyond one beat per cycle. "
+               "Compare it with forge's counter minus its beats.",
+               "- **vs unopt**: the unopt cycles at the same size, W and clock divided by this row's.",
+               "- **II**: the top's interval from csynth. The loop table below has each loop's II.",
+               "- **timing**: `met` when Vitis's clock estimate fits in the target minus its uncertainty "
+               "(its own rule, HLS 200-871); `missed` means the cycles come from a schedule that does not close "
+               "at that clock on the FPGA.", ""]
         for kernel in sorted({r["kernel"] for r in trows}):
             krows = sorted([r for r in trows if r["kernel"] == kernel],
                            key=lambda r: (size_count(r["size"]), order.get(r["case"], 9), str(r["W"]).zfill(4),
@@ -414,20 +450,27 @@ def write_reports(tiers: set[str]) -> None:
                 e = _int(r.get("lat_max"))
                 return e, (f"{e} est" if e is not None else "-")
 
-            base = {(r["size"], r["clock_ns"]): cycles(r)[0] for r in krows if r["case"] == "unopt"}
+            base = {(r["size"], r["W"], r["clock_ns"]): cycles(r)[0] for r in krows if r["case"] == "unopt"}
             table = []
             for r in krows:
                 c, ctext = cycles(r)
-                b = base.get((r["size"], r["clock_ns"]))
-                per = f"{c / size_count(r['size']):.2f}" if c else "-"
+                b = base.get((r["size"], r["W"], r["clock_ns"]))
+                elems = size_count(r["size"])
+                beats = elems // max(1, _int(r["W"]) or 1)
+                per = f"{c / elems:.2f}" if c else "-"
+                over = str(c - beats) if c else "-"
                 vs = f"{b / c:.1f}x" if b and c else "-"
                 ok = r["status"] if r["status"] == "ok" else f"**{r['status']}**"
                 port = r["portable"] if r["portable"] in ("yes", "") else f"**{r['portable']}**"
-                table.append([r["case"], r["size"], r["W"] or "-", r["clock_ns"], ok, ctext, per, vs,
-                              f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["clock_est_ns"], r["DSP"], port])
-            out += [f"## {kernel}", ""]
-            out += md_table(["case", "size", "W", "clock ns", "status", "cycles", "cyc/elem", "vs unopt",
-                             "est. latency", "II", "est. clock ns", "DSP", "portable"], table)
+                timing = r.get("timing", "") if r.get("timing") != "missed" else "**missed**"
+                table.append([r["case"], r["size"], r["W"] or "-", r["clock_ns"], ok, ctext, per, over, vs,
+                              f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["clock_est_ns"], timing,
+                              r["DSP"], r["BRAM_18K"], port])
+            ifaces = sorted({r.get("iface") or "ap_memory" for r in krows})
+            out += [f"## {kernel}", "", f"Interface: {', '.join(ifaces)}.", ""]
+            out += md_table(["case", "size", "W", "clock ns", "status", "cycles", "cyc/elem", "overhead",
+                             "vs unopt", "est. latency", "II", "est. clock ns", "timing", "DSP", "BRAM", "portable"],
+                            table)
             klo = [lp for lp in loops if lp["tier"] == tier and lp["kernel"] == kernel]
             if klo:
                 klo.sort(key=lambda lp: (size_count(lp["size"]), order.get(lp["case"], 9), str(lp["W"]).zfill(4)))
@@ -449,7 +492,7 @@ def write_reports(tiers: set[str]) -> None:
 
 def print_rows(rows: list[dict]) -> None:
     cols = ["kernel", "case", "size", "W", "clock_ns", "status", "lat_max", "ii_max",
-            "cosim_lat_avg", "DSP", "portable"]
+            "cosim_lat_avg", "timing", "DSP", "BRAM_18K", "portable"]
     table = [[str(r.get(c, "")) for c in cols] for r in rows]
     widths = [max(len(c), *(len(t[i]) for t in table)) for i, c in enumerate(cols)]
     print("  ".join(c.ljust(w) for c, w in zip(cols, widths)))
@@ -472,7 +515,8 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     missing = missing_inputs(pt, env)
     if args.dry_run:
         print(f"\n# {kdir.relative_to(ROOT)} / {proj}")
-        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "DIRECTIVES", "W", "DO_CSIM", "DO_COSIM", "CLOCK_NS"):
+        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "DIRECTIVES", "W", "AXIS", "DO_CSIM", "DO_COSIM",
+                  "CLOCK_NS"):
             print(f"export {k}='{env[k]}'")
         print(f"cd {kdir} && {vitis} -f {RUN_TCL} 2>&1 | tee run_{proj}.log")
         for m in missing:
@@ -490,6 +534,7 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     meta = {
         "tier": pt["params"]["tier"], "kernel": pt["params"]["kernel"], "case": pt["case"],
         "dtype": pt["params"].get("dtype", "int64"), "size": pt["size_tag"],
+        "iface": pt["params"].get("iface", "ap_memory"),
         "W": "" if pt["W"] is None else pt["W"], "clock_ns": pt["clock"], "top": pt["cfg"]["top"],
         "do_csim": not args.no_csim, "do_cosim": not args.no_cosim,
         "date": dt.datetime.now().isoformat(timespec="seconds"), "git": git_rev(), "env": {
@@ -498,8 +543,10 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     (kdir / proj).mkdir(exist_ok=True)
     (kdir / proj / "point.json").write_text(json.dumps(meta, indent=1) + "\n")
     row = read_point(kdir, proj)
+    dumped = dump_rtl(kdir, proj, meta["tier"])
     print(f"done {proj}: {row['status']}  lat {row['lat_min']}-{row['lat_max']}"
-          f"  cosim {row['cosim_lat_avg'] or '-'}  portable {row['portable'] or '-'}", flush=True)
+          f"  cosim {row['cosim_lat_avg'] or '-'}  timing {row.get('timing') or '-'}"
+          f"  portable {row['portable'] or '-'}  rtl {dumped or '-'}", flush=True)
     return row
 
 
@@ -536,6 +583,9 @@ def existing_rows(args) -> list[dict]:
 
 def cmd_collect(args) -> int:
     rows = existing_rows(args)
+    for r in rows:
+        kdir = ROOT / Path(r["proj"]).parent
+        dump_rtl(kdir, Path(r["proj"]).name, r["tier"])
     if not rows:
         sys.exit("no projects with a point.json found")
     write_rows(rows)

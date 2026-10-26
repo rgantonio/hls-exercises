@@ -7,17 +7,22 @@ Runs in snax-forge's pixi environment, so the SDFG is the one forge builds
   pixi run --manifest-path $FORGE/pixi.toml \\
       python $PWD/bench/gen/gen_dace.py --forge $FORGE [--tier done] [--kernel vecadd]
 
-For every kernel whose params.json has a "dace" case, and every size:
+For every kernel whose params.json has a "dace" case, every size and every W
+of that case (params["cases"]["dace"]["W"]):
 
   1. build forge's simplified SDFG and specialize it to the size;
-  2. FPGATransformSDFG, then the passes listed in params["dace"]["passes"];
-  3. expand library nodes (implementations from params["dace"]["expansions"]);
-  4. generate code only (v++ is never called) and keep DaCe's device file
-     as dace/<size>/<kernel>_0_0.cpp, unchanged apart from a header comment;
-  5. write dace/<size>/<kernel>_dace.cpp, a small top with the same
+  2. at W > 1, DaCe's Vectorization with vector_len W, so the arrays become
+     W-lane words of dace::vec<T, W> (params["dace"]["vectorize"] must be true:
+     DaCe 1.0.2 cannot vectorize reductions);
+  3. FPGATransformSDFG, then the passes listed in params["dace"]["passes"];
+  4. expand library nodes (implementations from params["dace"]["expansions"]);
+  5. generate code only (v++ is never called) and keep DaCe's device file
+     as dace/<size>_w<W>/<kernel>_0_0.cpp, unchanged apart from a header comment;
+  6. write dace/<size>_w<W>/<kernel>_dace.cpp, a small top with the same
      arguments as the kernel's hand-written top (src/<kernel>.h), which calls
-     DaCe's module function directly. The top gets ap_memory ports; DaCe's
-     own entry function (m_axi, s_axilite, DATAFLOW) is left unused.
+     DaCe's module function directly. Its ports get the same interface as cases
+     1 and 2 (axis, from params.json); DaCe's own entry function (m_axi,
+     s_axilite, DATAFLOW) is left unused.
 
 It also copies DaCe's runtime headers and hlslib into bench/gen/dace_include/,
 so the Vitis machine needs no DaCe install. docs/HLS_VS_FORGE.md, section 4.3.
@@ -75,12 +80,27 @@ def top_params(header: Path, kernel: str) -> str:
 
 def param_names(params: str) -> list[str]:
     names = []
-    for p in params.split(","):
+    for p in split_args(params):
         m = re.search(r"([A-Za-z_]\w*)\s*(\[|$)", p.strip())
         if not m:
             sys.exit(f"cannot read a parameter name from '{p}'")
         names.append(m.group(1))
     return names
+
+
+def split_args(sig: str) -> list[str]:
+    """Split a C++ parameter list on top-level commas (not those inside <...>)."""
+    out, depth, cur = [], 0, ""
+    for ch in sig:
+        depth += (ch == "<") - (ch == ">")
+        if ch == "," and depth == 0:
+            out.append(cur.strip())
+            cur = ""
+        else:
+            cur += ch
+    if cur.strip():
+        out.append(cur.strip())
+    return out
 
 
 def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, symbols: dict) -> str:
@@ -93,7 +113,7 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
     """
     import dace
 
-    args = [a.strip() for a in module_sig.split(",") if a.strip()]
+    args = split_args(module_sig)
     names = param_names(params)
     lines, call, notes = [], [], []
     for a in args:
@@ -148,14 +168,24 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
     import tempfile
     dace.Config.set("default_build_folder", value=tempfile.mkdtemp(prefix="gen_dace_"))
 
-    for size in params["sizes"]:
-        tag = size_tag(size)
-        import numpy as np
+    import numpy as np
+    from dace.transformation.dataflow import Vectorization
 
+    widths = params["cases"]["dace"].get("W", [1])
+    for size, width in [(s, w) for s in params["sizes"] for w in widths]:
+        tag = f"{size_tag(size)}_w{width}"
         symbols = spec.bind_symbols(spec.make_inputs(np.random.default_rng(0), **size))
         sdfg = build(spec, simplify=True)
         sdfg.name = kernel
         sdfg.specialize(symbols)
+        if width > 1:
+            if not cfg.get("vectorize", False):
+                sys.exit(f"{kernel}: dace case asks for W = {width} but params['dace']['vectorize'] is false")
+            # N is a multiple of W (the kernel header checks it), so no remainder: without
+            # preamble=False and postamble=False DaCe 1.0.2 adds a step that reads past the end.
+            if not sdfg.apply_transformations(Vectorization, options={"vector_len": width, "propagate_parent": True,
+                                                                       "preamble": False, "postamble": False}):
+                sys.exit(f"{kernel} {tag}: Vectorization did not apply")
         applied = sdfg.apply_transformations(FPGATransformSDFG)
         if not applied:
             sys.exit(f"{kernel} {tag}: FPGATransformSDFG did not apply")
@@ -187,7 +217,8 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
         out = kdir / "dace" / tag
         out.mkdir(parents=True, exist_ok=True)
         stamp = (f"// Generated by bench/gen/gen_dace.py from snax-forge kernels/{params['forge_kernel']}.py\n"
-                 f"// DaCe {dace.__version__}, symbols {symbols}, FPGATransformSDFG, "
+                 f"// DaCe {dace.__version__}, symbols {symbols}, "
+                 f"{'Vectorization ' + str(width) + ', ' if width > 1 else ''}FPGATransformSDFG, "
                  f"passes {cfg.get('passes', [])}, expansions {expansions or 'default'}.\n"
                  f"// DaCe's device file, unchanged below this header. Do not edit.\n\n")
         (out / f"{kernel}_0_0.cpp").write_text(stamp + code)

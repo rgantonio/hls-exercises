@@ -10,10 +10,15 @@
 #endif
 typedef DATA_T data_t;
 
+#include "lanes.h"  // vec_t: one beat of W lanes
+
 const int N = SIZE_N;
+const int NB = N / W;  // beats per array
+static_assert(N % W == 0, "N must be a multiple of W");
 
 // NPBench / snax-forge kernels/polybench/vecmul.py:  C[:] = A * B
-void vecmul(const data_t A[N], const data_t B[N], data_t C[N]);
+// Every array is one axis port of W-lane beats, read or written once, in order.
+void vecmul(const vec_t A[NB], const vec_t B[NB], vec_t C[NB]);
 
-// Case 3 top, generated into dace/<size>/vecmul_dace.cpp by bench/gen/gen_dace.py.
-void vecmul_dace(const data_t A[N], const data_t B[N], data_t C[N]);
+// Case 3 top, generated into dace/<size>_w<W>/vecmul_dace.cpp by bench/gen/gen_dace.py.
+void vecmul_dace(const vec_t A[NB], const vec_t B[NB], vec_t C[NB]);

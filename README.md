@@ -3,7 +3,7 @@
 Two things live here:
 
 - **Exercises** (`exercises/`): self-learning steps on how Vitis HLS works and what its optimizations do. [`exercises/README.md`](exercises/README.md) lists them and says how to run them.
-- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS. Their cycle counts are summarised in `results/`. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md).
+- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS, all with axis (valid-ready) ports as SNAX's units have. Their cycle counts are summarised in `results/`, and the generated Verilog is kept in `rtl/` for synthesis. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md).
 
 Tool: Vitis HLS 2023.2.2 on `xcku5p-ffvb676-2-e` (`notes/env.md`). Run everything from the repo root unless a section says otherwise.
 
@@ -55,13 +55,14 @@ python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower 
 
 ### 3. Read the results
 
-A run writes three files in `results/`, and these are what gets committed:
+A run writes three files in `results/` and copies each point's generated Verilog to `rtl/<tier>/<kernel>/<point>/`. These are what gets committed:
 
 | File | What it holds |
 |---|---|
 | `hls_cycles.csv` | One row per run point: csynth estimate, cosim (RTL) cycles, csim and cosim status, portability check |
 | `hls_loops.csv` | One row per loop per point: trips, iteration latency, II achieved and target |
-| `report_<tier>.md` | Per kernel, the points side by side with cycles per element and the ratio to `unopt`, then the loops |
+| `report_<tier>.md` | Per kernel, the points side by side with cycles per element, overhead beyond one beat per cycle, timing and the ratio to `unopt`, then the loops |
+| `rtl/.../*.v` | Vitis's Verilog for the point, the input to a later synthesis run |
 
 ```bash
 python3 bench/bench.py report --tier done   # rewrite report_done.md from the CSVs
@@ -92,4 +93,5 @@ common/      part.tcl (exercises), asic.tcl (bench), report scripts
 notes/       env.md, directive reference, exercise results.csv
 bench/       bench.py, run_bench.tcl, gen/, tier_<T>/<kernel>/
 results/     bench summaries: hls_cycles.csv, hls_loops.csv, report_<tier>.md
+rtl/         Vitis's generated Verilog per bench point
 ```

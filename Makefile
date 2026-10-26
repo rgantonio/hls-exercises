@@ -13,7 +13,7 @@
 #
 # Generated output is anything the tool creates. Hand-written sources
 # (*.cpp, *.tcl, README.md, params.json) and everything under notes/,
-# common/ and results/ are never touched.
+# common/, results/ and rtl/ are never touched.
 # ======================================================================
 
 SHELL := /bin/bash
@@ -47,7 +47,7 @@ DIR_CLAUSE := $(patsubst %,-name '%' -o,$(JUNK_DIRS)) -false
 FILE_CLAUSE := $(patsubst %,-name '%' -o,$(JUNK_FILES)) -false
 
 # Never descend into these.
-KEEP_CLAUSE := -name notes -o -name .git -o -name common -o -name results
+KEEP_CLAUSE := -name notes -o -name .git -o -name common -o -name results -o -name rtl
 
 # Matched directories are pruned so find does not try to descend into
 # something rm has already removed.
@@ -77,7 +77,7 @@ run:
 check:
 	@echo "clean would delete, under '$(SCOPE)':"
 	@$(FIND_JUNK) -print | sed 's/^/  /' || true
-	@echo "(notes/, common/, results/ and .git/ are never touched)"
+	@echo "(notes/, common/, results/, rtl/ and .git/ are never touched)"
 
 clean:
 	@$(FIND_JUNK) -exec rm -rf {} + 2>/dev/null || true

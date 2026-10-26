@@ -1,5 +1,7 @@
 // bench/tier_done/vecmul/src/tb_vecmul.cpp
-// One call on forge's inputs (vectors/<size>/data.h), every output checked exactly.
+// Plays forge's streamer: packs forge's inputs (vectors/<size>/data.h) into W-lane
+// beats, makes one call, and checks every output exactly. Cosim turns the arrays
+// into axis transactions with no stalls.
 // DUT is the case's top, set by run_bench.tcl (-DDUT=vecmul or -DDUT=vecmul_dace).
 #include <cstdio>
 #include "vecmul.h"
@@ -11,21 +13,27 @@
 #define STR2(x) #x
 #define STR(x) STR2(x)
 
-static data_t C[N];
+static vec_t A[NB], B[NB], C[NB];
 
 int main() {
-    for (int i = 0; i < N; i++) C[i] = IN_C[i];
+    for (int b = 0; b < NB; b++)
+        for (int l = 0; l < W; l++) {
+            set_lane(A[b], l, (data_t)IN_A[b * W + l]);
+            set_lane(B[b], l, (data_t)IN_B[b * W + l]);
+        }
 
-    DUT(IN_A, IN_B, C);
+    DUT(A, B, C);
 
     int bad = 0;
-    for (int i = 0; i < N; i++) {
-        if (C[i] != EXP_C[i]) {
-            if (bad < 3)
-                std::printf("  C[%d]: got %lld expected %lld\n", i, (long long)C[i], (long long)EXP_C[i]);
-            bad++;
+    for (int b = 0; b < NB; b++)
+        for (int l = 0; l < W; l++) {
+            int i = b * W + l;
+            if (lane(C[b], l) != EXP_C[i]) {
+                if (bad < 3)
+                    std::printf("  C[%d]: got %lld expected %lld\n", i, (long long)lane(C[b], l), (long long)EXP_C[i]);
+                bad++;
+            }
         }
-    }
-    std::printf("%s %s N=%d: %d of %d outputs differ\n", bad ? "FAIL" : "PASS", STR(DUT), N, bad, N);
+    std::printf("%s %s N=%d W=%d: %d of %d outputs differ\n", bad ? "FAIL" : "PASS", STR(DUT), N, W, bad, N);
     return bad ? 1 : 0;
 }
