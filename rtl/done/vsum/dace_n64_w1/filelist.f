@@ -2,6 +2,5 @@
 # Paths are relative to this folder.
 # top: vsum_dace
 vsum_dace_flow_control_loop_pipe_sequential_init.v
-vsum_dace_regslice_both.v
 vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_38_1.v
 vsum_dace.v

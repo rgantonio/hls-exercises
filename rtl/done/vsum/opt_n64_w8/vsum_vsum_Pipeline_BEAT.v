@@ -43,7 +43,7 @@ wire    ap_CS_fsm_pp0_stage0;
 wire    ap_enable_reg_pp0_iter0;
 reg    ap_enable_reg_pp0_iter1;
 reg    ap_idle_pp0;
-wire   [0:0] icmp_ln9_fu_104_p2;
+wire   [0:0] icmp_ln9_fu_102_p2;
 reg    ap_block_state1_pp0_stage0_iter0;
 reg    ap_block_pp0_stage0_subdone;
 reg    ap_condition_exit_pp0_iter0_stage0;
@@ -51,32 +51,32 @@ wire    ap_loop_exit_ready;
 reg    ap_ready_int;
 reg    A_TDATA_blk_n;
 wire    ap_block_pp0_stage0;
-wire   [63:0] temp_fu_116_p1;
-reg   [63:0] temp_reg_267;
+wire   [63:0] temp_fu_114_p1;
+reg   [63:0] temp_reg_265;
 reg    ap_block_pp0_stage0_11001;
-reg   [63:0] temp_1_reg_272;
-reg   [63:0] temp_4_reg_277;
-reg   [63:0] temp_5_reg_282;
-wire   [63:0] add_ln13_1_fu_190_p2;
-reg   [63:0] add_ln13_1_reg_287;
-wire   [63:0] add_ln13_4_fu_196_p2;
-reg   [63:0] add_ln13_4_reg_292;
-reg   [63:0] acc_fu_70;
-wire   [63:0] acc_1_fu_234_p2;
+reg   [63:0] temp_1_reg_270;
+reg   [63:0] temp_4_reg_275;
+reg   [63:0] temp_5_reg_280;
+wire   [63:0] add_ln13_1_fu_188_p2;
+reg   [63:0] add_ln13_1_reg_285;
+wire   [63:0] add_ln13_4_fu_194_p2;
+reg   [63:0] add_ln13_4_reg_290;
+reg   [63:0] acc_fu_68;
+wire   [63:0] acc_1_fu_232_p2;
 wire    ap_loop_init;
-reg   [3:0] b_fu_74;
-wire   [3:0] add_ln9_fu_110_p2;
+reg   [3:0] b_fu_72;
+wire   [3:0] add_ln9_fu_108_p2;
 reg   [3:0] ap_sig_allocacmp_b_1;
 reg    ap_block_pp0_stage0_01001;
-wire   [63:0] temp_2_fu_130_p4;
-wire   [63:0] temp_3_fu_140_p4;
-wire   [63:0] temp_6_fu_170_p4;
-wire   [63:0] temp_7_fu_180_p4;
-wire   [63:0] add_ln13_fu_210_p2;
-wire   [63:0] add_ln13_3_fu_219_p2;
-wire   [63:0] add_ln13_5_fu_223_p2;
-wire   [63:0] add_ln13_2_fu_214_p2;
-wire   [63:0] add_ln13_6_fu_228_p2;
+wire   [63:0] temp_2_fu_128_p4;
+wire   [63:0] temp_3_fu_138_p4;
+wire   [63:0] temp_6_fu_168_p4;
+wire   [63:0] temp_7_fu_178_p4;
+wire   [63:0] add_ln13_fu_208_p2;
+wire   [63:0] add_ln13_3_fu_217_p2;
+wire   [63:0] add_ln13_5_fu_221_p2;
+wire   [63:0] add_ln13_2_fu_212_p2;
+wire   [63:0] add_ln13_6_fu_226_p2;
 reg    ap_done_reg;
 wire    ap_continue_int;
 reg    ap_done_int;
@@ -89,8 +89,8 @@ wire    ap_ce_reg;
 initial begin
 #0 ap_CS_fsm = 1'd1;
 #0 ap_enable_reg_pp0_iter1 = 1'b0;
-#0 acc_fu_70 = 64'd0;
-#0 b_fu_74 = 4'd0;
+#0 acc_fu_68 = 64'd0;
+#0 b_fu_72 = 4'd0;
 #0 ap_done_reg = 1'b0;
 end
 
@@ -144,36 +144,36 @@ end
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         if ((ap_loop_init == 1'b1)) begin
-            acc_fu_70 <= 64'd0;
+            acc_fu_68 <= 64'd0;
         end else if ((ap_enable_reg_pp0_iter1 == 1'b1)) begin
-            acc_fu_70 <= acc_1_fu_234_p2;
+            acc_fu_68 <= acc_1_fu_232_p2;
         end
     end
 end
 
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
-        if (((icmp_ln9_fu_104_p2 == 1'd0) & (ap_start_int == 1'b1))) begin
-            b_fu_74 <= add_ln9_fu_110_p2;
+        if (((icmp_ln9_fu_102_p2 == 1'd0) & (ap_start_int == 1'b1))) begin
+            b_fu_72 <= add_ln9_fu_108_p2;
         end else if ((ap_loop_init == 1'b1)) begin
-            b_fu_74 <= 4'd0;
+            b_fu_72 <= 4'd0;
         end
     end
 end
 
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
-        add_ln13_1_reg_287 <= add_ln13_1_fu_190_p2;
-        add_ln13_4_reg_292 <= add_ln13_4_fu_196_p2;
-        temp_1_reg_272 <= {{A_TDATA[127:64]}};
-        temp_4_reg_277 <= {{A_TDATA[319:256]}};
-        temp_5_reg_282 <= {{A_TDATA[383:320]}};
-        temp_reg_267 <= temp_fu_116_p1;
+        add_ln13_1_reg_285 <= add_ln13_1_fu_188_p2;
+        add_ln13_4_reg_290 <= add_ln13_4_fu_194_p2;
+        temp_1_reg_270 <= {{A_TDATA[127:64]}};
+        temp_4_reg_275 <= {{A_TDATA[319:256]}};
+        temp_5_reg_280 <= {{A_TDATA[383:320]}};
+        temp_reg_265 <= temp_fu_114_p1;
     end
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0) & (icmp_ln9_fu_104_p2 == 1'd0) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0) & (icmp_ln9_fu_102_p2 == 1'd0) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         A_TDATA_blk_n = A_TVALID;
     end else begin
         A_TDATA_blk_n = 1'b1;
@@ -181,7 +181,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_104_p2 == 1'd0) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_102_p2 == 1'd0) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         A_TREADY = 1'b1;
     end else begin
         A_TREADY = 1'b0;
@@ -189,7 +189,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_104_p2 == 1'd1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_102_p2 == 1'd1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         acc_out_ap_vld = 1'b1;
     end else begin
         acc_out_ap_vld = 1'b0;
@@ -197,7 +197,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_subdone) & (icmp_ln9_fu_104_p2 == 1'd1) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_subdone) & (icmp_ln9_fu_102_p2 == 1'd1) & (ap_start_int == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         ap_condition_exit_pp0_iter0_stage0 = 1'b1;
     end else begin
         ap_condition_exit_pp0_iter0_stage0 = 1'b0;
@@ -240,7 +240,7 @@ always @ (*) begin
     if (((ap_loop_init == 1'b1) & (1'b0 == ap_block_pp0_stage0) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         ap_sig_allocacmp_b_1 = 4'd0;
     end else begin
-        ap_sig_allocacmp_b_1 = b_fu_74;
+        ap_sig_allocacmp_b_1 = b_fu_72;
     end
 end
 
@@ -255,25 +255,25 @@ always @ (*) begin
     endcase
 end
 
-assign acc_1_fu_234_p2 = (acc_fu_70 + add_ln13_6_fu_228_p2);
+assign acc_1_fu_232_p2 = (acc_fu_68 + add_ln13_6_fu_226_p2);
 
-assign acc_out = acc_fu_70;
+assign acc_out = acc_fu_68;
 
-assign add_ln13_1_fu_190_p2 = (temp_2_fu_130_p4 + temp_3_fu_140_p4);
+assign add_ln13_1_fu_188_p2 = (temp_2_fu_128_p4 + temp_3_fu_138_p4);
 
-assign add_ln13_2_fu_214_p2 = (add_ln13_1_reg_287 + add_ln13_fu_210_p2);
+assign add_ln13_2_fu_212_p2 = (add_ln13_1_reg_285 + add_ln13_fu_208_p2);
 
-assign add_ln13_3_fu_219_p2 = (temp_4_reg_277 + temp_5_reg_282);
+assign add_ln13_3_fu_217_p2 = (temp_4_reg_275 + temp_5_reg_280);
 
-assign add_ln13_4_fu_196_p2 = (temp_6_fu_170_p4 + temp_7_fu_180_p4);
+assign add_ln13_4_fu_194_p2 = (temp_6_fu_168_p4 + temp_7_fu_178_p4);
 
-assign add_ln13_5_fu_223_p2 = (add_ln13_4_reg_292 + add_ln13_3_fu_219_p2);
+assign add_ln13_5_fu_221_p2 = (add_ln13_4_reg_290 + add_ln13_3_fu_217_p2);
 
-assign add_ln13_6_fu_228_p2 = (add_ln13_5_fu_223_p2 + add_ln13_2_fu_214_p2);
+assign add_ln13_6_fu_226_p2 = (add_ln13_5_fu_221_p2 + add_ln13_2_fu_212_p2);
 
-assign add_ln13_fu_210_p2 = (temp_reg_267 + temp_1_reg_272);
+assign add_ln13_fu_208_p2 = (temp_reg_265 + temp_1_reg_270);
 
-assign add_ln9_fu_110_p2 = (ap_sig_allocacmp_b_1 + 4'd1);
+assign add_ln9_fu_108_p2 = (ap_sig_allocacmp_b_1 + 4'd1);
 
 assign ap_CS_fsm_pp0_stage0 = ap_CS_fsm[32'd0];
 
@@ -292,7 +292,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    ap_block_state1_pp0_stage0_iter0 = ((icmp_ln9_fu_104_p2 == 1'd0) & (1'b0 == A_TVALID));
+    ap_block_state1_pp0_stage0_iter0 = ((icmp_ln9_fu_102_p2 == 1'd0) & (1'b0 == A_TVALID));
 end
 
 assign ap_enable_pp0 = (ap_idle_pp0 ^ 1'b1);
@@ -301,16 +301,16 @@ assign ap_enable_reg_pp0_iter0 = ap_start_int;
 
 assign ap_loop_exit_ready = ap_condition_exit_pp0_iter0_stage0;
 
-assign icmp_ln9_fu_104_p2 = ((ap_sig_allocacmp_b_1 == 4'd8) ? 1'b1 : 1'b0);
+assign icmp_ln9_fu_102_p2 = ((ap_sig_allocacmp_b_1 == 4'd8) ? 1'b1 : 1'b0);
 
-assign temp_2_fu_130_p4 = {{A_TDATA[191:128]}};
+assign temp_2_fu_128_p4 = {{A_TDATA[191:128]}};
 
-assign temp_3_fu_140_p4 = {{A_TDATA[255:192]}};
+assign temp_3_fu_138_p4 = {{A_TDATA[255:192]}};
 
-assign temp_6_fu_170_p4 = {{A_TDATA[447:384]}};
+assign temp_6_fu_168_p4 = {{A_TDATA[447:384]}};
 
-assign temp_7_fu_180_p4 = {{A_TDATA[511:448]}};
+assign temp_7_fu_178_p4 = {{A_TDATA[511:448]}};
 
-assign temp_fu_116_p1 = A_TDATA[63:0];
+assign temp_fu_114_p1 = A_TDATA[63:0];
 
 endmodule //vsum_vsum_Pipeline_BEAT

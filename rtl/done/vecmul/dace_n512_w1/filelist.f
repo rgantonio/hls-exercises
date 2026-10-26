@@ -3,5 +3,4 @@
 # top: vecmul_dace
 vecmul_dace_flow_control_loop_pipe.v
 vecmul_dace_mul_64s_64s_64_1_1.v
-vecmul_dace_regslice_both.v
 vecmul_dace.v

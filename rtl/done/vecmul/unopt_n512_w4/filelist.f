@@ -2,5 +2,4 @@
 # Paths are relative to this folder.
 # top: vecmul
 vecmul_mul_64s_64s_64_1_1.v
-vecmul_regslice_both.v
 vecmul.v

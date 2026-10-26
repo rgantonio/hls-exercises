@@ -6,5 +6,4 @@ dot_dace_dot_dace_Pipeline_VITIS_LOOP_64_1.v
 dot_dace_flow_control_loop_pipe_sequential_init.v
 dot_dace_mul_64s_64s_64_1_1.v
 dot_dace_p_tmp0_RAM_AUTO_1R1W.v
-dot_dace_regslice_both.v
 dot_dace.v

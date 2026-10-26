@@ -4,5 +4,4 @@
 dot_dot_Pipeline_BEAT.v
 dot_flow_control_loop_pipe_sequential_init.v
 dot_mul_64s_64s_64_1_1.v
-dot_regslice_both.v
 dot.v

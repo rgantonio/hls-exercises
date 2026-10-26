@@ -2,6 +2,5 @@
 # Paths are relative to this folder.
 # top: vsum
 vsum_flow_control_loop_pipe_sequential_init.v
-vsum_regslice_both.v
 vsum_vsum_Pipeline_BEAT.v
 vsum.v

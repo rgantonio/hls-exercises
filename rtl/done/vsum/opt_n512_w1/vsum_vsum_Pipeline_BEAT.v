@@ -43,7 +43,7 @@ wire    ap_CS_fsm_pp0_stage0;
 wire    ap_enable_reg_pp0_iter0;
 reg    ap_enable_reg_pp0_iter1;
 reg    ap_idle_pp0;
-wire   [0:0] icmp_ln9_fu_74_p2;
+wire   [0:0] icmp_ln9_fu_72_p2;
 reg    ap_block_state2_pp0_stage0_iter1;
 reg    ap_block_pp0_stage0_subdone;
 reg    ap_condition_exit_pp0_iter1_stage0;
@@ -51,12 +51,12 @@ wire    ap_loop_exit_ready;
 reg    ap_ready_int;
 reg    A_TDATA_blk_n;
 wire    ap_block_pp0_stage0;
-reg   [63:0] acc_fu_40;
-wire   [63:0] acc_1_fu_89_p2;
+reg   [63:0] acc_fu_38;
+wire   [63:0] acc_1_fu_87_p2;
 reg    ap_block_pp0_stage0_11001;
 wire    ap_loop_init;
-reg   [9:0] b_fu_44;
-wire   [9:0] add_ln9_fu_80_p2;
+reg   [9:0] b_fu_42;
+wire   [9:0] add_ln9_fu_78_p2;
 reg    ap_block_pp0_stage0_01001;
 reg    ap_done_reg;
 wire    ap_continue_int;
@@ -70,8 +70,8 @@ wire    ap_ce_reg;
 initial begin
 #0 ap_CS_fsm = 1'd1;
 #0 ap_enable_reg_pp0_iter1 = 1'b0;
-#0 acc_fu_40 = 64'd0;
-#0 b_fu_44 = 10'd0;
+#0 acc_fu_38 = 64'd0;
+#0 b_fu_42 = 10'd0;
 #0 ap_done_reg = 1'b0;
 end
 
@@ -125,9 +125,9 @@ end
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         if ((ap_loop_init == 1'b1)) begin
-            acc_fu_40 <= 64'd0;
-        end else if (((icmp_ln9_fu_74_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1))) begin
-            acc_fu_40 <= acc_1_fu_89_p2;
+            acc_fu_38 <= 64'd0;
+        end else if (((icmp_ln9_fu_72_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1))) begin
+            acc_fu_38 <= acc_1_fu_87_p2;
         end
     end
 end
@@ -135,15 +135,15 @@ end
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         if ((ap_loop_init == 1'b1)) begin
-            b_fu_44 <= 10'd0;
-        end else if (((icmp_ln9_fu_74_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1))) begin
-            b_fu_44 <= add_ln9_fu_80_p2;
+            b_fu_42 <= 10'd0;
+        end else if (((icmp_ln9_fu_72_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1))) begin
+            b_fu_42 <= add_ln9_fu_78_p2;
         end
     end
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0) & (icmp_ln9_fu_74_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0) & (icmp_ln9_fu_72_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         A_TDATA_blk_n = A_TVALID;
     end else begin
         A_TDATA_blk_n = 1'b1;
@@ -151,7 +151,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_74_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_72_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         A_TREADY = 1'b1;
     end else begin
         A_TREADY = 1'b0;
@@ -159,7 +159,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_74_p2 == 1'd1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_11001) & (icmp_ln9_fu_72_p2 == 1'd1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         acc_out_ap_vld = 1'b1;
     end else begin
         acc_out_ap_vld = 1'b0;
@@ -167,7 +167,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b0 == ap_block_pp0_stage0_subdone) & (icmp_ln9_fu_74_p2 == 1'd1) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
+    if (((1'b0 == ap_block_pp0_stage0_subdone) & (icmp_ln9_fu_72_p2 == 1'd1) & (ap_enable_reg_pp0_iter1 == 1'b1) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         ap_condition_exit_pp0_iter1_stage0 = 1'b1;
     end else begin
         ap_condition_exit_pp0_iter1_stage0 = 1'b0;
@@ -217,11 +217,11 @@ always @ (*) begin
     endcase
 end
 
-assign acc_1_fu_89_p2 = (A_TDATA + acc_fu_40);
+assign acc_1_fu_87_p2 = (A_TDATA + acc_fu_38);
 
-assign acc_out = acc_fu_40;
+assign acc_out = acc_fu_38;
 
-assign add_ln9_fu_80_p2 = (b_fu_44 + 10'd1);
+assign add_ln9_fu_78_p2 = (b_fu_42 + 10'd1);
 
 assign ap_CS_fsm_pp0_stage0 = ap_CS_fsm[32'd0];
 
@@ -240,7 +240,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    ap_block_state2_pp0_stage0_iter1 = ((icmp_ln9_fu_74_p2 == 1'd0) & (1'b0 == A_TVALID));
+    ap_block_state2_pp0_stage0_iter1 = ((icmp_ln9_fu_72_p2 == 1'd0) & (1'b0 == A_TVALID));
 end
 
 assign ap_enable_pp0 = (ap_idle_pp0 ^ 1'b1);
@@ -249,6 +249,6 @@ assign ap_enable_reg_pp0_iter0 = ap_start_int;
 
 assign ap_loop_exit_ready = ap_condition_exit_pp0_iter1_stage0;
 
-assign icmp_ln9_fu_74_p2 = ((b_fu_44 == 10'd512) ? 1'b1 : 1'b0);
+assign icmp_ln9_fu_72_p2 = ((b_fu_42 == 10'd512) ? 1'b1 : 1'b0);
 
 endmodule //vsum_vsum_Pipeline_BEAT

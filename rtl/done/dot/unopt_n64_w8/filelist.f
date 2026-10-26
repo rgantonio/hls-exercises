@@ -2,5 +2,4 @@
 # Paths are relative to this folder.
 # top: dot
 dot_mul_64s_64s_64_1_1.v
-dot_regslice_both.v
 dot.v

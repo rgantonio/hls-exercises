@@ -2,5 +2,4 @@
 # Paths are relative to this folder.
 # top: vecadd
 vecadd_flow_control_loop_pipe.v
-vecadd_regslice_both.v
 vecadd.v

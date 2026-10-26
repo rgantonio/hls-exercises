@@ -3,5 +3,4 @@
 # top: vecadd_dace
 vecadd_dace_flow_control_loop_pipe_sequential_init.v
 vecadd_dace_module_vecadd_0_0.v
-vecadd_dace_regslice_both.v
 vecadd_dace.v

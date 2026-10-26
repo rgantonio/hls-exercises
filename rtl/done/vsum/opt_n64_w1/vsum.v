@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="vsum_vsum,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=2.285000,HLS_SYN_LAT=70,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=80,HLS_SYN_LUT=202,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="vsum_vsum,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=2.285000,HLS_SYN_LAT=68,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=78,HLS_SYN_LUT=189,HLS_VERSION=2023_2_2}" *)
 
 module vsum (
         ap_clk,
@@ -23,11 +23,9 @@ module vsum (
         out_r_TREADY
 );
 
-parameter    ap_ST_fsm_state1 = 5'd1;
-parameter    ap_ST_fsm_state2 = 5'd2;
-parameter    ap_ST_fsm_state3 = 5'd4;
-parameter    ap_ST_fsm_state4 = 5'd8;
-parameter    ap_ST_fsm_state5 = 5'd16;
+parameter    ap_ST_fsm_state1 = 3'd1;
+parameter    ap_ST_fsm_state2 = 3'd2;
+parameter    ap_ST_fsm_state3 = 3'd4;
 
 input   ap_clk;
 input   ap_rst_n;
@@ -45,87 +43,47 @@ input   out_r_TREADY;
 reg ap_done;
 reg ap_idle;
 reg ap_ready;
+reg A_TREADY;
+reg out_r_TVALID;
 
  reg    ap_rst_n_inv;
-(* fsm_encoding = "none" *) reg   [4:0] ap_CS_fsm;
+(* fsm_encoding = "none" *) reg   [2:0] ap_CS_fsm;
 wire    ap_CS_fsm_state1;
 reg    out_r_TDATA_blk_n;
-wire    ap_CS_fsm_state4;
-wire    ap_CS_fsm_state5;
-wire    grp_vsum_Pipeline_BEAT_fu_43_ap_start;
-wire    grp_vsum_Pipeline_BEAT_fu_43_ap_done;
-wire    grp_vsum_Pipeline_BEAT_fu_43_ap_idle;
-wire    grp_vsum_Pipeline_BEAT_fu_43_ap_ready;
-wire    grp_vsum_Pipeline_BEAT_fu_43_A_TREADY;
-wire   [63:0] grp_vsum_Pipeline_BEAT_fu_43_acc_out;
-wire    grp_vsum_Pipeline_BEAT_fu_43_acc_out_ap_vld;
-reg    grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg;
-reg   [4:0] ap_NS_fsm;
-wire    ap_NS_fsm_state2;
 wire    ap_CS_fsm_state3;
-wire    regslice_both_out_r_U_apdone_blk;
-reg    ap_block_state5;
+wire    grp_vsum_Pipeline_BEAT_fu_39_ap_start;
+wire    grp_vsum_Pipeline_BEAT_fu_39_ap_done;
+wire    grp_vsum_Pipeline_BEAT_fu_39_ap_idle;
+wire    grp_vsum_Pipeline_BEAT_fu_39_ap_ready;
+wire    grp_vsum_Pipeline_BEAT_fu_39_A_TREADY;
+wire   [63:0] grp_vsum_Pipeline_BEAT_fu_39_acc_out;
+wire    grp_vsum_Pipeline_BEAT_fu_39_acc_out_ap_vld;
+reg    grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg;
+wire    ap_CS_fsm_state2;
+reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
-wire    ap_ST_fsm_state2_blk;
+reg    ap_ST_fsm_state2_blk;
 reg    ap_ST_fsm_state3_blk;
-reg    ap_ST_fsm_state4_blk;
-reg    ap_ST_fsm_state5_blk;
-wire    regslice_both_A_U_apdone_blk;
-wire   [63:0] A_TDATA_int_regslice;
-wire    A_TVALID_int_regslice;
-reg    A_TREADY_int_regslice;
-wire    regslice_both_A_U_ack_in;
-reg    out_r_TVALID_int_regslice;
-wire    out_r_TREADY_int_regslice;
-wire    regslice_both_out_r_U_vld_out;
 wire    ap_ce_reg;
 
 // power-on initialization
 initial begin
-#0 ap_CS_fsm = 5'd1;
-#0 grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg = 1'b0;
+#0 ap_CS_fsm = 3'd1;
+#0 grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg = 1'b0;
 end
 
-vsum_vsum_Pipeline_BEAT grp_vsum_Pipeline_BEAT_fu_43(
+vsum_vsum_Pipeline_BEAT grp_vsum_Pipeline_BEAT_fu_39(
     .ap_clk(ap_clk),
     .ap_rst(ap_rst_n_inv),
-    .ap_start(grp_vsum_Pipeline_BEAT_fu_43_ap_start),
-    .ap_done(grp_vsum_Pipeline_BEAT_fu_43_ap_done),
-    .ap_idle(grp_vsum_Pipeline_BEAT_fu_43_ap_idle),
-    .ap_ready(grp_vsum_Pipeline_BEAT_fu_43_ap_ready),
-    .A_TVALID(A_TVALID_int_regslice),
-    .A_TDATA(A_TDATA_int_regslice),
-    .A_TREADY(grp_vsum_Pipeline_BEAT_fu_43_A_TREADY),
-    .acc_out(grp_vsum_Pipeline_BEAT_fu_43_acc_out),
-    .acc_out_ap_vld(grp_vsum_Pipeline_BEAT_fu_43_acc_out_ap_vld)
-);
-
-vsum_regslice_both #(
-    .DataWidth( 64 ))
-regslice_both_A_U(
-    .ap_clk(ap_clk),
-    .ap_rst(ap_rst_n_inv),
-    .data_in(A_TDATA),
-    .vld_in(A_TVALID),
-    .ack_in(regslice_both_A_U_ack_in),
-    .data_out(A_TDATA_int_regslice),
-    .vld_out(A_TVALID_int_regslice),
-    .ack_out(A_TREADY_int_regslice),
-    .apdone_blk(regslice_both_A_U_apdone_blk)
-);
-
-vsum_regslice_both #(
-    .DataWidth( 64 ))
-regslice_both_out_r_U(
-    .ap_clk(ap_clk),
-    .ap_rst(ap_rst_n_inv),
-    .data_in(grp_vsum_Pipeline_BEAT_fu_43_acc_out),
-    .vld_in(out_r_TVALID_int_regslice),
-    .ack_in(out_r_TREADY_int_regslice),
-    .data_out(out_r_TDATA),
-    .vld_out(regslice_both_out_r_U_vld_out),
-    .ack_out(out_r_TREADY),
-    .apdone_blk(regslice_both_out_r_U_apdone_blk)
+    .ap_start(grp_vsum_Pipeline_BEAT_fu_39_ap_start),
+    .ap_done(grp_vsum_Pipeline_BEAT_fu_39_ap_done),
+    .ap_idle(grp_vsum_Pipeline_BEAT_fu_39_ap_idle),
+    .ap_ready(grp_vsum_Pipeline_BEAT_fu_39_ap_ready),
+    .A_TVALID(A_TVALID),
+    .A_TDATA(A_TDATA),
+    .A_TREADY(grp_vsum_Pipeline_BEAT_fu_39_A_TREADY),
+    .acc_out(grp_vsum_Pipeline_BEAT_fu_39_acc_out),
+    .acc_out_ap_vld(grp_vsum_Pipeline_BEAT_fu_39_acc_out_ap_vld)
 );
 
 always @ (posedge ap_clk) begin
@@ -138,21 +96,21 @@ end
 
 always @ (posedge ap_clk) begin
     if (ap_rst_n_inv == 1'b1) begin
-        grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg <= 1'b0;
+        grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg <= 1'b0;
     end else begin
-        if (((1'b1 == ap_NS_fsm_state2) & (1'b1 == ap_CS_fsm_state1))) begin
-            grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg <= 1'b1;
-        end else if ((grp_vsum_Pipeline_BEAT_fu_43_ap_ready == 1'b1)) begin
-            grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg <= 1'b0;
+        if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+            grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg <= 1'b1;
+        end else if ((grp_vsum_Pipeline_BEAT_fu_39_ap_ready == 1'b1)) begin
+            grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg <= 1'b0;
         end
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
-        A_TREADY_int_regslice = grp_vsum_Pipeline_BEAT_fu_43_A_TREADY;
+    if ((1'b1 == ap_CS_fsm_state2)) begin
+        A_TREADY = grp_vsum_Pipeline_BEAT_fu_39_A_TREADY;
     end else begin
-        A_TREADY_int_regslice = 1'b0;
+        A_TREADY = 1'b0;
     end
 end
 
@@ -164,10 +122,16 @@ always @ (*) begin
     end
 end
 
-assign ap_ST_fsm_state2_blk = 1'b0;
+always @ (*) begin
+    if ((grp_vsum_Pipeline_BEAT_fu_39_ap_done == 1'b0)) begin
+        ap_ST_fsm_state2_blk = 1'b1;
+    end else begin
+        ap_ST_fsm_state2_blk = 1'b0;
+    end
+end
 
 always @ (*) begin
-    if ((grp_vsum_Pipeline_BEAT_fu_43_ap_done == 1'b0)) begin
+    if ((out_r_TREADY == 1'b0)) begin
         ap_ST_fsm_state3_blk = 1'b1;
     end else begin
         ap_ST_fsm_state3_blk = 1'b0;
@@ -175,23 +139,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((out_r_TREADY_int_regslice == 1'b0)) begin
-        ap_ST_fsm_state4_blk = 1'b1;
-    end else begin
-        ap_ST_fsm_state4_blk = 1'b0;
-    end
-end
-
-always @ (*) begin
-    if (((1'b1 == ap_block_state5) | (out_r_TREADY_int_regslice == 1'b0))) begin
-        ap_ST_fsm_state5_blk = 1'b1;
-    end else begin
-        ap_ST_fsm_state5_blk = 1'b0;
-    end
-end
-
-always @ (*) begin
-    if ((~((1'b1 == ap_block_state5) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state5))) begin
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
         ap_done = 1'b1;
     end else begin
         ap_done = 1'b0;
@@ -207,7 +155,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b1 == ap_block_state5) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state5))) begin
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
         ap_ready = 1'b1;
     end else begin
         ap_ready = 1'b0;
@@ -215,18 +163,18 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state5) | (1'b1 == ap_CS_fsm_state4))) begin
-        out_r_TDATA_blk_n = out_r_TREADY_int_regslice;
+    if ((1'b1 == ap_CS_fsm_state3)) begin
+        out_r_TDATA_blk_n = out_r_TREADY;
     end else begin
         out_r_TDATA_blk_n = 1'b1;
     end
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state4) & (out_r_TREADY_int_regslice == 1'b1))) begin
-        out_r_TVALID_int_regslice = 1'b1;
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
+        out_r_TVALID = 1'b1;
     end else begin
-        out_r_TVALID_int_regslice = 1'b0;
+        out_r_TVALID = 1'b0;
     end
 end
 
@@ -240,27 +188,17 @@ always @ (*) begin
             end
         end
         ap_ST_fsm_state2 : begin
-            ap_NS_fsm = ap_ST_fsm_state3;
+            if (((grp_vsum_Pipeline_BEAT_fu_39_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state2))) begin
+                ap_NS_fsm = ap_ST_fsm_state3;
+            end else begin
+                ap_NS_fsm = ap_ST_fsm_state2;
+            end
         end
         ap_ST_fsm_state3 : begin
-            if (((grp_vsum_Pipeline_BEAT_fu_43_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
-                ap_NS_fsm = ap_ST_fsm_state4;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state3;
-            end
-        end
-        ap_ST_fsm_state4 : begin
-            if (((1'b1 == ap_CS_fsm_state4) & (out_r_TREADY_int_regslice == 1'b1))) begin
-                ap_NS_fsm = ap_ST_fsm_state5;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state4;
-            end
-        end
-        ap_ST_fsm_state5 : begin
-            if ((~((1'b1 == ap_block_state5) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state5))) begin
+            if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
                 ap_NS_fsm = ap_ST_fsm_state1;
             end else begin
-                ap_NS_fsm = ap_ST_fsm_state5;
+                ap_NS_fsm = ap_ST_fsm_state3;
             end
         end
         default : begin
@@ -269,28 +207,18 @@ always @ (*) begin
     endcase
 end
 
-assign A_TREADY = regslice_both_A_U_ack_in;
-
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
 
+assign ap_CS_fsm_state2 = ap_CS_fsm[32'd1];
+
 assign ap_CS_fsm_state3 = ap_CS_fsm[32'd2];
-
-assign ap_CS_fsm_state4 = ap_CS_fsm[32'd3];
-
-assign ap_CS_fsm_state5 = ap_CS_fsm[32'd4];
-
-assign ap_NS_fsm_state2 = ap_NS_fsm[32'd1];
-
-always @ (*) begin
-    ap_block_state5 = ((regslice_both_out_r_U_apdone_blk == 1'b1) | (out_r_TREADY_int_regslice == 1'b0));
-end
 
 always @ (*) begin
     ap_rst_n_inv = ~ap_rst_n;
 end
 
-assign grp_vsum_Pipeline_BEAT_fu_43_ap_start = grp_vsum_Pipeline_BEAT_fu_43_ap_start_reg;
+assign grp_vsum_Pipeline_BEAT_fu_39_ap_start = grp_vsum_Pipeline_BEAT_fu_39_ap_start_reg;
 
-assign out_r_TVALID = regslice_both_out_r_U_vld_out;
+assign out_r_TDATA = grp_vsum_Pipeline_BEAT_fu_39_acc_out;
 
 endmodule //vsum

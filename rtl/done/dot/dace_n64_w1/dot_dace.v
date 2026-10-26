@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="dot_dace_dot_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=140,HLS_SYN_TPT=none,HLS_SYN_MEM=2,HLS_SYN_DSP=0,HLS_SYN_FF=368,HLS_SYN_LUT=4605,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="dot_dace_dot_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=138,HLS_SYN_TPT=none,HLS_SYN_MEM=2,HLS_SYN_DSP=0,HLS_SYN_FF=366,HLS_SYN_LUT=4591,HLS_VERSION=2023_2_2}" *)
 
 module dot_dace (
         ap_clk,
@@ -26,13 +26,11 @@ module dot_dace (
         out_r_TREADY
 );
 
-parameter    ap_ST_fsm_state1 = 7'd1;
-parameter    ap_ST_fsm_state2 = 7'd2;
-parameter    ap_ST_fsm_state3 = 7'd4;
-parameter    ap_ST_fsm_state4 = 7'd8;
-parameter    ap_ST_fsm_state5 = 7'd16;
-parameter    ap_ST_fsm_state6 = 7'd32;
-parameter    ap_ST_fsm_state7 = 7'd64;
+parameter    ap_ST_fsm_state1 = 5'd1;
+parameter    ap_ST_fsm_state2 = 5'd2;
+parameter    ap_ST_fsm_state3 = 5'd4;
+parameter    ap_ST_fsm_state4 = 5'd8;
+parameter    ap_ST_fsm_state5 = 5'd16;
 
 input   ap_clk;
 input   ap_rst_n;
@@ -53,71 +51,55 @@ input   out_r_TREADY;
 reg ap_done;
 reg ap_idle;
 reg ap_ready;
+reg A_TREADY;
+reg B_TREADY;
+reg out_r_TVALID;
 
  reg    ap_rst_n_inv;
-(* fsm_encoding = "none" *) reg   [6:0] ap_CS_fsm;
+(* fsm_encoding = "none" *) reg   [4:0] ap_CS_fsm;
 wire    ap_CS_fsm_state1;
 reg   [5:0] p_tmp0_address0;
 reg    p_tmp0_ce0;
 reg    p_tmp0_we0;
 wire   [63:0] p_tmp0_q0;
 reg    out_r_TDATA_blk_n;
-wire    ap_CS_fsm_state6;
-wire    ap_CS_fsm_state7;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_done;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_idle;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_ready;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_A_TREADY;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_B_TREADY;
-wire   [5:0] grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_address0;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_ce0;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_we0;
-wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_d0;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_done;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_idle;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_ready;
-wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_old_val_out;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_old_val_out_ap_vld;
-wire   [5:0] grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_address0;
-wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_ce0;
-reg    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg;
-wire    ap_CS_fsm_state2;
-wire    ap_CS_fsm_state3;
-reg    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg;
-wire    ap_CS_fsm_state4;
 wire    ap_CS_fsm_state5;
-wire    regslice_both_out_r_U_apdone_blk;
-reg    ap_block_state7;
-reg   [6:0] ap_NS_fsm;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_done;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_idle;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_ready;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_A_TREADY;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_B_TREADY;
+wire   [5:0] grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_address0;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_ce0;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_we0;
+wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_d0;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_done;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_idle;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_ready;
+wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_old_val_out;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_old_val_out_ap_vld;
+wire   [5:0] grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_address0;
+wire    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_ce0;
+reg    grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg;
+wire    ap_CS_fsm_state2;
+reg    grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg;
+wire    ap_CS_fsm_state3;
+wire    ap_CS_fsm_state4;
+reg   [4:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
-wire    ap_ST_fsm_state2_blk;
-reg    ap_ST_fsm_state3_blk;
-wire    ap_ST_fsm_state4_blk;
+reg    ap_ST_fsm_state2_blk;
+wire    ap_ST_fsm_state3_blk;
+reg    ap_ST_fsm_state4_blk;
 reg    ap_ST_fsm_state5_blk;
-reg    ap_ST_fsm_state6_blk;
-reg    ap_ST_fsm_state7_blk;
-wire    regslice_both_A_U_apdone_blk;
-wire   [63:0] A_TDATA_int_regslice;
-wire    A_TVALID_int_regslice;
-reg    A_TREADY_int_regslice;
-wire    regslice_both_A_U_ack_in;
-wire    regslice_both_B_U_apdone_blk;
-wire   [63:0] B_TDATA_int_regslice;
-wire    B_TVALID_int_regslice;
-reg    B_TREADY_int_regslice;
-wire    regslice_both_B_U_ack_in;
-reg    out_r_TVALID_int_regslice;
-wire    out_r_TREADY_int_regslice;
-wire    regslice_both_out_r_U_vld_out;
 wire    ap_ce_reg;
 
 // power-on initialization
 initial begin
-#0 ap_CS_fsm = 7'd1;
-#0 grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg = 1'b0;
-#0 grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg = 1'b0;
+#0 ap_CS_fsm = 5'd1;
+#0 grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg = 1'b0;
+#0 grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg = 1'b0;
 end
 
 dot_dace_p_tmp0_RAM_AUTO_1R1W #(
@@ -130,83 +112,41 @@ p_tmp0_U(
     .address0(p_tmp0_address0),
     .ce0(p_tmp0_ce0),
     .we0(p_tmp0_we0),
-    .d0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_d0),
+    .d0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_d0),
     .q0(p_tmp0_q0)
 );
 
-dot_dace_dot_dace_Pipeline_VITIS_LOOP_64_1 grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49(
+dot_dace_dot_dace_Pipeline_VITIS_LOOP_64_1 grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45(
     .ap_clk(ap_clk),
     .ap_rst(ap_rst_n_inv),
-    .ap_start(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start),
-    .ap_done(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_done),
-    .ap_idle(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_idle),
-    .ap_ready(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_ready),
-    .A_TVALID(A_TVALID_int_regslice),
-    .B_TVALID(B_TVALID_int_regslice),
-    .A_TDATA(A_TDATA_int_regslice),
-    .A_TREADY(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_A_TREADY),
-    .B_TDATA(B_TDATA_int_regslice),
-    .B_TREADY(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_B_TREADY),
-    .p_tmp0_address0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_address0),
-    .p_tmp0_ce0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_ce0),
-    .p_tmp0_we0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_we0),
-    .p_tmp0_d0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_d0)
+    .ap_start(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start),
+    .ap_done(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_done),
+    .ap_idle(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_idle),
+    .ap_ready(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_ready),
+    .A_TVALID(A_TVALID),
+    .B_TVALID(B_TVALID),
+    .A_TDATA(A_TDATA),
+    .A_TREADY(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_A_TREADY),
+    .B_TDATA(B_TDATA),
+    .B_TREADY(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_B_TREADY),
+    .p_tmp0_address0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_address0),
+    .p_tmp0_ce0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_ce0),
+    .p_tmp0_we0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_we0),
+    .p_tmp0_d0(grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_d0)
 );
 
-dot_dace_dot_dace_Pipeline_VITIS_LOOP_38_1 grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59(
+dot_dace_dot_dace_Pipeline_VITIS_LOOP_38_1 grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55(
     .ap_clk(ap_clk),
     .ap_rst(ap_rst_n_inv),
-    .ap_start(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start),
-    .ap_done(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_done),
-    .ap_idle(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_idle),
-    .ap_ready(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_ready),
-    .old_val_out(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_old_val_out),
-    .old_val_out_ap_vld(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_old_val_out_ap_vld),
-    .p_tmp0_address0(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_address0),
-    .p_tmp0_ce0(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_ce0),
+    .ap_start(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start),
+    .ap_done(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_done),
+    .ap_idle(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_idle),
+    .ap_ready(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_ready),
+    .old_val_out(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_old_val_out),
+    .old_val_out_ap_vld(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_old_val_out_ap_vld),
+    .p_tmp0_address0(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_address0),
+    .p_tmp0_ce0(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_ce0),
     .p_tmp0_q0(p_tmp0_q0)
-);
-
-dot_dace_regslice_both #(
-    .DataWidth( 64 ))
-regslice_both_A_U(
-    .ap_clk(ap_clk),
-    .ap_rst(ap_rst_n_inv),
-    .data_in(A_TDATA),
-    .vld_in(A_TVALID),
-    .ack_in(regslice_both_A_U_ack_in),
-    .data_out(A_TDATA_int_regslice),
-    .vld_out(A_TVALID_int_regslice),
-    .ack_out(A_TREADY_int_regslice),
-    .apdone_blk(regslice_both_A_U_apdone_blk)
-);
-
-dot_dace_regslice_both #(
-    .DataWidth( 64 ))
-regslice_both_B_U(
-    .ap_clk(ap_clk),
-    .ap_rst(ap_rst_n_inv),
-    .data_in(B_TDATA),
-    .vld_in(B_TVALID),
-    .ack_in(regslice_both_B_U_ack_in),
-    .data_out(B_TDATA_int_regslice),
-    .vld_out(B_TVALID_int_regslice),
-    .ack_out(B_TREADY_int_regslice),
-    .apdone_blk(regslice_both_B_U_apdone_blk)
-);
-
-dot_dace_regslice_both #(
-    .DataWidth( 64 ))
-regslice_both_out_r_U(
-    .ap_clk(ap_clk),
-    .ap_rst(ap_rst_n_inv),
-    .data_in(grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_old_val_out),
-    .vld_in(out_r_TVALID_int_regslice),
-    .ack_in(out_r_TREADY_int_regslice),
-    .data_out(out_r_TDATA),
-    .vld_out(regslice_both_out_r_U_vld_out),
-    .ack_out(out_r_TREADY),
-    .apdone_blk(regslice_both_out_r_U_apdone_blk)
 );
 
 always @ (posedge ap_clk) begin
@@ -219,41 +159,41 @@ end
 
 always @ (posedge ap_clk) begin
     if (ap_rst_n_inv == 1'b1) begin
-        grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg <= 1'b0;
+        grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg <= 1'b0;
     end else begin
-        if ((1'b1 == ap_CS_fsm_state4)) begin
-            grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg <= 1'b1;
-        end else if ((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_ready == 1'b1)) begin
-            grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg <= 1'b0;
+        if ((1'b1 == ap_CS_fsm_state3)) begin
+            grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg <= 1'b1;
+        end else if ((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_ready == 1'b1)) begin
+            grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg <= 1'b0;
         end
     end
 end
 
 always @ (posedge ap_clk) begin
     if (ap_rst_n_inv == 1'b1) begin
-        grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg <= 1'b0;
+        grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg <= 1'b0;
     end else begin
-        if ((1'b1 == ap_CS_fsm_state2)) begin
-            grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg <= 1'b1;
-        end else if ((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_ready == 1'b1)) begin
-            grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg <= 1'b0;
+        if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+            grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg <= 1'b1;
+        end else if ((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_ready == 1'b1)) begin
+            grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg <= 1'b0;
         end
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
-        A_TREADY_int_regslice = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_A_TREADY;
+    if ((1'b1 == ap_CS_fsm_state2)) begin
+        A_TREADY = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_A_TREADY;
     end else begin
-        A_TREADY_int_regslice = 1'b0;
+        A_TREADY = 1'b0;
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
-        B_TREADY_int_regslice = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_B_TREADY;
+    if ((1'b1 == ap_CS_fsm_state2)) begin
+        B_TREADY = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_B_TREADY;
     end else begin
-        B_TREADY_int_regslice = 1'b0;
+        B_TREADY = 1'b0;
     end
 end
 
@@ -265,20 +205,26 @@ always @ (*) begin
     end
 end
 
-assign ap_ST_fsm_state2_blk = 1'b0;
-
 always @ (*) begin
-    if ((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_done == 1'b0)) begin
-        ap_ST_fsm_state3_blk = 1'b1;
+    if ((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_done == 1'b0)) begin
+        ap_ST_fsm_state2_blk = 1'b1;
     end else begin
-        ap_ST_fsm_state3_blk = 1'b0;
+        ap_ST_fsm_state2_blk = 1'b0;
     end
 end
 
-assign ap_ST_fsm_state4_blk = 1'b0;
+assign ap_ST_fsm_state3_blk = 1'b0;
 
 always @ (*) begin
-    if ((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_done == 1'b0)) begin
+    if ((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_done == 1'b0)) begin
+        ap_ST_fsm_state4_blk = 1'b1;
+    end else begin
+        ap_ST_fsm_state4_blk = 1'b0;
+    end
+end
+
+always @ (*) begin
+    if ((out_r_TREADY == 1'b0)) begin
         ap_ST_fsm_state5_blk = 1'b1;
     end else begin
         ap_ST_fsm_state5_blk = 1'b0;
@@ -286,23 +232,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((out_r_TREADY_int_regslice == 1'b0)) begin
-        ap_ST_fsm_state6_blk = 1'b1;
-    end else begin
-        ap_ST_fsm_state6_blk = 1'b0;
-    end
-end
-
-always @ (*) begin
-    if (((1'b1 == ap_block_state7) | (out_r_TREADY_int_regslice == 1'b0))) begin
-        ap_ST_fsm_state7_blk = 1'b1;
-    end else begin
-        ap_ST_fsm_state7_blk = 1'b0;
-    end
-end
-
-always @ (*) begin
-    if ((~((1'b1 == ap_block_state7) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state7))) begin
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state5))) begin
         ap_done = 1'b1;
     end else begin
         ap_done = 1'b0;
@@ -318,7 +248,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b1 == ap_block_state7) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state7))) begin
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state5))) begin
         ap_ready = 1'b1;
     end else begin
         ap_ready = 1'b0;
@@ -326,44 +256,44 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state7) | (1'b1 == ap_CS_fsm_state6))) begin
-        out_r_TDATA_blk_n = out_r_TREADY_int_regslice;
+    if ((1'b1 == ap_CS_fsm_state5)) begin
+        out_r_TDATA_blk_n = out_r_TREADY;
     end else begin
         out_r_TDATA_blk_n = 1'b1;
     end
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state6) & (out_r_TREADY_int_regslice == 1'b1))) begin
-        out_r_TVALID_int_regslice = 1'b1;
+    if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state5))) begin
+        out_r_TVALID = 1'b1;
     end else begin
-        out_r_TVALID_int_regslice = 1'b0;
+        out_r_TVALID = 1'b0;
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state5)) begin
-        p_tmp0_address0 = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_address0;
-    end else if ((1'b1 == ap_CS_fsm_state3)) begin
-        p_tmp0_address0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_address0;
+    if ((1'b1 == ap_CS_fsm_state4)) begin
+        p_tmp0_address0 = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_address0;
+    end else if ((1'b1 == ap_CS_fsm_state2)) begin
+        p_tmp0_address0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_address0;
     end else begin
         p_tmp0_address0 = 'bx;
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state5)) begin
-        p_tmp0_ce0 = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_p_tmp0_ce0;
-    end else if ((1'b1 == ap_CS_fsm_state3)) begin
-        p_tmp0_ce0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_ce0;
+    if ((1'b1 == ap_CS_fsm_state4)) begin
+        p_tmp0_ce0 = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_p_tmp0_ce0;
+    end else if ((1'b1 == ap_CS_fsm_state2)) begin
+        p_tmp0_ce0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_ce0;
     end else begin
         p_tmp0_ce0 = 1'b0;
     end
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
-        p_tmp0_we0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_p_tmp0_we0;
+    if ((1'b1 == ap_CS_fsm_state2)) begin
+        p_tmp0_we0 = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_p_tmp0_we0;
     end else begin
         p_tmp0_we0 = 1'b0;
     end
@@ -379,37 +309,27 @@ always @ (*) begin
             end
         end
         ap_ST_fsm_state2 : begin
-            ap_NS_fsm = ap_ST_fsm_state3;
+            if (((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state2))) begin
+                ap_NS_fsm = ap_ST_fsm_state3;
+            end else begin
+                ap_NS_fsm = ap_ST_fsm_state2;
+            end
         end
         ap_ST_fsm_state3 : begin
-            if (((grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
-                ap_NS_fsm = ap_ST_fsm_state4;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state3;
-            end
+            ap_NS_fsm = ap_ST_fsm_state4;
         end
         ap_ST_fsm_state4 : begin
-            ap_NS_fsm = ap_ST_fsm_state5;
+            if (((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state4))) begin
+                ap_NS_fsm = ap_ST_fsm_state5;
+            end else begin
+                ap_NS_fsm = ap_ST_fsm_state4;
+            end
         end
         ap_ST_fsm_state5 : begin
-            if (((grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state5))) begin
-                ap_NS_fsm = ap_ST_fsm_state6;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state5;
-            end
-        end
-        ap_ST_fsm_state6 : begin
-            if (((1'b1 == ap_CS_fsm_state6) & (out_r_TREADY_int_regslice == 1'b1))) begin
-                ap_NS_fsm = ap_ST_fsm_state7;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state6;
-            end
-        end
-        ap_ST_fsm_state7 : begin
-            if ((~((1'b1 == ap_block_state7) | (out_r_TREADY_int_regslice == 1'b0)) & (1'b1 == ap_CS_fsm_state7))) begin
+            if (((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state5))) begin
                 ap_NS_fsm = ap_ST_fsm_state1;
             end else begin
-                ap_NS_fsm = ap_ST_fsm_state7;
+                ap_NS_fsm = ap_ST_fsm_state5;
             end
         end
         default : begin
@@ -417,10 +337,6 @@ always @ (*) begin
         end
     endcase
 end
-
-assign A_TREADY = regslice_both_A_U_ack_in;
-
-assign B_TREADY = regslice_both_B_U_ack_in;
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
 
@@ -432,22 +348,14 @@ assign ap_CS_fsm_state4 = ap_CS_fsm[32'd3];
 
 assign ap_CS_fsm_state5 = ap_CS_fsm[32'd4];
 
-assign ap_CS_fsm_state6 = ap_CS_fsm[32'd5];
-
-assign ap_CS_fsm_state7 = ap_CS_fsm[32'd6];
-
-always @ (*) begin
-    ap_block_state7 = ((out_r_TREADY_int_regslice == 1'b0) | (regslice_both_out_r_U_apdone_blk == 1'b1));
-end
-
 always @ (*) begin
     ap_rst_n_inv = ~ap_rst_n;
 end
 
-assign grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_59_ap_start_reg;
+assign grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_ap_start_reg;
 
-assign grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_49_ap_start_reg;
+assign grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start = grp_dot_dace_Pipeline_VITIS_LOOP_64_1_fu_45_ap_start_reg;
 
-assign out_r_TVALID = regslice_both_out_r_U_vld_out;
+assign out_r_TDATA = grp_dot_dace_Pipeline_VITIS_LOOP_38_1_fu_55_old_val_out;
 
 endmodule //dot_dace
