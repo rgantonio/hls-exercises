@@ -90,3 +90,11 @@ notes/figures/
 !**/run_hls.tcl
 !**/directives.tcl
 !**/params.json
+# --- Bench (docs/HLS_VS_FORGE.md) ----------------------------------------
+# Projects (*_proj/) and logs are ignored above; generated sources and
+# results are tracked.
+!results/
+!results/*.csv
+!bench/**/params.json
+!bench/**/*.tcl
+!bench/**/data.h

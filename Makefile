@@ -7,6 +7,8 @@
 #   make clean                delete all generated tool output
 #   make clean EX=<dir>       delete generated output for one exercise
 #   make clean PROJ='<glob>'   narrow to matching project dirs (quote it)
+#   make bench ARGS='<args>'  bench driver, e.g. ARGS='run --kernel vecadd'
+#                             (python3 bench/bench.py <args>, docs/HLS_VS_FORGE.md)
 #
 # Generated output is anything the tool creates. Hand-written sources
 # (*.cpp, *.tcl, README.md, params.json) and everything under notes/
@@ -42,7 +44,7 @@ DIR_CLAUSE := $(patsubst %,-name '%' -o,$(JUNK_DIRS)) -false
 FILE_CLAUSE := $(patsubst %,-name '%' -o,$(JUNK_FILES)) -false
 
 # Never descend into these.
-KEEP_CLAUSE := -name notes -o -name .git -o -name common
+KEEP_CLAUSE := -name notes -o -name .git -o -name common -o -name results
 
 # Matched directories are pruned so find does not try to descend into
 # something rm has already removed.
@@ -50,11 +52,11 @@ MATCH := \( -type d \( $(DIR_CLAUSE) \) -prune \) -o \( -type f \( $(FILE_CLAUSE
 
 FIND_JUNK = find $(SCOPE) \( $(KEEP_CLAUSE) \) -prune -o \( $(MATCH) \)
 
-.PHONY: help list run check clean
+.PHONY: help list run check clean bench
 .DEFAULT_GOAL := help
 
 help:
-	@echo "targets: list | run EX=<dir> | check [EX=<dir>] | clean [EX=<dir>]"
+	@echo "targets: list | run EX=<dir> | check [EX=<dir>] | clean [EX=<dir>] | bench ARGS='<args>'"
 	@echo "vars:    HLS=$(HLS)  PROJ=$(PROJ)"
 	@echo "$(words $(ALL_EXERCISES)) exercise(s) found; 'make list' to see them."
 
@@ -72,8 +74,12 @@ run:
 check:
 	@echo "clean would delete, under '$(SCOPE)':"
 	@$(FIND_JUNK) -print | sed 's/^/  /' || true
-	@echo "(notes/, common/ and .git/ are never touched)"
+	@echo "(notes/, common/, results/ and .git/ are never touched)"
 
 clean:
 	@$(FIND_JUNK) -exec rm -rf {} + 2>/dev/null || true
 	@echo "cleaned: $(SCOPE)"
+
+# Bench driver (docs/HLS_VS_FORGE.md). Without ARGS it prints its help.
+bench:
+	python3 bench/bench.py $(if $(strip $(ARGS)),$(ARGS),--help)
