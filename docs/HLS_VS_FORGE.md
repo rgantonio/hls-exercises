@@ -40,7 +40,8 @@ These keep the two sides comparable. Where a difference can't be removed, it is 
 - Forge's units take their data as `Decoupled(Vec(lanes, UInt(64)))`: one valid-ready handshake around all W lanes, with the streamers outside the unit (forge D112). The HLS tops match that. Every array argument is one AXI4-Stream port (`TDATA`, `TVALID`, `TREADY`) whose `TDATA` holds one beat of W lanes, W × 64 bits with lane 0 in the low bits.
 - A beat is `vec_t` from `bench/include/lanes.h`. It is DaCe's own `dace::vec<T, W>`: `T` itself at W = 1, `hlslib::DataPack<T, W>` (one `ap_uint<64W>`) above. So case 3's generated module takes exactly the type cases 1 and 2 use.
 - A reduction's result is a one-beat axis port of one element (`out[1]`), as forge's accumulator has `Decoupled(UInt)`.
-- `params.json` lists the axis ports, and `run_bench.tcl` sets them with `set_directive_interface -mode axis` for every case. Axis on an array argument needs every element read or written once, in order, which the tier done kernels do.
+- **No register slices.** By default Vitis puts a register slice on every axis port, a two-entry skid buffer that registers `TDATA`/`TVALID` and `TREADY` (2 × W × 64 flops per port). Forge's units have none: their handshake is plain logic (`io.a.ready := busy && io.b.valid && io.out.ready`). So the bench sets `"axis_register_mode": "off"`, and the `iface` column says which mode a row used. In the first synthesis run (`vecadd` `unopt_n512_w8`, with the slices on), they were 3,072 of the 4,843 flops.
+- `params.json` lists the axis ports, and `run_bench.tcl` sets them with `set_directive_interface -mode axis -register_mode <mode>` for every case. Axis on an array argument needs every element read or written once, in order, which the tier done kernels do.
 - The testbench plays the streamer: it packs forge's inputs into beats, and cosim drives the streams with no stalls.
 - Control is `ap_ctrl_hs` (start, done, idle, ready). There are no CSRs and no AXI memory-mapped ports.
 
@@ -231,7 +232,7 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
 
 - Size keys are `make_inputs`'s argument names (`n`, `m`). They give the tag (`n64`, `m38_n42`) and the macros (`SIZE_N`, `SIZE_M`).
 - `{size}`, `{W}` and `{bench}` (the absolute path of `bench/`) in paths and `cflags` are filled per point. Every path that reaches Vitis is absolute, because cosim compiles from inside the project.
-- `iface` and `axis`: with `"iface": "axis"`, every argument in `axis` gets an axis interface in every case. The interface is recorded per row.
+- `iface`, `axis` and `axis_register_mode`: with `"iface": "axis"`, every argument in `axis` gets an axis interface in every case, with register slices set by `axis_register_mode` (`off`, `forward`, `reverse` or `both`; `both` is Vitis's default when the key is missing). The interface and mode are recorded per row.
 - `cflags` at the top go to every case, a case's own `cflags` after them. A case's `W` list replaces the kernel's (the reductions' `dace` case runs at W = 1 only).
 - Optional keys: `acc_dtype` (tier P, gives `ACC_T`), `clock_ns` (default 3.33), and per case `tb` or `directives` to override the defaults.
 - The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, and `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`).

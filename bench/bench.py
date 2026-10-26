@@ -131,6 +131,14 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
     return out
 
 
+def iface_label(params: dict) -> str:
+    """'axis' with its register slices (Vitis's default 'both' unless params say otherwise)."""
+    iface = params.get("iface", "ap_memory")
+    if iface == "axis":
+        return f"axis, register slices {params.get('axis_register_mode', 'both')}"
+    return iface
+
+
 def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
     kdir, params, cfg, tag, w = pt["kdir"], pt["params"], pt["cfg"], pt["size_tag"], pt["W"]
     # {size}, {W} and {bench} (absolute path of bench/) may appear in paths and cflags.
@@ -162,6 +170,7 @@ def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
         "DIRECTIVES": str(dpath.resolve()) if dpath.is_file() else "",
         "W": "" if w is None else str(w),
         "AXIS": " ".join(params.get("axis", [])) if params.get("iface") == "axis" else "",
+        "AXIS_REGMODE": params.get("axis_register_mode", "both"),
         "DO_CSIM": "1" if do_csim else "0",
         "DO_COSIM": "1" if do_cosim else "0",
         "CLOCK_NS": pt["clock"],
@@ -530,7 +539,7 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     missing = missing_inputs(pt, env)
     if args.dry_run:
         print(f"\n# {kdir.relative_to(ROOT)} / {proj}")
-        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "DIRECTIVES", "W", "AXIS", "DO_CSIM", "DO_COSIM",
+        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "DIRECTIVES", "W", "AXIS", "AXIS_REGMODE", "DO_CSIM", "DO_COSIM",
                   "CLOCK_NS"):
             print(f"export {k}='{env[k]}'")
         print(f"cd {kdir} && {vitis} -f {RUN_TCL} 2>&1 | tee run_{proj}.log")
@@ -549,7 +558,7 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     meta = {
         "tier": pt["params"]["tier"], "kernel": pt["params"]["kernel"], "case": pt["case"],
         "dtype": pt["params"].get("dtype", "int64"), "size": pt["size_tag"],
-        "iface": pt["params"].get("iface", "ap_memory"),
+        "iface": iface_label(pt["params"]),
         "W": "" if pt["W"] is None else pt["W"], "clock_ns": pt["clock"], "top": pt["cfg"]["top"],
         "do_csim": not args.no_csim, "do_cosim": not args.no_cosim,
         "date": dt.datetime.now().isoformat(timespec="seconds"), "git": git_rev(), "env": {

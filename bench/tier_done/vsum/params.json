@@ -9,6 +9,7 @@
   "W": [1, 4, 8],
   "iface": "axis",
   "axis": ["A", "out"],
+  "axis_register_mode": "off",
   "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_vsum.cpp",
   "cases": {

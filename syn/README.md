@@ -40,7 +40,7 @@ syn/runs/summary.csv   one row per point and clock: area, cells, critical path, 
 |---|---|
 | `syn.py` | The driver: picks points, sets the environment, runs DC in the point's run folder, reads the reports into `summary.csv` |
 | `scripts/dc_syn.tcl` | One DC run: reads the point's `filelist.f`, links against `gscl45nm.db` and DesignWare, `compile_ultra -no_autoungroup`, writes reports and the mapped netlist |
-| `scripts/constraints.sdc` | Clock on `ap_clk` at `$clock_ns`, uncertainties, `INVX4` input drive, output load, small IO delays |
+| `scripts/constraints.sdc` | Clock on `ap_clk` at `$clock_ns`, uncertainties, `INVX4` input drive, output load, small IO delays, and the synchronous reset `ap_rst_n` kept as an ideal network (its tree belongs to place and route) |
 
 ## The filelist
 

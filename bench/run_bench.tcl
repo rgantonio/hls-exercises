@@ -16,6 +16,8 @@
 #   DIRECTIVES  directives file to source, absolute path, or empty
 #   W           lane count for the directives (empty when the case has none)
 #   AXIS        top-level arguments to give an axis interface, space-separated
+#   AXIS_REGMODE  register slices on those ports: off, forward, reverse or both
+#                 (Vitis's default is both; the bench uses off, as forge's units have none)
 #   DO_CSIM     1 = run csim_design
 #   DO_COSIM    1 = run cosim_design
 #   CLOCK_NS    read by common/asic.tcl
@@ -51,7 +53,8 @@ open_solution -reset sol -flow_target vivado
 source [file join $here .. common asic.tcl]
 # Valid-ready ports, as forge's units have: each listed array argument becomes one
 # AXI4-Stream port (TDATA, TVALID, TREADY), read or written once, in order.
-foreach port [env_or AXIS ""] { set_directive_interface -mode axis $top $port }
+set regmode [env_or AXIS_REGMODE both]
+foreach port [env_or AXIS ""] { set_directive_interface -mode axis -register_mode $regmode $top $port }
 if {$directives ne ""} { source $directives }
 
 if {$do_csim}  { csim_design }

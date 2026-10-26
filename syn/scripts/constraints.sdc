@@ -43,4 +43,13 @@ set_driving_cell -lib_cell INVX4 $data_inputs
 set_load 0.03 [all_outputs]
 
 set_input_delay -max 0.01 -clock clk $data_inputs
+
 set_output_delay -max 0.01 -clock clk [all_outputs]
+
+#-----------------------------
+# Reset
+#-----------------------------
+# ap_rst_n is synchronous and reaches nearly every flop. Keep it ideal here, so
+# DC builds no buffer tree for it and does not report its fanout as max-cap
+# violations; the reset tree belongs to place and route.
+set_ideal_network [get_ports ap_rst_n]
