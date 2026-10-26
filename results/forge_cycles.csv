@@ -1,0 +1,2 @@
+kernel,size,W,recipe,implementation,gvsoc_counter,rtl_counter,beats,source
+vecadd,n64,4,recipes/vecadd.json,chisel_tiled_spatial,19,19,16,"snax-forge docs/RUN.md: flow on SNAX-GVSoC and snax_cluster on Verilator, forge counter add_acc"

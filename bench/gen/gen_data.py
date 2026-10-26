@@ -44,9 +44,13 @@ def load_spec(forge: Path, rel: str):
     return mod.SPEC
 
 
+def size_tag(size: dict) -> str:
+    """{"m": 38, "n": 42} -> "m38_n42", as bench.py names it."""
+    return "_".join(f"{k.lower()}{v}" for k, v in size.items())
+
+
 def c_array(name: str, arr: np.ndarray) -> str:
     dims = "".join(f"[{d}]" for d in arr.shape) or "[1]"
-    flat = arr.reshape(-1) if arr.ndim else arr.reshape(1)
 
     def nest(a: np.ndarray, indent: str) -> str:
         if a.ndim <= 1:
@@ -55,7 +59,7 @@ def c_array(name: str, arr: np.ndarray) -> str:
             return "{\n" + ",\n".join(indent + "  " + r for r in rows) + "\n" + indent + "}"
         return "{\n" + ",\n".join(indent + "  " + nest(x, indent + "  ") for x in a) + "\n" + indent + "}"
 
-    body = nest(arr if arr.ndim else flat, "")
+    body = nest(arr if arr.ndim else arr.reshape(1), "")
     return f"static const data_t {name}{dims} = {body};\n"
 
 
@@ -63,7 +67,7 @@ def write_data(kdir: Path, params: dict, forge: Path) -> None:
     spec = load_spec(forge, params["forge_kernel"])
     seed = int(params.get("seed", 0))
     for size in params["sizes"]:
-        tag = "_".join(f"{k.lower()}{v}" for k, v in size.items())
+        tag = size_tag(size)
         rng = np.random.default_rng(seed)
         inputs = spec.make_inputs(rng, **size)
         work = {k: np.array(v, copy=True) for k, v in inputs.items()}

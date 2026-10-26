@@ -39,7 +39,7 @@ Note that this example was taken from `tiny_csynth.rpt`
 
 # Probe D: 
 
-Check the `run_hls_probe.tcl` inside the `hls-exercises/s0_flow/01_project_anatomy` and you will see the comparison with and without the `config_compile -pipeline_loops 0`.
+Check the `run_hls_probe.tcl` inside the `hls-exercises/exercises/s0_flow/01_project_anatomy` and you will see the comparison with and without the `config_compile -pipeline_loops 0`.
 
 # You can probe or see the RTL schematic in vivado
 

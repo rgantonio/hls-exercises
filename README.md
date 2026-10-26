@@ -2,8 +2,8 @@
 
 Two things live here:
 
-- **Exercises** (`s0_flow/` to `s2_pipelining/`): self-learning steps on how Vitis HLS works and what its optimizations do. Notes and results are in `notes/`.
-- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS, and their RTL cycle counts go into `results/`. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md).
+- **Exercises** (`exercises/`): self-learning steps on how Vitis HLS works and what its optimizations do. [`exercises/README.md`](exercises/README.md) lists them and says how to run them.
+- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS. Their cycle counts are summarised in `results/`. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md).
 
 Tool: Vitis HLS 2023.2.2 on `xcku5p-ffvb676-2-e` (`notes/env.md`). Run everything from the repo root unless a section says otherwise.
 
@@ -20,44 +20,61 @@ The bench driver needs Python 3, standard library only. The bench generators nee
 
 ```bash
 make list                                   # every exercise
-make run EX=s1_model/01_latency_and_ii      # one exercise (vitis_hls -f run_hls.tcl)
-make check                                  # what clean would delete
+make run EX=s1_model/01_latency_and_ii      # one exercise
 make clean                                  # delete all tool output
-make clean EX=s1_model/01_latency_and_ii    # one exercise only
 ```
 
-Each exercise's `README.md` says what to run and what to look at. Results go into `notes/results.csv` by hand.
+More in [`exercises/README.md`](exercises/README.md).
 
 ## Bench
 
-### Generate inputs (snax-forge's environment)
+### 1. Generate sources (snax-forge's environment)
 
-Test vectors come from forge's own kernel files, so both sides compute on the same data. Run this once per new kernel or size, then commit the generated `vectors/` files:
+Test vectors and the case 3 (DaCe) sources come from forge's own kernel files, so both sides work on the same kernel and the same data. Run these once per new kernel or size, then commit the generated `vectors/`, `dace/` and `bench/gen/dace_include/` files:
 
 ```bash
 FORGE=/path/to/snax-forge
-pixi run --manifest-path $FORGE/pixi.toml \
-    python $PWD/bench/gen/gen_data.py --forge $FORGE --tier done
+pixi run --manifest-path $FORGE/pixi.toml python $PWD/bench/gen/gen_data.py --forge $FORGE --kernel vecadd
+pixi run --manifest-path $FORGE/pixi.toml python $PWD/bench/gen/gen_dace.py --forge $FORGE --kernel vecadd
 ```
 
-Case 3 sources come from `bench/gen/gen_dace.py` the same way, once it exists (tier done, step D4).
+Both take `--tier T` instead of `--kernel K` for a whole tier.
 
-### Run (Vitis machine)
+### 2. Run (Vitis machine)
 
 ```bash
-python3 bench/bench.py list                          # every kernel and run point
-python3 bench/bench.py run --kernel vecadd --case unopt --dry-run   # print, don't run
-python3 bench/bench.py run --kernel vecadd --case unopt             # one case
-python3 bench/bench.py run --tier done                              # a whole tier
-python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim  # narrower, faster
-python3 bench/bench.py run --tier done -j 4                         # 4 Vitis runs at once
-python3 bench/bench.py collect --tier done           # re-read existing projects into the CSV
-python3 bench/bench.py check                         # portability of the generated Verilog
+python3 bench/bench.py list                                          # every kernel and run point
+python3 bench/bench.py run --kernel vecadd --case unopt --dry-run    # print the commands only
+python3 bench/bench.py run --kernel vecadd --case unopt              # one case
+python3 bench/bench.py run --kernel vecadd                           # every case, size and W
+python3 bench/bench.py run --tier done -j 4                          # a whole tier, 4 Vitis runs at once
+python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower and faster
 ```
 
 `make bench ARGS="run --kernel vecadd"` does the same through make.
 
-Each point is one Vitis project inside the kernel's folder: `<case>_<size>[_w<W>]_c<clock>_proj`, plus its log `run_<project>.log`. Results land in `results/hls_cycles.csv`, one row per point. A rerun replaces its row.
+### 3. Read the results
+
+A run writes three files in `results/`, and these are what gets committed:
+
+| File | What it holds |
+|---|---|
+| `hls_cycles.csv` | One row per run point: csynth estimate, cosim (RTL) cycles, csim and cosim status, portability check |
+| `hls_loops.csv` | One row per loop per point: trips, iteration latency, II achieved and target |
+| `report_<tier>.md` | Per kernel, the points side by side with cycles per element and the ratio to `unopt`, then the loops |
+
+```bash
+python3 bench/bench.py report --tier done   # rewrite report_done.md from the CSVs
+python3 bench/bench.py collect --tier done  # re-read the projects that still exist into the CSVs
+python3 bench/bench.py check                # portability of the generated Verilog
+```
+
+The Vitis projects (`<case>_<size>[_w<W>]_c<clock>_proj` in each kernel's folder) and their logs (`run_<project>.log`) are scratch. Git ignores them and `make clean` removes them. To look at one in detail before cleaning:
+
+```bash
+cd bench/tier_done/vecadd
+PROJ=opt_n64_w4_c3p33_proj TOP=vecadd SOLS=sol OUT=/tmp/lat.md ../../../common/collect_latency.sh
+```
 
 To run one point by hand, take the `export` lines that `--dry-run` prints, then:
 
@@ -66,24 +83,13 @@ cd bench/tier_done/vecadd
 vitis_hls -f ../../run_bench.tcl 2>&1 | tee run_manual.log
 ```
 
-The exercises' latency script also works on a bench project:
-
-```bash
-cd bench/tier_done/vecadd
-PROJ=opt_n64_w4_c3p33_proj TOP=vecadd SOLS=sol OUT=lat_opt.md ../../../common/collect_latency.sh
-```
-
-### Clean
-
-`make clean` also removes the bench projects and logs (`*_proj`, `run_*.log`). Generated sources (`vectors/`, `dace/`) and `results/` are tracked and stay.
-
 ## Layout
 
 ```
+docs/        HLS_VS_FORGE.md: the plan and conventions of the bench
+exercises/   the self-learning steps (s0_flow, s1_model, s2_pipelining)
 common/      part.tcl (exercises), asic.tcl (bench), report scripts
-notes/       exercise notes, directive reference, results.csv
-s*_*/        exercises
+notes/       env.md, directive reference, exercise results.csv
 bench/       bench.py, run_bench.tcl, gen/, tier_<T>/<kernel>/
-results/     hls_cycles.csv and, later, forge and synthesis results
-docs/        HLS_VS_FORGE.md
+results/     bench summaries: hls_cycles.csv, hls_loops.csv, report_<tier>.md
 ```

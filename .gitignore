@@ -91,6 +91,7 @@ notes/figures/
 !**/directives.tcl
 !**/params.json
 # --- Bench (docs/HLS_VS_FORGE.md) ----------------------------------------
+.dacecache/
 # Projects (*_proj/) and logs are ignored above; generated sources and
 # results are tracked.
 !results/

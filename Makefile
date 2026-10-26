@@ -1,8 +1,9 @@
 # ======================================================================
 # hls-exercises — root Makefile
 #
-#   make list                 show every exercise found
-#   make run EX=<dir>         run one exercise
+#   make list                 show every exercise found (exercises/)
+#   make run EX=<dir>         run one exercise; EX=s0_flow/01_project_anatomy
+#                             and EX=exercises/s0_flow/01_project_anatomy both work
 #   make check                dry run: list what clean would delete
 #   make clean                delete all generated tool output
 #   make clean EX=<dir>       delete generated output for one exercise
@@ -11,8 +12,8 @@
 #                             (python3 bench/bench.py <args>, docs/HLS_VS_FORGE.md)
 #
 # Generated output is anything the tool creates. Hand-written sources
-# (*.cpp, *.tcl, README.md, params.json) and everything under notes/
-# and common/ are never touched.
+# (*.cpp, *.tcl, README.md, params.json) and everything under notes/,
+# common/ and results/ are never touched.
 # ======================================================================
 
 SHELL := /bin/bash
@@ -21,14 +22,16 @@ HLS   ?= vitis_hls
 PROJ  ?= *_proj
 EX    ?=
 
-# Any directory holding a run_hls.tcl is an exercise.
-ALL_EXERCISES := $(sort $(patsubst %/run_hls.tcl,%,$(wildcard s*/*/run_hls.tcl)))
+# Any directory under exercises/ holding a run_hls.tcl is an exercise.
+ALL_EXERCISES := $(sort $(patsubst %/run_hls.tcl,%,$(wildcard exercises/s*/*/run_hls.tcl)))
 
-# EX=<dir> narrows every target to one exercise; unset means the whole repo.
+# EX=<dir> narrows every target to one directory; unset means the whole repo.
+# A path that exists under exercises/ may leave out the exercises/ prefix.
 ifeq ($(strip $(EX)),)
   SCOPE := .
 else
-  SCOPE := $(patsubst %/,%,$(EX))
+  EXD   := $(patsubst %/,%,$(EX))
+  SCOPE := $(if $(wildcard exercises/$(EXD)),exercises/$(EXD),$(EXD))
 endif
 
 # --- what counts as junk ----------------------------------------------

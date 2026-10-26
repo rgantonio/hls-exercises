@@ -1,6 +1,6 @@
 # HLS against snax-forge
 
-This repo started as self-learning exercises (`s0_` to `s2_`). The `bench/` part turns it into the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels snax-forge builds accelerators for are written here as HLS, in three ways, and their cycle counts are kept next to forge's.
+This repo started as self-learning exercises (`exercises/`, see its README). The `bench/` part turns it into the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels snax-forge builds accelerators for are written here as HLS, in three ways, and their cycle counts are kept next to forge's.
 
 This file is the plan and the conventions. `README.md` has the commands.
 
@@ -111,12 +111,13 @@ so it is reported per target, not per HLS run.
 
 ### 4.3 `dace`
 
-`bench/gen/gen_dace.py` (written in tier done, step D4) runs in forge's environment and writes `dace/<size>/` per kernel. A spike on DaCe 1.0.2 showed what comes out:
+`bench/gen/gen_dace.py` runs in forge's environment. It builds forge's own SDFG (`snax_forge.sdfg.build`), specializes it to the size, applies `FPGATransformSDFG`, and writes `dace/<size>/` per kernel. Here is what comes out on DaCe 1.0.2:
 
 - **The device file is plain Vitis C++ with pragmas in it.** Every map already has `PIPELINE II=1` and `LOOP_FLATTEN`. So `asic.tcl`'s `pipeline_loops 0` doesn't matter for this case; what DaCe chose is what runs.
-- **The top function is a DATAFLOW region over raw pointers,** with `m_axi` and `s_axilite` pragmas and hlslib macros. The generated file is kept unchanged. A small hand-written wrapper, `src/<kernel>_dace.cpp`, is the top instead: it takes sized arrays (so `ap_memory` ports) and calls DaCe's `module_<kernel>_0_0` function directly.
-- **Includes.** The device file includes `<dace/fpga_device.h>`, so the DaCe runtime headers (with hlslib) are copied into `bench/gen/dace_include/` and put on the include path. That way the Vitis machine needs no DaCe install.
-- **Library nodes** (tier A) expand into loops. `atax`'s transpose is written out to a transient, and every transient becomes one more top-level port (DaCe treats it as global memory). That is close to forge chaining accelerators through L1 (forge D105), and it is kept as DaCe made it. `MatMul` expands to `Gemv` first, so an FPGA implementation of `Gemv` (`FPGA_Accumulate`, `FPGA_TilesByColumn`) has to be chosen after that first expansion step.
+- **DaCe's entry function is a DATAFLOW region over raw pointers,** with `m_axi` and `s_axilite` pragmas and hlslib macros. Its device file is kept unchanged as `dace/<size>/<kernel>_0_0.cpp`, and that entry function is left unused.
+- **The generator writes a small top, `dace/<size>/<kernel>_dace.cpp`.** It has the same arguments as the hand-written top in `src/<kernel>.h`, so the ports (`ap_memory`) and the testbench are the same as in cases 1 and 2, and it calls DaCe's `module_<kernel>_0_0` function directly.
+- **Includes and flags.** The device file includes `<dace/fpga_device.h>`. So the generator copies DaCe's runtime headers and hlslib into `bench/gen/dace_include/`, and the Vitis machine needs no DaCe install. The case compiles with DaCe's own synthesis flags: `-std=c++14 -DDACE_SYNTHESIS -DDACE_XILINX -DDACE_XILINX_DEVICE_CODE -DHLSLIB_SYNTHESIS`.
+- **Library nodes** (tier A) expand into loops. `atax`'s transpose is written out to a transient, which DaCe treats as global memory. For now the generated top keeps every transient as a local array inside the block. Tier A decides whether transients become ports instead, which is closer to forge chaining accelerators through L1 (forge D105). `MatMul` expands to `Gemv` first, so an FPGA implementation of `Gemv` (`FPGA_Accumulate`, `FPGA_TilesByColumn`) has to be chosen after that first expansion step.
 - **Choices are recorded.** `gen_dace.py` reads the passes and expansions from `params.json` (a `dace` key) and writes them into the generated file's header comment, so every row traces back to what made it.
 
 If DaCe can't take a kernel through, that is a row with its `status` and the error, as forge's coverage table does (FE2).
@@ -131,37 +132,40 @@ hls-exercises/
   Makefile                       exercises: make run/clean; bench: make bench ARGS="..."
   docs/
     HLS_VS_FORGE.md              this file
+  exercises/                     the self-learning steps s0_ to s2_, with their README
   common/
     part.tcl                     exercises only (unchanged)
     asic.tcl                     bench runs (section 3.1)
     collect_latency.sh           unchanged, also works on bench projects
     collect_resources.sh         unchanged
-  notes/                         exercise notes and results (unchanged)
-  results/
-    hls_cycles.csv               one row per bench run point, written by bench.py
+  notes/                         env.md, directive reference, exercise results.csv
+  results/                       the only bench output that is kept (5.2)
+    hls_cycles.csv               one row per run point
+    hls_loops.csv                one row per loop per run point
+    report_<tier>.md             tables from the CSVs, rewritten by bench.py
     forge_cycles.csv             forge's counters, same keys (kernel, size, W)
     synth_vivado.csv             section 6, later
     synth_dc.csv                 section 6, later
   bench/
-    bench.py                     the driver: list, run, collect, check
+    bench.py                     the driver: list, run, collect, check, report
     run_bench.tcl                one Vitis run, everything from the environment
     gen/
       gen_data.py                vectors from forge's kernels (forge's env)
-      gen_dace.py                case 3 sources (forge's env, tier done step D4)
-      dace_include/              DaCe runtime headers for case 3 (copied, tier done step D4)
+      gen_dace.py                case 3 sources (forge's env)
+      dace_include/              DaCe runtime headers and hlslib, copied by gen_dace.py
     tier_done/
       vecadd/
         params.json              what to run (5.1)
-        README.md                what each case does, results table, findings
+        README.md                what each case does and what the run showed
         src/
           vecadd.h               declarations, sizes from -DSIZE_N, #error without DATA_T
           vecadd.cpp             top for unopt and opt
           vecadd_opt.cpp         only when opt needs other code
-          vecadd_dace.cpp        wrapper top for dace
           tb_vecadd.cpp          testbench, checks against data.h, calls DUT
         directives_opt.tcl       uses $W
-        vectors/n64/data.h       generated, committed
-        dace/n64/...             generated, committed
+        vectors/n64/data.h       generated by gen_data.py, committed
+        dace/n64/vecadd_0_0.cpp  DaCe's device file, generated, committed
+        dace/n64/vecadd_dace.cpp top for case 3, generated, committed
         opt_n64_w4_c3p33_proj/   Vitis project (ignored by git, removed by make clean)
         run_opt_n64_w4_c3p33_proj.log
       vecmul/ vsum/ dot/
@@ -193,19 +197,29 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
   "cases": {
     "unopt": {"top": "vecadd", "src": ["src/vecadd.cpp"]},
     "opt":   {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true},
-    "dace":  {"top": "vecadd_dace", "src": ["src/vecadd_dace.cpp", "dace/{size}/vecadd_0_0.cpp"],
-              "cflags": ["-I{bench}/gen/dace_include"]}
-  }
+    "dace":  {"top": "vecadd_dace",
+              "src": ["dace/{size}/vecadd_dace.cpp", "dace/{size}/vecadd_0_0.cpp"],
+              "cflags": ["-std=c++14", "-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE",
+                         "-DHLSLIB_SYNTHESIS", "-I{bench}/gen/dace_include"]}
+  },
+  "dace": {"passes": [], "expansions": {}}
 }
 ```
 
 - Size keys are `make_inputs`'s argument names (`n`, `m`). They give the tag (`n64`, `m38_n42`) and the macros (`SIZE_N`, `SIZE_M`).
 - `{size}`, `{W}` and `{bench}` (the absolute path of `bench/`) in paths and `cflags` are filled per point. Every path that reaches Vitis is absolute, because cosim compiles from inside the project.
 - Optional keys: `acc_dtype` (tier P, gives `ACC_T`), `clock_ns` (default 3.33), and per case `tb`, `cflags` or `directives` to override the defaults.
+- The top-level `dace` key is read by `gen_dace.py` only: `passes` names functions of `dace.transformation.auto.fpga` to apply, and `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`).
 
-### 5.2 `results/hls_cycles.csv`
+### 5.2 What is kept: `results/`
 
-One row per point, keyed by `tier, kernel, case, size, W, clock_ns`. A rerun replaces its row.
+The Vitis projects, logs and Verilog are scratch: git ignores them and `make clean` removes them. Only summaries are committed. That keeps the repo small and diffable, and `bench.py collect` can always rebuild them from projects that still exist.
+
+- `hls_cycles.csv`: one row per point.
+- `hls_loops.csv`: one row per loop per point (module, loop, trips, iteration latency, II achieved and target, pipelined). This is enough to explain a cycle count without the reports.
+- `report_<tier>.md`: per kernel, a table of the points with cycles, cycles per element and the ratio to `unopt`, then the loop table, then forge's rows from `forge_cycles.csv` when there are any. `run` and `collect` rewrite it, and `bench.py report` rewrites it on demand.
+
+Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces its rows. The columns of `hls_cycles.csv`:
 
 | Columns | Meaning |
 |---|---|
@@ -246,15 +260,14 @@ Each tier runs the same steps, and each step ends with what changed and the rows
 5. **Compare.** Add forge's counters to `results/forge_cycles.csv` and write the tier's table: cycles per case against forge's, with the known differences.
 6. **Synthesis.** Section 6, both sides.
 
-### H0 — setup (before tier done)
+### H0 — setup and the first run (`vecadd`)
 
-`common/asic.tcl`, `bench/run_bench.tcl`, `bench/bench.py`, `bench/gen/gen_data.py`, the README and the Makefile target come with this doc.
+The scripts and `vecadd` are in place for all three cases: sources, vectors from `gen_data.py`, and DaCe sources from `gen_dace.py`. Outside Vitis, a g++ build of the testbench passes for `unopt` and `dace` on forge's vectors. The first Vitis run checks the rest:
 
-What is left is running them once:
-- Add a `vecadd` folder.
-- Run `bench.py run --kernel vecadd --case unopt --dry-run`, then the real run.
-- Check that `config_op mul -impl fabric` and `config_array_partition -complete_threshold 0` are accepted on 2023.2.2 (`help` in `vitis_hls -i` if not).
-- Check that the report parsing fills every column.
+- `config_op mul -impl fabric` and `config_array_partition -complete_threshold 0` are accepted on 2023.2.2.
+- Array partitioning on top-level `ap_memory` arguments gives W ports.
+- Vitis takes DaCe's unused entry function (interface pragmas on a non-top function).
+- The report parsing fills every column, and `report_done.md` reads well.
 
 ### Tier done — `vecadd`, `vecmul`, `vsum`, `dot`
 
@@ -265,7 +278,6 @@ What is left is running them once:
 | `vsum` | n64, n512 | 1, 4, 8 | W = 1 is the `vsum` recipe, W = 4 is `vsum_tree`. `opt` gives W partial sums and a final add. |
 | `dot` | n64 (recipe), n512 | 4, 8 | Forge's dot study runs N = 512 at W = 4 and 8. Forge's dot variants (vmul + vsum through L1, FIFO link, MAC lanes) are the forge-side rows of this one HLS kernel. |
 
-Step D4 also writes `gen_dace.py`, starting with `vecadd` and copying in `dace_include/`.
 
 ### Tier A — `atax`, `bicg`, `mvt`, `gesummv`
 
@@ -290,7 +302,14 @@ B (divider unit, `covariance`'s mean), C (`covariance`, `softmax`), P (int8 in, 
 
 ## 8. Working with Claude Code
 
-Claude Code writes the sources and runs everything; you read the results and the step reports.
+The loop is the same as in the snax-forge work:
+
+1. The plan and the code are made in the chat and pushed here (sources, `params.json`, generated vectors and DaCe files).
+2. The chat gives a prompt for Claude Code on the machine with Vitis.
+3. Claude Code runs the bench, commits `results/` and kernel README updates, and pushes.
+4. The report (`results/report_<tier>.md`) and any failures go back to the chat, which plans the next step.
+
+Claude Code runs and reports; it does not redesign kernels or directives on its own. When a run fails, it reports the error lines from the log and stops, unless the prompt says what to fix.
 
 - **Start.** Every prompt starts with `git pull` in hls-exercises (and in snax-forge when vectors or DaCe sources are generated).
 - **Environments.** The Vitis side needs `vitis_hls` on the path (Vitis's `settings64.sh`) and Python 3, standard library only. The generators need snax-forge's pixi environment:
@@ -302,7 +321,7 @@ Claude Code writes the sources and runs everything; you read the results and the
 
 - **Order of runs.** One kernel and one case first with `--dry-run`, then for real, then the rest of the tier. Use `-j N` only once a single run is known to work.
 - **What counts as done.** Every row has `status ok` and `portable yes`, or the kernel README says why not.
-- **Hands off.** `common/part.tcl` and the `s*_` exercises are never changed by bench work.
+- **Hands off.** `common/part.tcl` and `exercises/` are never changed by bench work.
 - **Commits.** Short, one line per step, no co-author trailer.
 
 ---

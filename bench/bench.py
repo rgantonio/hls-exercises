@@ -11,11 +11,18 @@ docs/HLS_VS_FORGE.md.
                                  [-j N] [--dry-run]
   python3 bench/bench.py collect [--tier T] [--kernel K]   re-read existing projects
   python3 bench/bench.py check   [--tier T] [--kernel K]   portability of the Verilog
+  python3 bench/bench.py report  [--tier T]                write results/report_<tier>.md again
 
 Every run point is one Vitis project inside the kernel's folder, named
 <case>_<size>[_w<W>]_c<clock>_proj, holding one solution `sol` and a point.json
-that says what the point was. run and collect write one row per point into
-results/hls_cycles.csv, replacing the row with the same key.
+that says what the point was. The projects are scratch (git ignores them,
+make clean removes them). What is kept is the summary in results/:
+
+  hls_cycles.csv     one row per point: estimate, cosim cycles, checks
+  hls_loops.csv      one row per loop per point: trips, II, iteration latency
+  report_<tier>.md   tables made from the two CSVs (and forge_cycles.csv)
+
+run and collect replace the rows with the same key and write the report again.
 """
 
 from __future__ import annotations
@@ -36,7 +43,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BENCH = ROOT / "bench"
 RUN_TCL = BENCH / "run_bench.tcl"
-CSV_PATH = ROOT / "results" / "hls_cycles.csv"
+RESULTS = ROOT / "results"
+CSV_PATH = RESULTS / "hls_cycles.csv"
+LOOPS_PATH = RESULTS / "hls_loops.csv"
+FORGE_PATH = RESULTS / "forge_cycles.csv"
 
 CASES = ("unopt", "opt", "dace")
 CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "int8_t",
@@ -52,6 +62,8 @@ COLUMNS = [
     "vitis", "git", "date", "proj",
 ]
 KEY = ("tier", "kernel", "case", "size", "W", "clock_ns")
+LOOP_COLUMNS = list(KEY) + ["module", "loop", "lat_min", "lat_max", "iter_lat",
+                            "ii_achieved", "ii_target", "trips", "pipelined"]
 
 # Verilog patterns that tie the RTL to Xilinx parts (docs/HLS_VS_FORGE.md, 3.2).
 NOT_PORTABLE = [
@@ -201,6 +213,32 @@ def parse_csynth(rpt: Path) -> dict:
     return row
 
 
+def parse_loops(sol: Path, top: str) -> list[dict]:
+    """The loop table of every module report, top module first (as collect_latency.sh)."""
+    rdir = sol / "syn" / "report"
+    if not rdir.is_dir():
+        return []
+    reports = sorted(rdir.glob("*_csynth.rpt"), key=lambda r: (r.name != f"{top}_csynth.rpt", r.name))
+    loops = []
+    for r in reports:
+        module = r.name.removesuffix("_csynth.rpt")
+        inside = False
+        for line in r.read_text(errors="replace").splitlines():
+            if re.match(r"^\s*\* Loop:", line):
+                inside = True
+                continue
+            if inside and (line.startswith("=====") or line.startswith("+ ") or re.match(r"^\s*\* ", line)):
+                inside = False
+            if inside and re.match(r"^\s*\|\s*[-+]+ ", line):
+                c = _cells(line)
+                if len(c) >= 8:
+                    loops.append({"module": module, "loop": c[0].lstrip("-+ ").strip(),
+                                  "lat_min": c[1], "lat_max": c[2], "iter_lat": c[3],
+                                  "ii_achieved": c[4], "ii_target": c[5], "trips": c[6],
+                                  "pipelined": c[7]})
+    return loops
+
+
 def parse_cosim(sol: Path) -> dict:
     rpts = sorted((sol / "sim" / "report").glob("*cosim.rpt"))
     if not rpts:
@@ -267,6 +305,7 @@ def read_point(kdir: Path, proj: str) -> dict | None:
     row.update(parse_csynth(sol / "syn" / "report" / f"{meta['top']}_csynth.rpt"))
     row.update(parse_cosim(sol))
     row["portable"] = check_verilog(sol)
+    row["_loops"] = parse_loops(sol, meta["top"])
     if "lat_min" not in row or row["lat_min"] == "":
         row["status"] = "failed: no csynth report"
     elif meta.get("do_csim") and row.get("csim_errors") not in ("0",):
@@ -279,10 +318,33 @@ def read_point(kdir: Path, proj: str) -> dict | None:
 
 
 # ---------------------------------------------------------------- csv
+def read_csv(path: Path) -> list[dict]:
+    if not path.is_file():
+        return []
+    with path.open(newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+def write_loops(rows: list[dict]) -> None:
+    keys = {tuple(str(r[k]) for k in KEY) for r in rows}
+    kept = [r for r in read_csv(LOOPS_PATH) if tuple(r.get(k, "") for k in KEY) not in keys]
+    for r in rows:
+        for lp in r.get("_loops", []):
+            kept.append({**{k: str(r[k]) for k in KEY}, **lp})
+    order = {c: i for i, c in enumerate(CASES)}
+    kept.sort(key=lambda r: (r["tier"], r["kernel"], order.get(r["case"], 9), size_count(r["size"]),
+                             str(r["W"]).zfill(4), r["clock_ns"]))
+    with LOOPS_PATH.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=LOOP_COLUMNS, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(kept)
+
+
 def write_rows(rows: list[dict]) -> None:
     if not rows:
         return
     CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+    write_loops(rows)
     table: dict[tuple, dict] = {}
     if CSV_PATH.is_file():
         with CSV_PATH.open(newline="") as fh:
@@ -292,12 +354,97 @@ def write_rows(rows: list[dict]) -> None:
         table[tuple(str(r[k]) for k in KEY)] = {k: r.get(k, "") for k in COLUMNS}
     order = {c: i for i, c in enumerate(CASES)}
     keyed = sorted(table.values(), key=lambda r: (r["tier"], r["kernel"], order.get(r["case"], 9),
-                                                  r["size"], str(r["W"]).zfill(4), r["clock_ns"]))
+                                                  size_count(r["size"]), str(r["W"]).zfill(4), r["clock_ns"]))
     with CSV_PATH.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=COLUMNS, extrasaction="ignore")
         w.writeheader()
         w.writerows(keyed)
-    print(f"wrote {len(rows)} row(s) to {CSV_PATH.relative_to(ROOT)}")
+    print(f"wrote {len(rows)} row(s) to {CSV_PATH.relative_to(ROOT)} and its loops to {LOOPS_PATH.relative_to(ROOT)}")
+    write_reports({r["tier"] for r in rows})
+
+
+# ---------------------------------------------------------------- report
+def size_count(tag: str) -> int:
+    """'m38_n42' -> 38 * 42: the elements the size names."""
+    n = 1
+    for v in re.findall(r"[a-z]+(\d+)", tag or ""):
+        n *= int(v)
+    return n
+
+
+def _int(s: str) -> int | None:
+    try:
+        return int(float(s))
+    except (TypeError, ValueError):
+        return None
+
+
+def md_table(header: list[str], rows: list[list[str]]) -> list[str]:
+    out = ["| " + " | ".join(header) + " |", "|" + "|".join("---" for _ in header) + "|"]
+    out += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
+    return out + [""]
+
+
+def write_reports(tiers: set[str]) -> None:
+    rows = read_csv(CSV_PATH)
+    loops = read_csv(LOOPS_PATH)
+    forge = read_csv(FORGE_PATH)
+    order = {c: i for i, c in enumerate(CASES)}
+    for tier in sorted(tiers):
+        trows = [r for r in rows if r["tier"] == tier]
+        if not trows:
+            continue
+        out = [f"# Results: tier {tier}", "",
+               "Generated by `bench/bench.py` from `results/hls_cycles.csv` and `results/hls_loops.csv`. "
+               "Do not edit; rerun `python3 bench/bench.py report`.", "",
+               "- **cycles**: cosim latency (RTL simulation, Verilog), or the csynth estimate (marked `est`) "
+               "when cosim did not run.",
+               "- **cyc/elem**: cycles divided by the elements the size names (n, or m x n).",
+               "- **vs unopt**: the unopt cycles at the same size and clock divided by this row's.",
+               "- **II**: the top's interval from csynth. The loop table below has each loop's II.", ""]
+        for kernel in sorted({r["kernel"] for r in trows}):
+            krows = sorted([r for r in trows if r["kernel"] == kernel],
+                           key=lambda r: (size_count(r["size"]), order.get(r["case"], 9), str(r["W"]).zfill(4),
+                                          r["clock_ns"]))
+
+            def cycles(r: dict) -> tuple[int | None, str]:
+                c = _int(r.get("cosim_lat_avg"))
+                if c is not None:
+                    return c, str(c)
+                e = _int(r.get("lat_max"))
+                return e, (f"{e} est" if e is not None else "-")
+
+            base = {(r["size"], r["clock_ns"]): cycles(r)[0] for r in krows if r["case"] == "unopt"}
+            table = []
+            for r in krows:
+                c, ctext = cycles(r)
+                b = base.get((r["size"], r["clock_ns"]))
+                per = f"{c / size_count(r['size']):.2f}" if c else "-"
+                vs = f"{b / c:.1f}x" if b and c else "-"
+                ok = r["status"] if r["status"] == "ok" else f"**{r['status']}**"
+                port = r["portable"] if r["portable"] in ("yes", "") else f"**{r['portable']}**"
+                table.append([r["case"], r["size"], r["W"] or "-", r["clock_ns"], ok, ctext, per, vs,
+                              f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["clock_est_ns"], r["DSP"], port])
+            out += [f"## {kernel}", ""]
+            out += md_table(["case", "size", "W", "clock ns", "status", "cycles", "cyc/elem", "vs unopt",
+                             "est. latency", "II", "est. clock ns", "DSP", "portable"], table)
+            klo = [lp for lp in loops if lp["tier"] == tier and lp["kernel"] == kernel]
+            if klo:
+                klo.sort(key=lambda lp: (size_count(lp["size"]), order.get(lp["case"], 9), str(lp["W"]).zfill(4)))
+                out += ["Loops:", ""]
+                out += md_table(["case", "size", "W", "module", "loop", "trips", "iter lat", "II (achieved/target)",
+                                 "latency", "pipelined"],
+                                [[lp["case"], lp["size"], lp["W"] or "-", lp["module"], lp["loop"], lp["trips"],
+                                  lp["iter_lat"], f"{lp['ii_achieved']}/{lp['ii_target']}",
+                                  f"{lp['lat_min']}-{lp['lat_max']}", lp["pipelined"]] for lp in klo])
+            frows = [f for f in forge if f.get("kernel") == kernel]
+            if frows:
+                cols = [c for c in frows[0].keys()]
+                out += ["snax-forge (`results/forge_cycles.csv`):", ""]
+                out += md_table(cols, [[f.get(c, "") for c in cols] for f in frows])
+        path = RESULTS / f"report_{tier}.md"
+        path.write_text("\n".join(out))
+        print(f"wrote {path.relative_to(ROOT)}")
 
 
 def print_rows(rows: list[dict]) -> None:
@@ -396,6 +543,16 @@ def cmd_collect(args) -> int:
     return 0
 
 
+def cmd_report(args) -> int:
+    tiers = {r["tier"] for r in read_csv(CSV_PATH)}
+    if args.tier:
+        tiers &= {args.tier}
+    if not tiers:
+        sys.exit("no rows in results/hls_cycles.csv for that tier")
+    write_reports(tiers)
+    return 0
+
+
 def cmd_check(args) -> int:
     bad = 0
     for r in existing_rows(args):
@@ -407,10 +564,11 @@ def cmd_check(args) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("list", "run", "collect", "check"):
+    for name in ("list", "run", "collect", "check", "report"):
         p = sub.add_parser(name)
         p.add_argument("--tier", help="done, a, untiered, ... (folder bench/tier_<T>)")
-        p.add_argument("--kernel")
+        if name != "report":
+            p.add_argument("--kernel")
         if name in ("list", "run"):
             p.add_argument("--case", nargs="+", choices=CASES)
             p.add_argument("--size", nargs="+", help="size tags, e.g. n64 m38_n42")
@@ -422,7 +580,8 @@ def main() -> int:
             p.add_argument("-j", "--jobs", type=int, default=1, help="Vitis runs in parallel")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
     args = ap.parse_args()
-    return {"list": cmd_list, "run": cmd_run, "collect": cmd_collect, "check": cmd_check}[args.cmd](args)
+    return {"list": cmd_list, "run": cmd_run, "collect": cmd_collect, "check": cmd_check,
+            "report": cmd_report}[args.cmd](args)
 
 
 if __name__ == "__main__":
