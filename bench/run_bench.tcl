@@ -16,8 +16,9 @@
 #   TB_CFLAGS   flags for the testbench only: the run-time pins' values
 #               (-DCFG_LOOP_COUNT=..., from params.json's "config")
 #   PINS        the run-time pins (params.json "config"), space-separated: each gets an
-#               ap_none interface with -register, a 32-bit register loaded at ap_start,
-#               as forge's blocks sample their config pins at start
+#               ap_vld interface (data plus a valid bit). The C++ reads each pin once,
+#               so Vitis takes it once at the start of a run and keeps it in a register,
+#               as forge's blocks sample their config pins at start (valid = start there)
 #   TRIPCOUNT   loop=trips pairs, space-separated (e.g. BEAT=16): a loop bounded by a
 #               run-time pin gets set_directive_loop_tripcount at that value, so the
 #               csynth estimate is for this size. It changes no hardware.
@@ -63,9 +64,9 @@ source [file join $here .. common asic.tcl]
 # AXI4-Stream port (TDATA, TVALID, TREADY), read or written once, in order.
 set regmode [env_or AXIS_REGMODE both]
 foreach port [env_or AXIS ""] { set_directive_interface -mode axis -register_mode $regmode $top $port }
-# Run-time pins: a plain input with a register, so the block samples them at start and the
-# driver may change them during the run, as with forge's config pins.
-foreach pin [env_or PINS ""] { set_directive_interface -mode ap_none -register $top $pin }
+# Run-time pins: data plus a valid bit, read once per run. ap_none -register (35ecc92) gave a
+# register that reloads every cycle, so a pin changed mid-run still moved the loop bound.
+foreach pin [env_or PINS ""] { set_directive_interface -mode ap_vld $top $pin }
 if {$directives ne ""} { source $directives }
 foreach pair [env_or TRIPCOUNT ""] {
     lassign [split $pair =] loop trips
