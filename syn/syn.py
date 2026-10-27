@@ -2,8 +2,9 @@
 """syn/syn.py - ASIC synthesis of bench points with Design Compiler on FreePDK45.
 
 A point is a folder in rtl/, named <tier>/<kernel>/<point> (e.g.
-done/vecadd/unopt_n512_w8), holding Vitis's Verilog and a filelist.f that
-bench/bench.py writes. Patterns are shell globs over those names.
+done/vecadd/opt_w8, one hardware point: case and W, every size runs on it),
+holding Vitis's Verilog and a filelist.f that bench/bench.py writes. Patterns
+are shell globs over those names.
 
   python3 syn/syn.py list    [PATTERN ...]
   python3 syn/syn.py run     PATTERN ... [--clock NS] [--cores N] [-j N] [--dry-run]
@@ -13,7 +14,8 @@ Each run works in syn/runs/<tier>/<kernel>/<point>[_c<clock>]/ (the clock tag
 only for a clock other than the default): WORK/, logs/, reports/ and out/ (the
 mapped netlist and sdf). Every run also writes one row into
 syn/runs/summary.csv: area, critical path, slack and power. git ignores
-syn/runs/ entirely, so nothing here is committed.
+syn/runs/ entirely; only a copy of the summary, results/synth_dc.csv, is
+committed, so the numbers can be read without the runs.
 
 Tools and files, all overridable from the environment:
   DC_SHELL        dc_shell                               (Design Compiler)
@@ -41,6 +43,7 @@ RTL = ROOT / "rtl"
 RUNS = SYN / "runs"
 SCRIPT = SYN / "scripts" / "dc_syn.tcl"
 SUMMARY = RUNS / "summary.csv"
+RESULTS_COPY = ROOT / "results" / "synth_dc.csv"  # the committed copy of SUMMARY
 DEFAULT_LIB = ROOT.parent / "FreePDK45" / "osu_soc" / "lib" / "files" / "gscl45nm.db"
 DEFAULT_CLOCK = "10"
 
@@ -129,6 +132,8 @@ def write_summary(rows: list[dict]) -> None:
         w = csv.DictWriter(fh, fieldnames=COLUMNS, extrasaction="ignore")
         w.writeheader()
         w.writerows(sorted(table.values(), key=lambda r: (r["point"], float(r["clock_ns"] or 0))))
+    RESULTS_COPY.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(SUMMARY, RESULTS_COPY)
 
 
 def print_rows(rows: list[dict]) -> None:

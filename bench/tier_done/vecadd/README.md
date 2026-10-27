@@ -8,15 +8,17 @@ snax-forge `kernels/polybench/vecadd.py`, with `recipes/vecadd.json` (N = 64, W 
 
 Axis (A, B, C): one valid-ready port per array, each beat W lanes of 64 bits, as forge's `Decoupled(Vec(lanes, UInt(64)))`. Control is `ap_ctrl_hs`. The testbench packs forge's vectors into beats and checks every output exactly.
 
+Run-time pin, as forge's `loopCount`: `loop_count` (beats in the run, N / W), a 32-bit plain input read at `ap_start`. The size reaches the hardware only through the pins, so every size runs on one hardware point per case and W (`rtl/done/vecadd/<case>_w<W>/`).
+
 ## Cases
 
 | Case | Top | What runs |
 |---|---|---|
 | `unopt` | `vecadd` (`src/vecadd.cpp`) | `BEAT` over the beats, `LANE` over the W lanes of a beat, nothing pipelined: the lanes run one after the other. |
 | `opt` | `vecadd` (`src/vecadd.cpp`) | `directives_opt.tcl`: `BEAT` pipelined at II = 1, `LANE` unrolled, so a whole beat goes through every cycle. |
-| `dace` | `vecadd_dace` (`dace/<size>_w<W>/`) | DaCe's map at II = 1. At W = 4 and 8, DaCe's `Vectorization` makes the arrays W-lane words, so the loop takes one beat per cycle. |
+| `dace` | `vecadd_dace` (`dace/w<W>/`) | DaCe's map at II = 1. At W = 4 and 8, DaCe's `Vectorization` makes the arrays W-lane words, so the loop takes one beat per cycle. |
 
-Sizes n64 and n512, W = 1, 4 and 8.
+Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## What to expect
 
@@ -27,18 +29,4 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-**Update, commit 4fea150: register slices off.** The tables below are from the axis run with Vitis's register slices (bb9ca4c). Since 4fea150 the ports have none: `opt` and `dace` are 2 cycles shorter (1 for some reductions), and `unopt` saves up to one cycle per beat. `results/report_done.md` has the current numbers.
-
-First axis run: 26 Oct 2026, commit bb9ca4c. All 18 points pass csim and cosim with timing met, DSP 0 and portable Verilog; the tables are in `results/report_done.md`.
-
-| Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead (cycles − beats) |
-|---|---|---|---|
-| `unopt` | 129 / 241 / 217 | 1025 / 1921 / 1729 | — (2 cycles per element at W = 1, about 3.5–4 above) |
-| `opt` | 66 / 18 / 10 | 514 / 130 / 66 | 2 |
-| `dace` | 66 / 19 / 11 | 514 / 131 / 67 | 2 at W = 1, 3 vectorized |
-| forge `add_acc` | — / 19 / — | — | 3 (W = 4) |
-
-- The ports are as planned: `A_TDATA`, `B_TDATA`, `C_TDATA` of 256 bits at W = 4 with `TVALID`/`TREADY`, and an active-low synchronous reset `ap_rst_n` (Vitis fixes that once AXI ports exist).
-- `opt` runs one beat per cycle plus 2. Forge's unit runs one beat per cycle plus 3, so at n64 W = 4 it is 18 cycles against 19.
-- DaCe's vectorized loop reaches one beat per cycle too, one cycle behind `opt`, because its module is a function call from the generated top.
-- `unopt` at W = 4 and 8 is slower than at W = 1: each beat runs its W lanes one after the other, with loop overhead on top (15 cycles per beat at W = 4). So "vs unopt" at W > 1 uses a slower baseline than at W = 1.
+Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.

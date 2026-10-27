@@ -10,18 +10,19 @@
   "iface": "axis",
   "axis": ["A", "B", "C"],
   "axis_register_mode": "off",
+  "config": {"loop_count": "n // W"},
   "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_vecmul.cpp",
   "cases": {
-    "unopt": {"top": "vecmul", "src": ["src/vecmul.cpp"], "per_w": true},
-    "opt": {"top": "vecmul", "src": ["src/vecmul.cpp"], "per_w": true},
+    "unopt": {"top": "vecmul", "src": ["src/vecmul.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
+    "opt": {"top": "vecmul", "src": ["src/vecmul.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "dace": {
       "top": "vecmul_dace",
       "per_w": true,
       "W": [1, 4, 8],
-      "src": ["dace/{size}_w{W}/vecmul_dace.cpp", "dace/{size}_w{W}/vecmul_0_0.cpp"],
+      "src": ["dace/w{W}/vecmul_dace.cpp", "dace/w{W}/vecmul_0_0.cpp"],
       "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE"]
     }
   },
-  "dace": {"vectorize": true, "passes": [], "expansions": {}}
+  "dace": {"vectorize": true, "passes": [], "expansions": {}, "symbols": {"N": "loop_count * W"}}
 }

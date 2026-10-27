@@ -16,16 +16,24 @@ docs/HLS_VS_FORGE.md.
 Every run point is one Vitis project inside the kernel's folder, named
 <case>_<size>_w<W>[_c<clock>]_proj (the clock tag only for a clock other than
 the default), holding one solution `sol` and a point.json
-that says what the point was. The projects are scratch (git ignores them,
+that says what the point was. The size reaches the hardware only through the
+run-time pins (params.json "config", e.g. loop_count = n // W), which the
+testbench drives; the C arrays still need a depth, so each size is its own
+Vitis run. The projects are scratch (git ignores them,
 make clean removes them). What is kept is the summary in results/:
 
   hls_cycles.csv     one row per point: estimate, cosim cycles, checks
   hls_loops.csv      one row per loop per point: trips, II, iteration latency
   report_<tier>.md   tables made from the two CSVs (and forge_cycles.csv)
 
-and Vitis's generated Verilog of every point, copied to
-rtl/<tier>/<kernel>/<point>/ with a filelist.f (top module and files) that
-syn/syn.py synthesizes from.
+and Vitis's generated Verilog, one folder per hardware point,
+rtl/<tier>/<kernel>/<case>_w<W>[_c<clock>]/, with a filelist.f (top module and
+files) that syn/syn.py synthesizes from and a sizes.txt of the sizes that ran on
+it. The first size to land there is the reference; every other size's Verilog
+is compared with it (ignoring Vitis's CORE_GENERATION_INFO line, which carries
+the latency estimate) and the result goes into the rtl_same column: "ref",
+"yes", or "no: <files>". A size whose Verilog differs keeps its own folder,
+rtl/<tier>/<kernel>/<case>_<size>_w<W>/.
 
 run and collect replace the rows with the same key and write the report again.
 """
@@ -61,11 +69,11 @@ CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "i
 DEFAULT_CLOCK = "3.33"
 
 COLUMNS = [
-    "tier", "kernel", "case", "iface", "dtype", "size", "W", "clock_ns",
+    "tier", "kernel", "case", "iface", "dtype", "size", "W", "config", "clock_ns",
     "status", "csim_errors", "clock_est_ns", "clock_unc_ns", "timing",
     "lat_min", "lat_max", "ii_min", "ii_max", "pipeline",
     "cosim_status", "cosim_lat_min", "cosim_lat_avg", "cosim_lat_max",
-    "LUT", "FF", "DSP", "BRAM_18K", "portable",
+    "LUT", "FF", "DSP", "BRAM_18K", "portable", "rtl", "rtl_same",
     "vitis", "git", "date", "proj",
 ]
 KEY = ("tier", "kernel", "case", "size", "W", "clock_ns")
@@ -107,6 +115,37 @@ def clock_tag(clock: str) -> str:
     return "" if clock == DEFAULT_CLOCK else "_c" + clock.replace(".", "p")
 
 
+def evaluate(exprs: dict, names: dict) -> dict:
+    """{"loop_count": "n // W"} with names {"n": 64, "W": 4} -> {"loop_count": 16}. Later
+    entries may use earlier ones (a trip count of "loop_count")."""
+    out: dict = {}
+    for k, expr in exprs.items():
+        try:
+            out[k] = int(eval(str(expr), {"__builtins__": {}}, {**names, **out}))
+        except Exception as e:  # noqa: BLE001 - report which expression failed
+            sys.exit(f"cannot evaluate '{k}': '{expr}' with {names}: {e}")
+    return out
+
+
+def config_values(params: dict, cfg: dict, size: dict, w) -> tuple[dict, dict]:
+    """The run-time pins' values for one point (params "config") and the trip counts of
+    the loops they bound (the case's "tripcount")."""
+    names = {k.lower(): int(v) for k, v in size.items()}
+    names["W"] = int(w) if w is not None else 1
+    config = evaluate(params.get("config", {}), names)
+    trips = evaluate(cfg.get("tripcount", {}), {**names, **config})
+    return config, trips
+
+
+def config_label(config: dict) -> str:
+    return " ".join(f"{k}={v}" for k, v in config.items())
+
+
+def rtl_name(case: str, w, clock: str) -> str:
+    """The hardware point: one folder in rtl/ per case, W and HLS clock, whatever the size."""
+    return case + (f"_w{w}" if w is not None else "") + clock_tag(clock)
+
+
 def points(kdir: Path, params: dict, args) -> list[dict]:
     """Every (case, size, W, clock) the arguments select for one kernel."""
     out = []
@@ -124,9 +163,11 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
             if args.w and w is not None and w not in args.w:
                 continue
             name = f"{case}_{tag}" + (f"_w{w}" if w is not None else "") + f"{clock_tag(clock)}_proj"
+            config, trips = config_values(params, cfg, size, w)
             out.append({
                 "kdir": kdir, "params": params, "case": case, "cfg": cfg,
                 "size": size, "size_tag": tag, "W": w, "clock": clock, "proj": name,
+                "config": config, "trips": trips, "rtl_name": rtl_name(case, w, clock),
             })
     return out
 
@@ -167,6 +208,8 @@ def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
         "SRCS": " ".join(path(s) for s in cfg["src"]),
         "TB": path(cfg.get("tb", params["tb"])),
         "CFLAGS": " ".join(flags),
+        "TB_CFLAGS": " ".join(f"-DCFG_{k.upper()}={v}" for k, v in pt["config"].items()),
+        "TRIPCOUNT": " ".join(f"{k}={v}" for k, v in pt["trips"].items()),
         "DIRECTIVES": str(dpath.resolve()) if dpath.is_file() else "",
         "W": "" if w is None else str(w),
         "AXIS": " ".join(params.get("axis", [])) if params.get("iface") == "axis" else "",
@@ -330,23 +373,74 @@ def write_filelist(dst: Path, top: str) -> None:
         f"# top: {top}\n" + "".join(f + "\n" for f in files))
 
 
-def dump_rtl(kdir: Path, proj: str, tier: str, top: str) -> str:
-    """Copy the point's generated Verilog to rtl/<tier>/<kernel>/<point>/ (replacing what was
-    there) and write its filelist.f."""
-    vdir = kdir / proj / "sol" / "syn" / "verilog"
-    if not vdir.is_dir():
-        return ""
-    dst = RTL / tier / kdir.name / proj.removesuffix("_proj")
+RTL_IGNORE = re.compile(r"CORE_GENERATION_INFO")
+
+
+def _rtl_files(folder: Path) -> dict[str, Path]:
+    return {f.name: f for f in sorted(folder.iterdir()) if f.is_file() and f.suffix in RTL_SUFFIXES}
+
+
+def _normalized(f: Path) -> list[str]:
+    """A Verilog file without Vitis's CORE_GENERATION_INFO line, which carries the
+    latency estimate and so changes with the size even when the hardware does not."""
+    return [ln for ln in f.read_text(errors="replace").splitlines() if not RTL_IGNORE.search(ln)]
+
+
+def _copy_rtl(files: dict[str, Path], dst: Path, top: str, size_tag: str) -> None:
     if dst.exists():
         shutil.rmtree(dst)
     dst.mkdir(parents=True)
-    n = 0
-    for f in sorted(vdir.iterdir()):
-        if f.is_file() and f.suffix in RTL_SUFFIXES:
-            shutil.copy2(f, dst / f.name)
-            n += 1
+    for name, f in files.items():
+        shutil.copy2(f, dst / name)
     write_filelist(dst, top)
-    return f"{dst.relative_to(ROOT)} ({n} files)"
+    (dst / "sizes.txt").write_text("# Sizes whose Vitis run gave exactly this Verilog (bench/bench.py).\n"
+                                   f"{size_tag}\n")
+
+
+def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: str) -> tuple[str, str]:
+    """Put a point's Verilog under rtl/<tier>/<kernel>/<name>/ (name: <case>_w<W>[_c<clock>]).
+
+    The first size to arrive is the reference ("ref"). A later size whose Verilog is the
+    same, CORE_GENERATION_INFO aside, only adds itself to sizes.txt ("yes"); one that
+    differs gets its own folder, named after its project, and "no: <files>".
+    Returns (folder relative to the repo, rtl_same)."""
+    vdir = kdir / proj / "sol" / "syn" / "verilog"
+    if not vdir.is_dir():
+        return "", ""
+    files = _rtl_files(vdir)
+    dst = RTL / tier / kdir.name / name
+    if not (dst / "filelist.f").is_file():
+        _copy_rtl(files, dst, top, size_tag)
+        return str(dst.relative_to(ROOT)), "ref"
+    ref = _rtl_files(dst)
+    differs = sorted(set(files) ^ set(ref)) + sorted(
+        n for n in set(files) & set(ref) if _normalized(files[n]) != _normalized(ref[n]))
+    if not differs:
+        sizes = (dst / "sizes.txt").read_text().splitlines() if (dst / "sizes.txt").is_file() else []
+        if size_tag not in sizes:
+            (dst / "sizes.txt").write_text("\n".join(sizes + [size_tag]) + "\n")
+        return str(dst.relative_to(ROOT)), "yes"
+    alt = RTL / tier / kdir.name / proj.removesuffix("_proj")
+    _copy_rtl(files, alt, top, size_tag)
+    return str(alt.relative_to(ROOT)), "no: " + ", ".join(differs[:6]) + (" ..." if len(differs) > 6 else "")
+
+
+def reset_rtl(kdir: Path, tier: str, name: str, size_projs: list[str]) -> None:
+    """Remove a hardware point's folder, and the per-size folders of an earlier difference,
+    before every size of it is placed again."""
+    base = RTL / tier / kdir.name
+    for folder in [name] + [p.removesuffix("_proj") for p in size_projs]:
+        if (base / folder).exists():
+            shutil.rmtree(base / folder)
+
+
+def place_rtl(rows: list[dict], metas: dict) -> None:
+    """Dump the Verilog of every row, smallest size first so it is the reference, and fill
+    the rows' rtl and rtl_same columns. Runs after all Vitis runs, one at a time."""
+    for r in sorted(rows, key=lambda r: size_count(r["size"])):
+        meta = metas[r["proj"]]
+        kdir, proj = ROOT / Path(r["proj"]).parent, Path(r["proj"]).name
+        r["rtl"], r["rtl_same"] = dump_rtl(kdir, proj, meta["tier"], meta["top"], meta["rtl_name"], r["size"])
 
 
 def read_point(kdir: Path, proj: str) -> dict | None:
@@ -358,6 +452,7 @@ def read_point(kdir: Path, proj: str) -> dict | None:
     sol = kdir / proj / "sol"
     row = {k: "" for k in COLUMNS}
     row.update({k: meta[k] for k in ("tier", "kernel", "case", "dtype", "size", "W", "clock_ns", "date", "git")})
+    row["config"] = meta.get("config", "")
     row["iface"] = meta.get("iface", "ap_memory")
     row["proj"] = f"{kdir.relative_to(ROOT)}/{proj}"
     row.update(parse_log(kdir / f"run_{proj}.log"))
@@ -464,7 +559,14 @@ def write_reports(tiers: set[str]) -> None:
                "- **vs unopt**: the unopt cycles at the same size, W and clock divided by this row's.",
                "- **II**: the top's interval from csynth. The loop table below has each loop's II.",
                "- **HLS clock**: the period Vitis scheduled for. It sets how deep the pipelines are; it is not "
-               "a timing result. Timing comes from ASIC synthesis (`syn/`).", ""]
+               "a timing result. Timing comes from ASIC synthesis (`syn/`).",
+               "- **config**: the run-time pins the testbench drove (forge's loopCount and len). The size "
+               "reaches the hardware only through them.",
+               "- **RTL**: the hardware point in `rtl/` and whether this size's Verilog is that folder's: "
+               "`ref` (the first size, the reference), `yes` (identical apart from the latency comment), or "
+               "`no` (it differs, and has its own folder).",
+               "- **est. latency**: csynth's estimate; `?` where a loop bound is a run-time pin with no trip "
+               "count given (the DaCe case).", ""]
         for kernel in sorted({r["kernel"] for r in trows}):
             krows = sorted([r for r in trows if r["kernel"] == kernel],
                            key=lambda r: (size_count(r["size"]), order.get(r["case"], 9), str(r["W"]).zfill(4),
@@ -489,12 +591,16 @@ def write_reports(tiers: set[str]) -> None:
                 vs = f"{b / c:.1f}x" if b and c else "-"
                 ok = r["status"] if r["status"] == "ok" else f"**{r['status']}**"
                 port = r["portable"] if r["portable"] in ("yes", "") else f"**{r['portable']}**"
-                table.append([r["case"], r["size"], r["W"] or "-", r["clock_ns"], ok, ctext, per, over, vs,
-                              f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["DSP"], r["BRAM_18K"], port])
+                same = (r.get("rtl_same") or "-")
+                same = same if same in ("ref", "yes", "-") else f"**{same}**"
+                rtl = Path(r["rtl"]).name if r.get("rtl") else "-"
+                table.append([r["case"], r["size"], r["W"] or "-", r.get("config") or "-", r["clock_ns"], ok, ctext,
+                              per, over, vs, f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["DSP"], r["BRAM_18K"],
+                              port, f"{rtl} ({same})"])
             ifaces = sorted({r.get("iface") or "ap_memory" for r in krows})
             out += [f"## {kernel}", "", f"Interface: {', '.join(ifaces)}.", ""]
-            out += md_table(["case", "size", "W", "HLS clock ns", "status", "cycles", "cyc/elem", "overhead",
-                             "vs unopt", "est. latency", "II", "DSP", "BRAM", "portable"], table)
+            out += md_table(["case", "size", "W", "config", "HLS clock ns", "status", "cycles", "cyc/elem",
+                             "overhead", "vs unopt", "est. latency", "II", "DSP", "BRAM", "portable", "RTL"], table)
             klo = [lp for lp in loops if lp["tier"] == tier and lp["kernel"] == kernel]
             if klo:
                 klo.sort(key=lambda lp: (size_count(lp["size"]), order.get(lp["case"], 9), str(lp["W"]).zfill(4)))
@@ -515,8 +621,8 @@ def write_reports(tiers: set[str]) -> None:
 
 
 def print_rows(rows: list[dict]) -> None:
-    cols = ["kernel", "case", "size", "W", "clock_ns", "status", "lat_max", "ii_max",
-            "cosim_lat_avg", "DSP", "BRAM_18K", "portable"]
+    cols = ["kernel", "case", "size", "W", "config", "clock_ns", "status", "lat_max", "ii_max",
+            "cosim_lat_avg", "DSP", "BRAM_18K", "portable", "rtl_same"]
     table = [[str(r.get(c, "")) for c in cols] for r in rows]
     widths = [max(len(c), *(len(t[i]) for t in table)) for i, c in enumerate(cols)]
     print("  ".join(c.ljust(w) for c, w in zip(cols, widths)))
@@ -539,8 +645,8 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
     missing = missing_inputs(pt, env)
     if args.dry_run:
         print(f"\n# {kdir.relative_to(ROOT)} / {proj}")
-        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "DIRECTIVES", "W", "AXIS", "AXIS_REGMODE", "DO_CSIM", "DO_COSIM",
-                  "CLOCK_NS"):
+        for k in ("PROJ", "TOP", "SRCS", "TB", "CFLAGS", "TB_CFLAGS", "TRIPCOUNT", "DIRECTIVES", "W", "AXIS",
+                  "AXIS_REGMODE", "DO_CSIM", "DO_COSIM", "CLOCK_NS"):
             print(f"export {k}='{env[k]}'")
         print(f"cd {kdir} && {vitis} -f {RUN_TCL} 2>&1 | tee run_{proj}.log")
         for m in missing:
@@ -560,17 +666,21 @@ def run_point(pt: dict, args, vitis: str) -> dict | None:
         "dtype": pt["params"].get("dtype", "int64"), "size": pt["size_tag"],
         "iface": iface_label(pt["params"]),
         "W": "" if pt["W"] is None else pt["W"], "clock_ns": pt["clock"], "top": pt["cfg"]["top"],
+        "config": config_label(pt["config"]), "rtl_name": pt["rtl_name"],
         "do_csim": not args.no_csim, "do_cosim": not args.no_cosim,
         "date": dt.datetime.now().isoformat(timespec="seconds"), "git": git_rev(), "env": {
-            k: env[k] for k in ("SRCS", "TB", "CFLAGS", "DIRECTIVES")},
+            k: env[k] for k in ("SRCS", "TB", "CFLAGS", "TB_CFLAGS", "TRIPCOUNT", "DIRECTIVES")},
     }
     (kdir / proj).mkdir(exist_ok=True)
     (kdir / proj / "point.json").write_text(json.dumps(meta, indent=1) + "\n")
     row = read_point(kdir, proj)
-    dumped = dump_rtl(kdir, proj, meta["tier"], meta["top"])
     print(f"done {proj}: {row['status']}  lat {row['lat_min']}-{row['lat_max']}"
-          f"  cosim {row['cosim_lat_avg'] or '-'}  portable {row['portable'] or '-'}  rtl {dumped or '-'}", flush=True)
+          f"  cosim {row['cosim_lat_avg'] or '-'}  portable {row['portable'] or '-'}", flush=True)
     return row
+
+
+def point_meta(proj_rel: str) -> dict:
+    return json.loads((ROOT / proj_rel / "point.json").read_text())
 
 
 def cmd_run(args) -> int:
@@ -585,6 +695,16 @@ def cmd_run(args) -> int:
     if args.dry_run:
         return 0
     rows = [r for r in results if r]
+    # A hardware point run for every size of its kernel starts its rtl/ folder afresh;
+    # a partial rerun is compared with what is there.
+    groups: dict[tuple, list[dict]] = {}
+    for pt in pts:
+        groups.setdefault((pt["kdir"], pt["case"], pt["W"], pt["clock"]), []).append(pt)
+    for (kdir, _, _, _), gpts in groups.items():
+        all_sizes = {size_tag(s) for s in gpts[0]["params"]["sizes"]}
+        if {pt["size_tag"] for pt in gpts} >= all_sizes:
+            reset_rtl(kdir, gpts[0]["params"]["tier"], gpts[0]["rtl_name"], [pt["proj"] for pt in gpts])
+    place_rtl(rows, {r["proj"]: point_meta(r["proj"]) for r in rows})
     skipped = len(results) - len(rows)
     if rows:
         write_rows(rows)
@@ -606,12 +726,15 @@ def existing_rows(args) -> list[dict]:
 
 def cmd_collect(args) -> int:
     rows = existing_rows(args)
-    for r in rows:
-        kdir, proj = ROOT / Path(r["proj"]).parent, Path(r["proj"]).name
-        top = json.loads((kdir / proj / "point.json").read_text())["top"]
-        dump_rtl(kdir, proj, r["tier"], top)
     if not rows:
         sys.exit("no projects with a point.json found")
+    metas = {r["proj"]: point_meta(r["proj"]) for r in rows}
+    for r in rows:
+        meta = metas[r["proj"]]
+        if "rtl_name" not in meta:  # a project from before the run-time pins
+            meta["rtl_name"] = Path(r["proj"]).name.removesuffix("_proj")
+        reset_rtl(ROOT / Path(r["proj"]).parent, meta["tier"], meta["rtl_name"], [Path(r["proj"]).name])
+    place_rtl(rows, metas)
     write_rows(rows)
     print_rows(rows)
     return 0

@@ -9,13 +9,13 @@ ASIC synthesis of the bench points with Design Compiler on FreePDK45 (OSU `gscl4
 
 ## Run
 
-A point is named `<tier>/<kernel>/<point>`, the folder under `rtl/` (for example `done/vecadd/unopt_n512_w8`). Patterns are shell globs over those names; quote them.
+A point is named `<tier>/<kernel>/<point>`, the folder under `rtl/` (for example `done/vecadd/opt_w8`, one hardware point that every size runs on). Patterns are shell globs over those names; quote them.
 
 ```bash
 python3 syn/syn.py list 'done/vecadd/*'                       # the points a pattern picks
-python3 syn/syn.py run done/vecadd/unopt_n512_w8 --dry-run    # print the commands only
-python3 syn/syn.py run done/vecadd/unopt_n512_w8              # one point at 10 ns
-python3 syn/syn.py run 'done/*/opt_n512_w8' --clock 5 -j 2    # several, 2 DC runs at once
+python3 syn/syn.py run done/vecadd/opt_w8 --dry-run           # print the commands only
+python3 syn/syn.py run done/vecadd/opt_w8                     # one point at 10 ns
+python3 syn/syn.py run 'done/*/opt_w8' --clock 5 -j 2         # several, 2 DC runs at once
 python3 syn/syn.py summary                                    # every run so far
 ```
 
@@ -32,6 +32,7 @@ syn/runs/<tier>/<kernel>/<point>[_c<clock>]/   (clock tag only when not 10 ns)
   reports/         qor, area, area_hierarchy, timing, constraint_setup, power, power_hierarchy, ...
   out/             <top>_mapped.v, .sdf
 syn/runs/summary.csv   one row per point and clock: area, cells, critical path, slack, power
+                       (copied to results/synth_dc.csv, which is committed)
 ```
 
 ## Files

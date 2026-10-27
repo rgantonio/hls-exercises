@@ -7,22 +7,27 @@ Runs in snax-forge's pixi environment, so the SDFG is the one forge builds
   pixi run --manifest-path $FORGE/pixi.toml \\
       python $PWD/bench/gen/gen_dace.py --forge $FORGE [--tier done] [--kernel vecadd]
 
-For every kernel whose params.json has a "dace" case, every size and every W
-of that case (params["cases"]["dace"]["W"]):
+For every kernel whose params.json has a "dace" case, and every W of that case
+(params["cases"]["dace"]["W"]):
 
-  1. build forge's simplified SDFG and specialize it to the size;
+  1. build forge's simplified SDFG and keep its sizes symbolic: DaCe passes a
+     free symbol (N) to its module as a scalar argument, so the size is a
+     run-time pin, as forge's loopCount, and one hardware serves every size;
   2. at W > 1, DaCe's Vectorization with vector_len W, so the arrays become
      W-lane words of dace::vec<T, W> (params["dace"]["vectorize"] must be true:
      DaCe 1.0.2 cannot vectorize reductions);
   3. FPGATransformSDFG, then the passes listed in params["dace"]["passes"];
   4. expand library nodes (implementations from params["dace"]["expansions"]);
   5. generate code only (v++ is never called) and keep DaCe's device file
-     as dace/<size>_w<W>/<kernel>_0_0.cpp, unchanged apart from a header comment;
-  6. write dace/<size>_w<W>/<kernel>_dace.cpp, a small top with the same
-     arguments as the kernel's hand-written top (src/<kernel>.h), which calls
-     DaCe's module function directly. Its ports get the same interface as cases
-     1 and 2 (axis, from params.json); DaCe's own entry function (m_axi,
-     s_axilite, DATAFLOW) is left unused.
+     as dace/w<W>/<kernel>_0_0.cpp, unchanged apart from a header comment;
+  6. write dace/w<W>/<kernel>_dace.cpp, a small top with the same arguments
+     as the kernel's hand-written top (src/<kernel>.h), which calls DaCe's
+     module function directly. Its ports get the same interface as cases 1 and
+     2 (axis, from params.json); DaCe's own entry function (m_axi, s_axilite,
+     DATAFLOW) is left unused. DaCe's symbols are computed from the top's pins
+     with params["dace"]["symbols"] (e.g. {"N": "loop_count * W"}), and a
+     transient array is sized for the largest size in params.json, a
+     design-time bound of DaCe's hardware.
 
 It also copies DaCe's runtime headers and hlslib into bench/gen/dace_include/,
 so the Vitis machine needs no DaCe install. docs/HLS_VS_FORGE.md, section 4.3.
@@ -103,13 +108,17 @@ def split_args(sig: str) -> list[str]:
     return out
 
 
-def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, symbols: dict) -> str:
+def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, symbols: dict,
+            sym_map: dict, max_tag: str) -> str:
     """The top <kernel>_dace: the hand-written top's arguments, DaCe's module inside.
 
     Module arguments named fpga_<X>, with X an argument of the hand-written top,
-    become that argument (an ap_memory port). Everything else is a DaCe
-    transient: an array becomes a local static array, a scalar a local
-    variable passed by value (DaCe's module takes scalar transients by value).
+    become that argument (an axis port). A scalar argument that is one of DaCe's
+    symbols gets its value from the top's pins through sym_map (a C++
+    expression, e.g. "loop_count * W"). Everything else is a DaCe transient: an
+    array becomes a local static array sized at `symbols` (the largest size), a
+    scalar a local variable passed by value (DaCe's module takes scalar
+    transients by value).
     """
     import dace
 
@@ -127,9 +136,15 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
                 continue
             desc = sdfg.arrays.get(name)
             size = int(dace.symbolic.evaluate(desc.total_size, symbols)) if desc is not None else 1
-            lines.append(f"    static {ctype} {name}[{size}];  // DaCe transient array, kept inside the block")
+            lines.append(f"    static {ctype} {name}[{size}];  // DaCe transient array, inside the block, sized for {max_tag}")
             notes.append(f"{name}[{size}]")
             call.append(name)
+        elif scalar and scalar.group(2) in sym_map:
+            ctype, name = scalar.group(1).strip(), scalar.group(2)
+            lines.append(f"    {ctype} {name} = ({ctype})({sym_map[name]});  // DaCe symbol, from the run-time pins")
+            call.append(name)
+        elif scalar and scalar.group(2) in {str(s) for s in sdfg.free_symbols} | set(sdfg.symbols):
+            sys.exit(f"{module_name}: argument '{a}' is a DaCe symbol with no entry in params['dace']['symbols']")
         elif scalar:
             ctype, name = scalar.group(1).strip(), scalar.group(2)
             lines.append(f"    {ctype} {name} = 0;  // DaCe transient scalar, passed by value")
@@ -140,12 +155,13 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
     body = "\n".join(lines + [f"    {module_name}({', '.join(call)});"])
     extra = ""
     if notes:
-        extra = ("// DaCe transients " + ", ".join(notes) + " stay inside the block for now; whether\n"
+        extra = ("// DaCe transients " + ", ".join(notes) + f" stay inside the block for now (arrays sized for\n"
+                 f"// {max_tag}, the largest size in params.json); whether\n"
                  "// transient arrays become ports instead is open (docs/HLS_VS_FORGE.md, section 4.3).\n")
     return (
         f"// Generated by bench/gen/gen_dace.py. Do not edit.\n"
-        f"// Top for case 3: same arguments as {kernel}() in src/{kernel}.h, so the testbench\n"
-        f"// and the ap_memory ports are the same as in cases 1 and 2.\n{extra}"
+        f"// Top for case 3: same arguments as {kernel}() in src/{kernel}.h, so the testbench,\n"
+        f"// the axis ports and the run-time pins are the same as in cases 1 and 2.\n{extra}"
         f'#include <cstdint>\n#include "{kernel}.h"\n\n'
         f"void {module_name}({', '.join(args)});\n\n"
         f"void {kernel}_dace({params}) {{\n{body}\n}}\n"
@@ -172,16 +188,19 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
     from dace.transformation.dataflow import Vectorization
 
     widths = params["cases"]["dace"].get("W", [1])
-    for size, width in [(s, w) for s in params["sizes"] for w in widths]:
-        tag = f"{size_tag(size)}_w{width}"
-        symbols = spec.bind_symbols(spec.make_inputs(np.random.default_rng(0), **size))
+    sym_map = cfg.get("symbols", {})
+    # Transient arrays get the largest size's extent; the sizes themselves stay symbolic.
+    biggest = max(params["sizes"], key=lambda s: int(np.prod(list(s.values()))))
+    max_tag = size_tag(biggest)
+    symbols = spec.bind_symbols(spec.make_inputs(np.random.default_rng(0), **biggest))
+    for width in widths:
+        tag = f"w{width}"
         sdfg = build(spec, simplify=True)
         sdfg.name = kernel
-        sdfg.specialize(symbols)
         if width > 1:
             if not cfg.get("vectorize", False):
                 sys.exit(f"{kernel}: dace case asks for W = {width} but params['dace']['vectorize'] is false")
-            # N is a multiple of W (the kernel header checks it), so no remainder: without
+            # N is a multiple of W (the kernel header and the pins keep it so), so no remainder: without
             # preamble=False and postamble=False DaCe 1.0.2 adds a step that reads past the end.
             if not sdfg.apply_transformations(Vectorization, options={"vector_len": width, "propagate_parent": True,
                                                                        "preamble": False, "postamble": False}):
@@ -217,12 +236,13 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
         out = kdir / "dace" / tag
         out.mkdir(parents=True, exist_ok=True)
         stamp = (f"// Generated by bench/gen/gen_dace.py from snax-forge kernels/{params['forge_kernel']}.py\n"
-                 f"// DaCe {dace.__version__}, symbols {symbols}, "
+                 f"// DaCe {dace.__version__}, sizes symbolic ({', '.join(sorted(sym_map)) or 'none'}), "
                  f"{'Vectorization ' + str(width) + ', ' if width > 1 else ''}FPGATransformSDFG, "
                  f"passes {cfg.get('passes', [])}, expansions {expansions or 'default'}.\n"
                  f"// DaCe's device file, unchanged below this header. Do not edit.\n\n")
         (out / f"{kernel}_0_0.cpp").write_text(stamp + code)
-        (out / f"{kernel}_dace.cpp").write_text(wrapper(kernel, tparams, module_sig, module_name, sdfg, symbols))
+        (out / f"{kernel}_dace.cpp").write_text(wrapper(kernel, tparams, module_sig, module_name, sdfg, symbols,
+                                                        sym_map, max_tag))
         print(f"wrote {out.relative_to(ROOT)}/{kernel}_0_0.cpp and {kernel}_dace.cpp ({module_name})")
 
 

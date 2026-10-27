@@ -8,15 +8,17 @@ snax-forge `kernels/polybench/dot.py`, with `recipes/dot.json` (vmul then an add
 
 Axis (A, B, out (one beat)): one valid-ready port per array, each beat W lanes of 64 bits, as forge's `Decoupled(Vec(lanes, UInt(64)))`. Control is `ap_ctrl_hs`. The testbench packs forge's vectors into beats and checks every output exactly.
 
+Run-time pins, as forge's `Accumulator`: `loop_count` (beats in the run, N / W) and `len` (beats per result, T), 32-bit plain inputs read at `ap_start`. A result leaves every `len` beats and at the last beat, and the sum restarts. The testbench sets `len = loop_count`, so one sum. DaCe's top takes `len` too but has no restart, so it ignores it. The size reaches the hardware only through the pins, so every size runs on one hardware point per case and W (`rtl/done/dot/<case>_w<W>/`).
+
 ## Cases
 
 | Case | Top | What runs |
 |---|---|---|
 | `unopt` | `dot` (`src/dot.cpp`) | `BEAT` over the beats, `LANE` over the W lanes of a beat, nothing pipelined: the lanes run one after the other. |
 | `opt` | `dot` (`src/dot.cpp`) | `directives_opt.tcl`: `BEAT` pipelined at II = 1, `LANE` unrolled, so a whole beat goes through every cycle. |
-| `dace` | `dot_dace` (`dace/<size>_w<W>/`) | DaCe's default is two loops: `A * B` into a transient array `__tmp0[N]`, then the sum over it, which is forge's "vmul then vsum through L1" inside one block. The array is a RAM inside the block (BRAM in the estimate). As for `vsum`, W = 1 only. |
+| `dace` | `dot_dace` (`dace/w<W>/`) | DaCe's default is two loops: `A * B` into a transient array `__tmp0[N]`, then the sum over it, which is forge's "vmul then vsum through L1" inside one block. The array is a RAM inside the block (BRAM in the estimate), sized for n512, the largest size: its depth is a design-time bound, so this hardware takes runs up to N = 512. As for `vsum`, W = 1 only. |
 
-Sizes n64 and n512, W = 1, 4 and 8.
+Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## What to expect
 
@@ -25,15 +27,4 @@ Sizes n64 and n512, W = 1, 4 and 8.
 
 ## Results
 
-**Update, commit 4fea150: register slices off.** The tables below are from the axis run with Vitis's register slices (bb9ca4c). Since 4fea150 the ports have none: `opt` and `dace` are 2 cycles shorter (1 for some reductions), and `unopt` saves up to one cycle per beat. `results/report_done.md` has the current numbers.
-
-First axis run: 26 Oct 2026, commit bb9ca4c. All 14 points pass, DSP 0, portable; all miss 3.33 ns on the FPGA (the 64-bit fabric multiplier, as in `vecmul`).
-
-| Case | n64 W1 / W4 / W8 | n512 W1 / W4 / W8 | Overhead |
-|---|---|---|---|
-| `unopt` | 194 / 226 / 210 | 1538 / 1794 / 1666 | — |
-| `opt` | 69 / 21 / 14 | 517 / 133 / 70 | 5 (6 at W = 8) |
-| `dace` | 136 | 1032 | about $N + 8$ |
-
-- `opt` is the fused form: W multipliers, an adder tree and one accumulator at II = 1, one beat per cycle plus 5. At W = 8 the tree is one stage deeper.
-- DaCe's `dot` takes 2 cycles per element. Its two loops run one after the other, and `A*B` sits between them in a RAM inside the block (`BRAM_18K` = 2, `dot_dace_p_tmp0_RAM_AUTO_1R1W.v` in `rtl/`). That breaks the plan's rule that memory stays outside the block. It is DaCe's default, which is forge's "vmul then vsum through L1" with the L1 moved inside.
+Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.

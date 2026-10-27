@@ -13,6 +13,11 @@
 #   SRCS        design sources, space-separated, absolute paths
 #   TB          testbench source, absolute path
 #   CFLAGS      flags for design and testbench (-DDATA_T=..., -DSIZE_N=..., -I...)
+#   TB_CFLAGS   flags for the testbench only: the run-time pins' values
+#               (-DCFG_LOOP_COUNT=..., from params.json's "config")
+#   TRIPCOUNT   loop=trips pairs, space-separated (e.g. BEAT=16): a loop bounded by a
+#               run-time pin gets set_directive_loop_tripcount at that value, so the
+#               csynth estimate is for this size. It changes no hardware.
 #   DIRECTIVES  directives file to source, absolute path, or empty
 #   W           lane count for the directives (empty when the case has none)
 #   AXIS        top-level arguments to give an axis interface, space-separated
@@ -47,7 +52,7 @@ set W          [env_or W ""]
 open_project -reset $proj
 set_top $top
 foreach f $::env(SRCS) { add_files $f -cflags $cflags }
-add_files -tb $::env(TB) -cflags "$cflags -DDUT=$top"
+add_files -tb $::env(TB) -cflags "$cflags [env_or TB_CFLAGS {}] -DDUT=$top"
 
 open_solution -reset sol -flow_target vivado
 source [file join $here .. common asic.tcl]
@@ -56,6 +61,10 @@ source [file join $here .. common asic.tcl]
 set regmode [env_or AXIS_REGMODE both]
 foreach port [env_or AXIS ""] { set_directive_interface -mode axis -register_mode $regmode $top $port }
 if {$directives ne ""} { source $directives }
+foreach pair [env_or TRIPCOUNT ""] {
+    lassign [split $pair =] loop trips
+    set_directive_loop_tripcount -min $trips -max $trips -avg $trips "$top/$loop"
+}
 
 if {$do_csim}  { csim_design }
 csynth_design

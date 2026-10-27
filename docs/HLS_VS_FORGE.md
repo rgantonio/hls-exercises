@@ -20,7 +20,9 @@ Every kernel is built in three cases.
 
 All three cases have the same ports: **axis**, the valid-ready interface of SNAX's units (section 2).
 
-**Cycles first.** Each run point records the csynth estimate (latency min and max, II) and the cosim latency, which is the RTL cycle count. Area and fmax come later, from synthesis of the same Verilog (section 6).
+**Cycles first.** Each run point records the csynth estimate (latency min and max, II) and the cosim latency, which is the RTL cycle count. Area and fmax come from synthesis of the same Verilog (section 6).
+
+**Hardware points and sizes.** A hardware point is a case and a W (and the HLS clock). The size is not part of it: it reaches the block on run-time pins, as in forge (section 2), so every size runs on the same Verilog, and synthesis runs once per hardware point.
 
 **The forge side.** Forge's number is its accelerator window, the `forge counter`, on SNAX-GVSoC and on snax_cluster's RTL (forge `docs/ARCHITECTURE.md` §7, `docs/RUN.md` §8). It goes into `results/forge_cycles.csv`, copied from forge's runs until forge has an export command.
 
@@ -32,16 +34,29 @@ These keep the two sides comparable. Where a difference can't be removed, it is 
 
 **Same kernels.** Forge's kernel files (`kernels/<group>/<kernel>.py`) are the source. The HLS C++ follows their NumPy body, at `int64` through tier C and `int8` in with `int32` accumulate from tier P (forge D113).
 
-**Same sizes.** The first size of every kernel is the one forge's recipe runs (`recipes/<kernel>.json`). After that come the sizes the plan sets per tier (section 7). Sizes and W are compile-time constants (`-DSIZE_N=64 -DW=4`).
+**Same sizes.** The first size of every kernel is the one forge's recipe runs (`recipes/<kernel>.json`). After that come the sizes the plan sets per tier (section 7). `docs/SIZES.md` lists them, with PolyBench's and NPBench's sizes for later.
+
+**Same split between design time and run time.** Forge's blocks take their lanes and data width at elaboration, and the run's length on 32-bit configuration pins that the CSR manager drives and the block samples at start (forge D130, `CtrlAdapter`): `loopCount`, the beats in the run, and for the `Accumulator` also `len`, the beats per result (T). M13 B1 renames them per unit to JOB_BEATS and JOBS (forge open item 83). The HLS tops follow that:
+
+| Kind | Parameter | HLS form |
+|---|---|---|
+| Design time | W, dtype, case, HLS clock | compile flags (`-DW=4`) and directives: one Verilog each |
+| Run time | `loop_count` = N / W beats | a `cfg_t` (`uint32_t`) argument of the top |
+| Run time | `len` = beats per result (`vsum`, `dot`; `rowsum` later) | a `cfg_t` argument |
+
+- A scalar argument under `ap_ctrl_hs` becomes an `ap_none` input: a plain wire with no handshake, like a CSR register's output. The top copies it into a local at entry, so it is read at `ap_start`.
+- The values come from `params.json`'s `config` (e.g. `"loop_count": "n // W"`). `bench.py` passes them to the testbench only (`-DCFG_LOOP_COUNT=16`), never to the design, so the design cannot fold them into constants.
+- `SIZE_N` stays a compile flag for the C side: the testbench's arrays and the depth of the axis arrays in the top's signature need it, so each size is still its own Vitis run. It should not reach the Verilog, and `bench.py` checks that: every size's Verilog of a hardware point is compared with the first one's (the `rtl_same` column), and a size whose Verilog differs keeps its own folder in `rtl/`.
+- A loop bounded by a pin has no trip count for csynth's estimate. `params.json`'s `tripcount` (e.g. `"BEAT": "loop_count"`) gives it one per size with `set_directive_loop_tripcount`, which changes no hardware. DaCe's loops are unlabelled, so the `dace` case's estimate shows `?`; its cosim count is unaffected.
 
 **Same data.** `bench/gen/gen_data.py` runs in forge's pixi environment. It calls each kernel's `make_inputs` with a fixed seed and forge's reference, and writes `vectors/<size>/data.h`. The testbench checks every output exactly.
 
 **Same block boundary: axis ports.**
 - Forge's units take their data as `Decoupled(Vec(lanes, UInt(64)))`: one valid-ready handshake around all W lanes, with the streamers outside the unit (forge D112). The HLS tops match that. Every array argument is one AXI4-Stream port (`TDATA`, `TVALID`, `TREADY`) whose `TDATA` holds one beat of W lanes, W × 64 bits with lane 0 in the low bits.
 - A beat is `vec_t` from `bench/include/lanes.h`. It is DaCe's own `dace::vec<T, W>`: `T` itself at W = 1, `hlslib::DataPack<T, W>` (one `ap_uint<64W>`) above. So case 3's generated module takes exactly the type cases 1 and 2 use.
-- A reduction's result is a one-beat axis port of one element (`out[1]`), as forge's accumulator has `Decoupled(UInt)`.
+- A reduction's result is an axis port of one element per beat (`out[NOUT]`), as forge's accumulator has `Decoupled(UInt)`. With `len = loop_count` there is one result, `NOUT = 1`.
 - **No register slices.** By default Vitis puts a register slice on every axis port, a two-entry skid buffer that registers `TDATA`/`TVALID` and `TREADY` (2 × W × 64 flops per port). Forge's units have none: their handshake is plain logic (`io.a.ready := busy && io.b.valid && io.out.ready`). So the bench sets `"axis_register_mode": "off"`, and the `iface` column says which mode a row used. In the first synthesis run (`vecadd` `unopt_n512_w8`, with the slices on), they were 3,072 of the 4,843 flops.
-- `params.json` lists the axis ports, and `run_bench.tcl` sets them with `set_directive_interface -mode axis -register_mode <mode>` for every case. Axis on an array argument needs every element read or written once, in order, which the tier done kernels do.
+- `params.json` lists the axis ports, and `run_bench.tcl` sets them with `set_directive_interface -mode axis -register_mode <mode>` for every case. Axis on an array argument needs every element read or written once, in order, which the tier done kernels do. The testbench's arrays hold exactly the beats the pins ask for, so cosim's transaction counts match.
 - The testbench plays the streamer: it packs forge's inputs into beats, and cosim drives the streams with no stalls.
 - Control is `ap_ctrl_hs` (start, done, idle, ready). There are no CSRs and no AXI memory-mapped ports.
 
@@ -119,17 +134,18 @@ so it is reported per target, not per HLS run.
 
 ### 4.3 `dace`
 
-`bench/gen/gen_dace.py` runs in forge's environment. It builds forge's own SDFG (`snax_forge.sdfg.build`) and specializes it to the size. At W > 1 it applies DaCe's `Vectorization` with `vector_len` W. Then it applies `FPGATransformSDFG` and writes `dace/<size>_w<W>/` per kernel. Here is what comes out on DaCe 1.0.2:
+`bench/gen/gen_dace.py` runs in forge's environment. It builds forge's own SDFG (`snax_forge.sdfg.build`) and keeps its sizes symbolic, so DaCe passes the symbol `N` to its module as an `int` argument: DaCe's own run-time pin. At W > 1 it applies DaCe's `Vectorization` with `vector_len` W. Then it applies `FPGATransformSDFG` and writes `dace/w<W>/` per kernel, one per hardware point, for every size. Here is what comes out on DaCe 1.0.2:
 
 - **Vectorization works on the elementwise kernels** (`vecadd`, `vecmul`): the arrays become `dace::vec<int64_t, W>` words and the loop runs one word per cycle. It needs `preamble=False` and `postamble=False`; otherwise DaCe adds a remainder step that reads one word past the end, even when W divides N.
 - **It does not work on reductions.** On `vsum` it fails with a `KeyError`, and on `dot` it doesn't finish. So their `dace` case runs at W = 1 only (`"W": [1]` in the case), which is what DaCe gives without hand work.
 
 - **The device file is plain Vitis C++ with pragmas in it.** Every map already has `PIPELINE II=1` and `LOOP_FLATTEN`. So `asic.tcl`'s `pipeline_loops 0` doesn't matter for this case; what DaCe chose is what runs.
 - **DaCe's entry function is a DATAFLOW region over raw pointers,** with `m_axi` and `s_axilite` pragmas and hlslib macros. Its device file is kept unchanged as `dace/<size>_w<W>/<kernel>_0_0.cpp`, and that entry function is left unused.
-- **The generator writes a small top, `dace/<size>_w<W>/<kernel>_dace.cpp`.** It has the same arguments as the hand-written top in `src/<kernel>.h`, so the ports (axis) and the testbench are the same as in cases 1 and 2, and it calls DaCe's `module_<kernel>_0_0` function directly.
+- **The generator writes a small top, `dace/w<W>/<kernel>_dace.cpp`.** It has the same arguments as the hand-written top in `src/<kernel>.h`, so the ports (axis), the pins and the testbench are the same as in cases 1 and 2, and it calls DaCe's `module_<kernel>_0_0` function directly.
+- **Symbols from pins.** `params.json`'s `dace.symbols` says how each DaCe symbol comes from the top's pins, e.g. `{"N": "loop_count * W"}` (DaCe counts elements, the pin counts beats). A symbol with no entry stops the generator. DaCe has no restart, so a `len` pin goes unused in this case.
 - **Includes and flags.** The device file includes `<dace/fpga_device.h>`. So the generator copies DaCe's runtime headers and hlslib into `bench/gen/dace_include/`, and the Vitis machine needs no DaCe install. The case compiles with DaCe's own synthesis flags, `-DDACE_SYNTHESIS -DDACE_XILINX -DDACE_XILINX_DEVICE_CODE`. Every case includes `bench/gen/dace_include/` anyway, for `vec_t`, and gets `-DHLSLIB_SYNTHESIS`: without it hlslib's `DataPack` bounds-checks with `std::stringstream`, which Vitis's csynth front end rejects (csim still passes). `lanes.h` stops the build when the flag is missing.
 - **Reductions** (`vsum`, `dot`). `np.sum` becomes a loop at II = 1 that writes through DaCe's write-conflict resolution into a scalar transient, which DaCe's module takes by value. DaCe's `dot` is two loops: `A * B` into a transient array of N, then the sum over it, which is forge's "vmul then vsum through L1" inside one block.
-- **Transients in the generated top.** A scalar is a local variable. An array is a local static array, so it is a RAM inside the block.
+- **Transients in the generated top.** A scalar is a local variable. An array is a local static array, so it is a RAM inside the block. Its size depends on the symbols, so it is sized for the largest size in `params.json`: that depth is a design-time bound of DaCe's hardware (`dot`'s `__tmp0[512]`).
 - **Library nodes** (tier A) expand into loops. `atax`'s transpose is written out to a transient, which DaCe treats as global memory. For now the generated top keeps every transient as a local array inside the block. Tier A decides whether transients become ports instead, which is closer to forge chaining accelerators through L1 (forge D105). `MatMul` expands to `Gemv` first, so an FPGA implementation of `Gemv` (`FPGA_Accumulate`, `FPGA_TilesByColumn`) has to be chosen after that first expansion step.
 - **Choices are recorded.** `gen_dace.py` reads the passes and expansions from `params.json` (a `dace` key) and writes them into the generated file's header comment, so every row traces back to what made it.
 
@@ -145,6 +161,7 @@ hls-exercises/
   Makefile                       exercises: make run/clean; bench: make bench ARGS="..."
   docs/
     HLS_VS_FORGE.md              this file
+    SIZES.md                     the sizes run, PolyBench's and NPBench's, and what to update later
   exercises/                     the self-learning steps s0_ to s2_, with their README
   common/
     part.tcl                     exercises only (unchanged)
@@ -157,10 +174,10 @@ hls-exercises/
     hls_loops.csv                one row per loop per run point
     report_<tier>.md             tables from the CSVs, rewritten by bench.py
     forge_cycles.csv             forge's counters, same keys (kernel, size, W)
-    synth_vivado.csv             section 6, later
-    synth_dc.csv                 section 6, later
-  rtl/                           Vitis's generated Verilog per point, kept for synthesis (5.2)
-    done/vecadd/opt_n64_w4/*.v, filelist.f
+    synth_dc.csv                 section 6: a copy of syn/runs/summary.csv
+    runs/<date>_<tier>.md        Claude Code's note of each bench run (section 8)
+  rtl/                           Vitis's generated Verilog per hardware point, kept for synthesis (5.2)
+    done/vecadd/opt_w4/*.v, filelist.f, sizes.txt
   syn/                           ASIC synthesis with DC on FreePDK45 (section 6, syn/README.md)
     syn.py, scripts/             the driver, dc_syn.tcl and constraints.sdc
     runs/                        every DC run, local only (git ignores it)
@@ -183,8 +200,8 @@ hls-exercises/
           tb_vecadd.cpp          testbench, checks against data.h, calls DUT
         directives_opt.tcl       pipeline BEAT, unroll LANE
         vectors/n64/data.h       generated by gen_data.py, committed
-        dace/n64_w4/vecadd_0_0.cpp   DaCe's device file, generated, committed
-        dace/n64_w4/vecadd_dace.cpp  top for case 3, generated, committed
+        dace/w4/vecadd_0_0.cpp       DaCe's device file, generated, committed
+        dace/w4/vecadd_dace.cpp      top for case 3, generated, committed
         opt_n64_w4_proj/         Vitis project (ignored by git, removed by make clean)
         run_opt_n64_w4_proj.log
       vecmul/ vsum/ dot/
@@ -194,7 +211,7 @@ hls-exercises/
       matadd/ relu/ rowsum/ axpy/ vdiv/
 ```
 
-**Naming.** Projects are `<case>_<size>_w<W>[_c<clock>]_proj`, each with one solution `sol`. The clock tag appears only for an HLS clock other than the default 3.33 ns. That deviates from the exercises' many-solutions-per-project layout, because `open_project -reset` wipes every solution, and here every point is independent. Each project holds a `point.json` that says what the point was, so `bench.py collect` can rebuild the CSV from the folders.
+**Naming.** Projects are `<case>_<size>_w<W>[_c<clock>]_proj`, each with one solution `sol`. Hardware points in `rtl/` drop the size: `<case>_w<W>[_c<clock>]`. The clock tag appears only for an HLS clock other than the default 3.33 ns. That deviates from the exercises' many-solutions-per-project layout, because `open_project -reset` wipes every solution, and here every point is independent. Each project holds a `point.json` that says what the point was, so `bench.py collect` can rebuild the CSV from the folders.
 
 Directives files are named `directives_<case>.tcl`, not `directives_<top>_<solution>.tcl`. The top is fixed per kernel, and the case is the solution.
 
@@ -214,35 +231,38 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
   "W": [1, 4, 8],
   "iface": "axis",
   "axis": ["A", "B", "C"],
+  "axis_register_mode": "off",
+  "config": {"loop_count": "n // W"},
   "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_vecadd.cpp",
   "cases": {
-    "unopt": {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true},
-    "opt": {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true},
+    "unopt": {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
+    "opt": {"top": "vecadd", "src": ["src/vecadd.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "dace": {
       "top": "vecadd_dace",
       "per_w": true,
       "W": [1, 4, 8],
-      "src": ["dace/{size}_w{W}/vecadd_dace.cpp", "dace/{size}_w{W}/vecadd_0_0.cpp"],
+      "src": ["dace/w{W}/vecadd_dace.cpp", "dace/w{W}/vecadd_0_0.cpp"],
       "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE"]
     }
   },
-  "dace": {"vectorize": true, "passes": [], "expansions": {}}
+  "dace": {"vectorize": true, "passes": [], "expansions": {}, "symbols": {"N": "loop_count * W"}}
 }
 ```
 
 - Size keys are `make_inputs`'s argument names (`n`, `m`). They give the tag (`n64`, `m38_n42`) and the macros (`SIZE_N`, `SIZE_M`).
+- `config` gives each run-time pin's value as a Python expression over the size keys and `W`; the testbench gets `-DCFG_<PIN>=<value>`. A case's `tripcount` maps a loop label to an expression over the same names and the pins (section 2).
 - `{size}`, `{W}` and `{bench}` (the absolute path of `bench/`) in paths and `cflags` are filled per point. Every path that reaches Vitis is absolute, because cosim compiles from inside the project.
 - `iface`, `axis` and `axis_register_mode`: with `"iface": "axis"`, every argument in `axis` gets an axis interface in every case, with register slices set by `axis_register_mode` (`off`, `forward`, `reverse` or `both`; `both` is Vitis's default when the key is missing). The interface and mode are recorded per row.
 - `cflags` at the top go to every case, a case's own `cflags` after them. A case's `W` list replaces the kernel's (the reductions' `dace` case runs at W = 1 only).
 - Optional keys: `acc_dtype` (tier P, gives `ACC_T`), `clock_ns` (default 3.33), and per case `tb` or `directives` to override the defaults.
-- The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, and `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`).
+- The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`), and `symbols` maps each DaCe symbol to a C++ expression over the top's pins.
 
 ### 5.2 What is kept: `results/`
 
 The Vitis projects and logs are scratch: git ignores them and `make clean` removes them. What is committed is the summaries in `results/`, and the generated Verilog in `rtl/`. `bench.py collect` can rebuild both from projects that still exist.
 
-- `rtl/<tier>/<kernel>/<point>/`: the `.v` files of `<proj>/sol/syn/verilog/` for every run point, copied by `run` and `collect`, and a `filelist.f` (the top module on a `# top:` line, then the files). That is enough for a synthesis run (section 6) on a machine without Vitis. It is plain text with no timestamps, a few files per point, so it diffs cleanly (2.2 MB for tier done).
+- `rtl/<tier>/<kernel>/<case>_w<W>/`: the `.v` files of `<proj>/sol/syn/verilog/` for one hardware point, a `filelist.f` (the top module on a `# top:` line, then the files) and `sizes.txt` (the sizes whose Verilog is exactly this). `run` and `collect` place them after all Vitis runs, smallest size first: that size is the reference, and every other size is compared with it, ignoring Vitis's `CORE_GENERATION_INFO` line (it carries the latency estimate). A size whose Verilog differs gets its own folder, `<case>_<size>_w<W>/`, and `rtl_same` says which files differ. That is enough for a synthesis run (section 6) on a machine without Vitis. It is plain text with no timestamps, so it diffs cleanly.
 
 - `hls_cycles.csv`: one row per point.
 - `hls_loops.csv`: one row per loop per point (module, loop, trips, iteration latency, II achieved and target, pipelined). This is enough to explain a cycle count without the reports.
@@ -253,6 +273,7 @@ Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces
 | Columns | Meaning |
 |---|---|
 | `iface` | The ports' interface (`axis` from now on) |
+| `config` | The run-time pins' values the testbench drove (`loop_count=16 len=16`) |
 | `status` | `ok`, or `failed: csim / cosim / no csynth report` |
 | `csim_errors` | From the log |
 | `clock_est_ns`, `clock_unc_ns`, `timing` | Vitis's FPGA clock estimate, kept for reference only. The report leaves them out: timing comes from ASIC synthesis (section 6). |
@@ -260,6 +281,7 @@ Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces
 | `cosim_status`, `cosim_lat_min/avg/max` | RTL cycles from cosim (Verilog) |
 | `LUT`, `FF`, `DSP`, `BRAM_18K` | csynth estimates. Only a sanity check here: DSP should be 0, and BRAM shows a RAM inside the block (DaCe's `dot`). |
 | `portable` | `yes`, or what was found (section 3.2) |
+| `rtl`, `rtl_same` | The `rtl/` folder of the point's Verilog, and `ref`, `yes` or `no: <files>` (5.2) |
 | `vitis`, `git`, `date`, `proj` | Where the row came from |
 
 ---
@@ -269,13 +291,11 @@ Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces
 The comparison is made on ASIC synthesis only; the FPGA's timing is not a concern. The flow is in `syn/` (`syn/README.md`): Design Compiler on FreePDK45 (OSU `gscl45nm`), with FreePDK45 next to hls-exercises.
 
 - **Input:** a point's `rtl/<tier>/<kernel>/<point>/filelist.f`, so only Vitis's Verilog, no Vitis.
-- **Run:** `python3 syn/syn.py run done/vecadd/unopt_n512_w8 [--clock NS]`. `compile_ultra -no_autoungroup` keeps the hierarchy, so control, CSR and datapath can be read apart. The clock is `ap_clk`, 10 ns by default.
-- **Output:** everything stays in `syn/runs/`, which git ignores, with one row per point and clock in `syn/runs/summary.csv` (area, cells, critical path, slack, dynamic and leakage power).
+- **Run:** `python3 syn/syn.py run 'done/*/*' [--clock NS]`, once per hardware point. `compile_ultra -no_autoungroup` keeps the hierarchy, so control, CSR and datapath can be read apart. The clock is `ap_clk`, 10 ns by default.
+- **Output:** the runs stay in `syn/runs/`, which git ignores, with one row per point and clock in `syn/runs/summary.csv` (area, cells, critical path, slack, dynamic and leakage power). `syn.py` copies that summary to `results/synth_dc.csv`, which is committed.
 - **Forge's side** goes through the same `dc_syn.tcl` once forge's `gen-rtl` output (`out/rtl/<kernel>/sv/*.sv`) gets a `filelist.f` of its own. That will need `-format sverilog`. TSMC 16 nm is the same flow with another library.
 
 This extends forge PAPER E7 (one unit in Chisel against Vitis HLS at equal II and clock) to the kernel set.
-
-This extends forge PAPER E7 (one unit in Chisel against Vitis HLS at equal II and clock) to the kernel set, and adds the FPGA view.
 
 ---
 
@@ -306,30 +326,32 @@ The first runs used `ap_memory` ports (commits 4b7b617 and 99e6c80, in git histo
 |---|---|---|---|
 | `vecadd` | n64 (recipe), n512 | 1, 4, 8 | The pipe-cleaner for every step |
 | `vecmul` | n64, n512 | 1, 4, 8 | First fabric multiplier: check `DSP = 0` |
-| `vsum` | n64, n512 | 1, 4, 8 | W = 1 is the `vsum` recipe, W = 4 is `vsum_tree`. `opt` adds the W lanes of a beat in a tree into one accumulator. |
+| `vsum` | n64, n512 | 1, 4, 8 | W = 1 is the `vsum` recipe, W = 4 is `vsum_tree`. `opt` adds the W lanes of a beat in a tree into one accumulator. `loop_count` and `len` pins, as forge's `Accumulator`. |
 | `dot` | n64 (recipe), n512 | 1, 4, 8 | Forge's dot study runs N = 512 at W = 4 and 8. Forge's dot variants (vmul + vsum through L1, FIFO link, MAC lanes) are the forge-side rows of this one HLS kernel. |
 
-Every case runs at every W (64 points), except the reductions' `dace` case, which runs at W = 1 (section 4.3).
+Every case runs at every W, except the reductions' `dace` case, which runs at W = 1 (section 4.3): 64 run points (two sizes each) on 32 hardware points.
+
+The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 has the run-time pins.
 
 
 ### Tier A — `atax`, `bicg`, `mvt`, `gesummv`
 
 | Kernel | Sizes | What `opt` needs |
 |---|---|---|
-| `atax` | m38_n42 (MINI) | The second product reads $A^T$: reorder so the row-wise pass accumulates into `y` (S2.1.1's swap) |
-| `bicg` | m38_n42 | One pass over $A$ feeds both `q` and `s` |
-| `mvt` | m40_n40 | One product row-wise, one column-wise; the column-wise one needs the same swap as `atax` |
-| `gesummv` | n30 | Both products share `x`: one pass, two accumulators |
+| `atax` | m256_n256 (forge's default), MINI, SMALL | The second product reads $A^T$: reorder so the row-wise pass accumulates into `y` (S2.1.1's swap) |
+| `bicg` | m256_n256, MINI, SMALL | One pass over $A$ feeds both `q` and `s` |
+| `mvt` | n256, MINI, SMALL | One product row-wise, one column-wise; the column-wise one needs the same swap as `atax` |
+| `gesummv` | n30 (forge's default, = MINI), SMALL | Both products share `x`: one pass, two accumulators |
 
-Forge's size for tier A is added as the first size once forge runs tier A. In case 3 the library-node expansions are where the choices are (section 4.3).
+The sizes are a proposal until forge's tier A recipes set theirs (`docs/SIZES.md`). Reused operands (`x` once per row, $A$ in two orders) are streamed again by the testbench rather than buffered in the block, as forge's streamers would fetch them (D112). In case 3 the library-node expansions are where the choices are (section 4.3).
 
-### Untiered — `matadd`, `relu`, `rowsum`, `axpy`, `vdiv`
+### Untiered — `matadd`, `relu`, `rowsum`, `axpy`
 
-These are added as forge picks them up. `vdiv` is the first divider, so it checks that the divider module stays portable (section 3.2).
+These are added as forge picks them up. `rowsum` is `vsum` with `len` < `loop_count` (one result per row). `axpy` gets separate `y` in and `y_out` ports, since an axis port cannot be read and written in place (forge open item 47).
 
 ### Later tiers
 
-B (divider unit, `covariance`'s mean), C (`covariance`, `softmax`), P (int8 in, int32 out: `acc_dtype`), D (`gemm`, `k2mm`, `k3mm`, `doitgen`, `gemver`, `jacobi`). These follow forge's order (forge `docs/ARCHITECTURE.md` §8).
+B (`vdiv`, the divider unit, and `covariance`'s mean; `vdiv` checks that the divider module stays portable, section 3.2), C (`covariance`, `softmax`), P (int8 in, int32 out: `acc_dtype`), D (`gemm`, `k2mm`, `k3mm`, `doitgen`, `gemver`, `jacobi`). These follow forge's order (forge `docs/ARCHITECTURE.md` §8).
 
 ---
 
@@ -343,6 +365,8 @@ The loop is the same as in the snax-forge work:
 4. The report (`results/report_<tier>.md`) and any failures go back to the chat, which plans the next step.
 
 Claude Code runs and reports; it does not redesign kernels or directives on its own. When a run fails, it reports the error lines from the log and stops, unless the prompt says what to fix.
+
+**Reports go in the repo.** Whatever the chat needs to read is committed, so nothing has to be pasted back: `results/` (the CSVs, `report_<tier>.md`, `synth_dc.csv`) and a run note `results/runs/<date>_<tier>.md` with the commands run, the tool versions, the counts of ok and failed points, the `rtl_same` outcome, and for every failure the log's error lines (at most 30 per failure). Vitis projects, logs and `syn/runs/` stay local.
 
 - **Start.** Every prompt starts with `git pull` in hls-exercises (and in snax-forge when vectors or DaCe sources are generated).
 - **Environments.** The Vitis side needs `vitis_hls` on the path (Vitis's `settings64.sh`) and Python 3, standard library only. The generators need snax-forge's pixi environment:

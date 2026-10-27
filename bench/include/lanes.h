@@ -8,6 +8,7 @@
 // hlslib::DataPack<T, W> (one ap_uint<W*64>) above, so case 3's generated module
 // takes exactly the type cases 1 and 2 use.
 #pragma once
+#include <cstdint>
 
 // hlslib's DataPack bounds-checks Get/Set with std::stringstream unless
 // HLSLIB_SYNTHESIS is set, and Vitis's csynth front end cannot parse that.
@@ -22,6 +23,13 @@
 #endif
 
 typedef dace::vec<data_t, W> vec_t;
+
+// A run-time configuration pin, as forge's 32-bit config fields (loopCount, len): the
+// CSR manager drives them and the block samples them at start (forge D130). A scalar
+// argument of the top under ap_ctrl_hs becomes an ap_none input, a plain wire with no
+// handshake; the tops copy it into a local at entry, so it is read at ap_start.
+// Lanes (W) and the dtype stay compile-time: they decide what hardware exists.
+typedef uint32_t cfg_t;
 
 template <typename T>
 inline T lane(const T &v, int) { return v; }

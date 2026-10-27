@@ -1,11 +1,12 @@
 // bench/tier_done/vecmul/src/vecmul.cpp
 // Top for cases unopt and opt; only the directives differ. BEAT walks the beats,
-// LANE the W lanes of one beat.
+// LANE the W lanes of one beat. The beat count is the run-time pin loop_count.
 #include "vecmul.h"
 
-void vecmul(const vec_t A[NB], const vec_t B[NB], vec_t C[NB]) {
+void vecmul(const vec_t A[NB], const vec_t B[NB], vec_t C[NB], cfg_t loop_count) {
+    const cfg_t beats = loop_count;  // sampled at start, as forge's blocks do
 BEAT:
-    for (int b = 0; b < NB; b++) {
+    for (cfg_t b = 0; b < beats; b++) {
         vec_t a = A[b], bb = B[b], c;
     LANE:
         for (int l = 0; l < W; l++) {

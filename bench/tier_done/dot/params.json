@@ -10,18 +10,19 @@
   "iface": "axis",
   "axis": ["A", "B", "out"],
   "axis_register_mode": "off",
+  "config": {"loop_count": "n // W", "len": "n // W"},
   "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_dot.cpp",
   "cases": {
-    "unopt": {"top": "dot", "src": ["src/dot.cpp"], "per_w": true},
-    "opt": {"top": "dot", "src": ["src/dot.cpp"], "per_w": true},
+    "unopt": {"top": "dot", "src": ["src/dot.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
+    "opt": {"top": "dot", "src": ["src/dot.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "dace": {
       "top": "dot_dace",
       "per_w": true,
       "W": [1],
-      "src": ["dace/{size}_w{W}/dot_dace.cpp", "dace/{size}_w{W}/dot_0_0.cpp"],
+      "src": ["dace/w{W}/dot_dace.cpp", "dace/w{W}/dot_0_0.cpp"],
       "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE"]
     }
   },
-  "dace": {"vectorize": false, "passes": [], "expansions": {}}
+  "dace": {"vectorize": false, "passes": [], "expansions": {}, "symbols": {"N": "loop_count * W"}}
 }
