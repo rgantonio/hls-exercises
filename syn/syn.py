@@ -17,6 +17,12 @@ syn/runs/summary.csv: area, critical path, slack and power. git ignores
 syn/runs/ entirely; only a copy of the summary, results/synth_dc.csv, is
 committed, so the numbers can be read without the runs.
 
+A point whose filelist.f has '# ram:' lines holds a memory Vitis built (e.g.
+DaCe's dot buffer). gscl45nm has no RAM, and DC would build it from flops,
+which takes hours and gives no fair area, so `run` parks it: no DC run, and a
+summary row with status "skipped: needs a RAM macro (...)". --with-ram runs it
+anyway (for when a macro or a black-box stub is in place).
+
 Tools and files, all overridable from the environment:
   DC_SHELL        dc_shell                               (Design Compiler)
   SYN_LIB         ../FreePDK45/osu_soc/lib/files/gscl45nm.db, next to hls-exercises
@@ -66,6 +72,19 @@ def select(patterns: list[str]) -> list[str]:
 def top_of(point: str) -> str:
     m = re.search(r"^#\s*top:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
     return m.group(1) if m else ""
+
+
+def rams_of(point: str) -> list[str]:
+    return re.findall(r"^#\s*ram:\s*(\S+)", (RTL / point / "filelist.f").read_text(), re.M)
+
+
+def parked_row(point: str, clock: str, rams: list[str]) -> dict:
+    row = {c: "" for c in COLUMNS}
+    row.update({"point": point, "top": top_of(point), "clock_ns": clock,
+                "status": f"skipped: needs a RAM macro ({', '.join(rams)}); gscl45nm has none, "
+                          "generate one (OpenRAM)",
+                "date": dt.datetime.now().isoformat(timespec="seconds")})
+    return row
 
 
 def run_dir(point: str, clock: str) -> Path:
@@ -149,11 +168,16 @@ def print_rows(rows: list[dict]) -> None:
 # ---------------------------------------------------------------- commands
 def cmd_list(args) -> int:
     for p in select(args.patterns):
-        print(f"{p}  (top {top_of(p)})")
+        rams = rams_of(p)
+        print(f"{p}  (top {top_of(p)})" + (f"  parked, RAM: {', '.join(rams)}" if rams else ""))
     return 0
 
 
 def run_one(point: str, args, dc: str, lib: Path) -> dict | None:
+    rams = rams_of(point)
+    if rams and not args.with_ram:
+        print(f"park {point}: it holds a RAM ({', '.join(rams)}); --with-ram runs it anyway", flush=True)
+        return None if args.dry_run else parked_row(point, args.clock, rams)
     rdir = run_dir(point, args.clock)
     env = dict(os.environ, SYN_FILELIST=str(RTL / point / "filelist.f"), SYN_LIB=str(lib),
                SYN_CLOCK_NS=args.clock, SYN_CORES=str(args.cores))
@@ -193,7 +217,7 @@ def cmd_run(args) -> int:
         write_summary(rows)
         print(f"\nwrote {SUMMARY.relative_to(ROOT)}")
         print_rows(rows)
-    return 0 if rows and all(r["status"].startswith("ok") for r in rows) or args.dry_run else 1
+    return 0 if rows and all(r["status"].startswith(("ok", "skipped")) for r in rows) or args.dry_run else 1
 
 
 def cmd_summary(args) -> int:
@@ -217,6 +241,8 @@ def main() -> int:
             p.add_argument("--cores", type=int, default=16, help="cores per DC run (default 16)")
             p.add_argument("-j", "--jobs", type=int, default=1, help="DC runs at once (each takes a license)")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
+            p.add_argument("--with-ram", action="store_true",
+                           help="also run points with a '# ram:' line (parked by default)")
     args = ap.parse_args()
     if args.cmd == "run" and not args.patterns:
         ap.error("run needs at least one pattern, e.g. done/vecadd/unopt_n512_w8")

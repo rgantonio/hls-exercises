@@ -44,7 +44,7 @@ These keep the two sides comparable. Where a difference can't be removed, it is 
 | Run time | `loop_count` = N / W beats | a `cfg_t` (`uint32_t`) argument of the top |
 | Run time | `len` = beats per result (`vsum`, `dot`; `rowsum` later) | a `cfg_t` argument |
 
-- A scalar argument under `ap_ctrl_hs` becomes an `ap_none` input: a plain wire with no handshake, like a CSR register's output. The top copies it into a local at entry, so it is read at `ap_start`.
+- A scalar argument becomes an `ap_none` input: a plain wire with no handshake. `run_bench.tcl` gives every pin `set_directive_interface -mode ap_none -register`, so Vitis loads it into a 32-bit register at `ap_start`, as forge's blocks sample their config at start. Without it (the run of 27 Oct, `f6426a6`), Vitis compared the port directly inside the loop, even though the C++ copies it into a local, and the pins had to be held for the whole run.
 - The values come from `params.json`'s `config` (e.g. `"loop_count": "n // W"`). `bench.py` passes them to the testbench only (`-DCFG_LOOP_COUNT=16`), never to the design, so the design cannot fold them into constants.
 - `SIZE_N` stays a compile flag for the C side: the testbench's arrays and the depth of the axis arrays in the top's signature need it, so each size is still its own Vitis run. It should not reach the Verilog, and `bench.py` checks that: every size's Verilog of a hardware point is compared with the first one's (the `rtl_same` column), and a size whose Verilog differs keeps its own folder in `rtl/`.
 - A loop bounded by a pin has no trip count for csynth's estimate. `params.json`'s `tripcount` (e.g. `"BEAT": "loop_count"`) gives it one per size with `set_directive_loop_tripcount`, which changes no hardware. DaCe's loops are unlabelled, so the `dace` case's estimate shows `?`; its cosim count is unaffected.
@@ -262,7 +262,7 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
 
 The Vitis projects and logs are scratch: git ignores them and `make clean` removes them. What is committed is the summaries in `results/`, and the generated Verilog in `rtl/`. `bench.py collect` can rebuild both from projects that still exist.
 
-- `rtl/<tier>/<kernel>/<case>_w<W>/`: the `.v` files of `<proj>/sol/syn/verilog/` for one hardware point, a `filelist.f` (the top module on a `# top:` line, then the files) and `sizes.txt` (the sizes whose Verilog is exactly this). `run` and `collect` place them after all Vitis runs, smallest size first: that size is the reference, and every other size is compared with it, ignoring Vitis's `CORE_GENERATION_INFO` line (it carries the latency estimate). A size whose Verilog differs gets its own folder, `<case>_<size>_w<W>/`, and `rtl_same` says which files differ. That is enough for a synthesis run (section 6) on a machine without Vitis. It is plain text with no timestamps, so it diffs cleanly.
+- `rtl/<tier>/<kernel>/<case>_w<W>/`: the `.v` files of `<proj>/sol/syn/verilog/` for one hardware point, a `filelist.f` (the top module on a `# top:` line, then the files) and `sizes.txt` (the sizes whose Verilog is exactly this). `run` and `collect` place them after all Vitis runs, smallest size first: that size is the reference, and every other size is compared with it, ignoring Vitis's `CORE_GENERATION_INFO` line (it carries the latency estimate). If that differs, it is compared again with Vitis's numbered ids masked (`add_ln9_fu_126_p2`, `add_ln9_reg_232`, `..._U1`): equal then is `renamed`, the same circuit with shifted net names, as `unopt` n512 W = 8 was on 27 Oct (DC gave the same area). A size whose Verilog still differs gets its own folder, `<case>_<size>_w<W>/`, and `rtl_same` says which files differ. A memory Vitis built (a `*_RAM_*.v` file) is named on a `# ram:` line of `filelist.f`. That is enough for a synthesis run (section 6) on a machine without Vitis. It is plain text with no timestamps, so it diffs cleanly.
 
 - `hls_cycles.csv`: one row per point.
 - `hls_loops.csv`: one row per loop per point (module, loop, trips, iteration latency, II achieved and target, pipelined). This is enough to explain a cycle count without the reports.
@@ -281,7 +281,7 @@ Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces
 | `cosim_status`, `cosim_lat_min/avg/max` | RTL cycles from cosim (Verilog) |
 | `LUT`, `FF`, `DSP`, `BRAM_18K` | csynth estimates. Only a sanity check here: DSP should be 0, and BRAM shows a RAM inside the block (DaCe's `dot`). |
 | `portable` | `yes`, or what was found (section 3.2) |
-| `rtl`, `rtl_same` | The `rtl/` folder of the point's Verilog, and `ref`, `yes` or `no: <files>` (5.2) |
+| `rtl`, `rtl_same` | The `rtl/` folder of the point's Verilog, and `ref`, `yes`, `renamed` or `no: <files>` (5.2) |
 | `vitis`, `git`, `date`, `proj` | Where the row came from |
 
 ---
@@ -292,6 +292,7 @@ The comparison is made on ASIC synthesis only; the FPGA's timing is not a concer
 
 - **Input:** a point's `rtl/<tier>/<kernel>/<point>/filelist.f`, so only Vitis's Verilog, no Vitis.
 - **Run:** `python3 syn/syn.py run 'done/*/*' [--clock NS]`, once per hardware point. `compile_ultra -no_autoungroup` keeps the hierarchy, so control, CSR and datapath can be read apart. The clock is `ap_clk`, 10 ns by default.
+- **Memories are parked.** `gscl45nm` has no RAM cells, so DC would build a memory out of flops: DaCe's `dot` buffer (64 × 512) became 32,832 flops, took 14 minutes to elaborate and gives no fair area. `syn.py` skips every point whose `filelist.f` has a `# ram:` line and writes a `skipped: needs a RAM macro` row for it; `--with-ram` runs it anyway. Later, an OpenRAM macro for FreePDK45 (`.lib` converted to `.db`, with its Verilog model left out of the filelist) gives the memory's area, and the logic is synthesized around it. Forge's dot through L1 does not count the TCDM in the accelerator either, so the logic alone is the like-for-like number.
 - **Output:** the runs stay in `syn/runs/`, which git ignores, with one row per point and clock in `syn/runs/summary.csv` (area, cells, critical path, slack, dynamic and leakage power). `syn.py` copies that summary to `results/synth_dc.csv`, which is committed.
 - **Forge's side** goes through the same `dc_syn.tcl` once forge's `gen-rtl` output (`out/rtl/<kernel>/sv/*.sv`) gets a `filelist.f` of its own. That will need `-format sverilog`. TSMC 16 nm is the same flow with another library.
 
@@ -369,7 +370,7 @@ Claude Code runs and reports; it does not redesign kernels or directives on its 
 **Reports go in the repo.** Whatever the chat needs to read is committed, so nothing has to be pasted back: `results/` (the CSVs, `report_<tier>.md`, `synth_dc.csv`) and a run note `results/runs/<date>_<tier>.md` with the commands run, the tool versions, the counts of ok and failed points, the `rtl_same` outcome, and for every failure the log's error lines (at most 30 per failure). Vitis projects, logs and `syn/runs/` stay local.
 
 - **Start.** Every prompt starts with `git pull` in hls-exercises (and in snax-forge when vectors or DaCe sources are generated).
-- **Environments.** The Vitis side needs `vitis_hls` on the path (Vitis's `settings64.sh`) and Python 3, standard library only. The generators need snax-forge's pixi environment:
+- **Environments.** The Vitis side needs `vitis_hls` on the path (Vitis's `settings64.sh`) and Python 3.7 or newer, standard library only (the ESAT host's `python3` is 3.6; use `python3.11`). The generators need snax-forge's pixi environment:
 
   ```bash
   FORGE=/path/to/snax-forge

@@ -14,7 +14,7 @@ source /path/to/Vitis/2023.2/settings64.sh   # puts vitis_hls on the path
 vitis_hls -version                           # expect v2023.2.2
 ```
 
-The bench driver needs Python 3, standard library only. The bench generators need a snax-forge checkout and its pixi environment.
+The bench driver and `syn/syn.py` need Python 3.7 or newer, standard library only. Where `python3` is older (3.6 on the ESAT servers), run them with `python3.11`. The bench generators need a snax-forge checkout and its pixi environment.
 
 ## Exercises
 
