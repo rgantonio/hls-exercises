@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="dot_dot,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=242,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=1038,HLS_SYN_LUT=6640,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="dot_dot,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=241,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=1039,HLS_SYN_LUT=6708,HLS_VERSION=2023_2_2}" *)
 
 module dot (
         ap_clk,
@@ -25,16 +25,17 @@ module dot (
         out_r_TVALID,
         out_r_TREADY,
         loop_count,
-        len
+        loop_count_ap_vld,
+        len,
+        len_ap_vld
 );
 
-parameter    ap_ST_fsm_state1 = 7'd1;
-parameter    ap_ST_fsm_state2 = 7'd2;
-parameter    ap_ST_fsm_state3 = 7'd4;
-parameter    ap_ST_fsm_state4 = 7'd8;
-parameter    ap_ST_fsm_state5 = 7'd16;
-parameter    ap_ST_fsm_state6 = 7'd32;
-parameter    ap_ST_fsm_state7 = 7'd64;
+parameter    ap_ST_fsm_state1 = 6'd1;
+parameter    ap_ST_fsm_state2 = 6'd2;
+parameter    ap_ST_fsm_state3 = 6'd4;
+parameter    ap_ST_fsm_state4 = 6'd8;
+parameter    ap_ST_fsm_state5 = 6'd16;
+parameter    ap_ST_fsm_state6 = 6'd32;
 
 input   ap_clk;
 input   ap_rst_n;
@@ -52,7 +53,9 @@ output  [63:0] out_r_TDATA;
 output   out_r_TVALID;
 input   out_r_TREADY;
 input  [31:0] loop_count;
+input   loop_count_ap_vld;
 input  [31:0] len;
+input   len_ap_vld;
 
 reg ap_done;
 reg ap_idle;
@@ -62,29 +65,32 @@ reg B_TREADY;
 reg out_r_TVALID;
 
  reg    ap_rst_n_inv;
-(* fsm_encoding = "none" *) reg   [6:0] ap_CS_fsm;
+(* fsm_encoding = "none" *) reg   [5:0] ap_CS_fsm;
 wire    ap_CS_fsm_state1;
-reg   [31:0] loop_count_0_data_reg;
-reg    loop_count_0_vld_reg;
-reg    loop_count_0_ack_out;
-reg   [31:0] len_0_data_reg;
-reg    len_0_vld_reg;
-reg    len_0_ack_out;
+reg   [31:0] loop_count_preg;
+reg   [31:0] loop_count_in_sig;
+reg    loop_count_ap_vld_preg;
+reg    loop_count_ap_vld_in_sig;
+reg   [31:0] len_preg;
+reg   [31:0] len_in_sig;
+reg    len_ap_vld_preg;
+reg    len_ap_vld_in_sig;
 reg    A_TDATA_blk_n;
-wire    ap_CS_fsm_state3;
+wire    ap_CS_fsm_state2;
 wire   [0:0] icmp_ln14_fu_144_p2;
 reg    B_TDATA_blk_n;
 reg    out_r_TDATA_blk_n;
-wire    ap_CS_fsm_state7;
+wire    ap_CS_fsm_state6;
 reg   [0:0] or_ln22_reg_343;
-wire    ap_CS_fsm_state2;
+reg    loop_count_blk_n;
+reg    len_blk_n;
 wire   [31:0] add_ln22_1_fu_149_p2;
 reg   [31:0] add_ln22_1_reg_304;
 reg   [255:0] a_reg_310;
 reg   [255:0] bb_reg_315;
 wire   [2:0] l_fu_161_p2;
 reg   [2:0] l_reg_323;
-wire    ap_CS_fsm_state4;
+wire    ap_CS_fsm_state3;
 wire  signed [63:0] temp_fu_188_p1;
 reg  signed [63:0] temp_reg_328;
 wire  signed [63:0] temp_1_fu_197_p1;
@@ -94,16 +100,17 @@ reg   [31:0] add_ln22_reg_338;
 wire   [0:0] or_ln22_fu_219_p2;
 wire   [63:0] mul_ln19_fu_225_p2;
 reg   [63:0] mul_ln19_reg_347;
-wire    ap_CS_fsm_state5;
+wire    ap_CS_fsm_state4;
 wire   [63:0] s_1_fu_229_p2;
-wire    ap_CS_fsm_state6;
+wire    ap_CS_fsm_state5;
 reg   [2:0] l_1_reg_103;
-reg    ap_block_state3;
+reg    ap_block_state2;
 reg   [63:0] s_reg_114;
 reg   [63:0] acc_fu_60;
 wire   [63:0] sum_fu_237_p2;
-reg    ap_block_state7;
-reg    ap_block_state7_io;
+reg    ap_block_state6;
+reg    ap_block_state6_io;
+reg    ap_block_state1;
 reg   [31:0] cnt_fu_64;
 wire   [0:0] icmp_ln18_fu_155_p2;
 reg   [31:0] b_fu_68;
@@ -114,23 +121,22 @@ wire   [255:0] lshr_ln170_fu_183_p2;
 wire   [255:0] lshr_ln170_1_fu_192_p2;
 wire   [0:0] icmp_ln22_fu_210_p2;
 wire   [0:0] icmp_ln22_1_fu_215_p2;
-reg   [6:0] ap_NS_fsm;
+reg   [5:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
-wire    ap_ST_fsm_state2_blk;
-reg    ap_ST_fsm_state3_blk;
+reg    ap_ST_fsm_state2_blk;
+wire    ap_ST_fsm_state3_blk;
 wire    ap_ST_fsm_state4_blk;
 wire    ap_ST_fsm_state5_blk;
-wire    ap_ST_fsm_state6_blk;
-reg    ap_ST_fsm_state7_blk;
+reg    ap_ST_fsm_state6_blk;
 wire    ap_ce_reg;
 
 // power-on initialization
 initial begin
-#0 ap_CS_fsm = 7'd1;
-#0 loop_count_0_data_reg = 32'd0;
-#0 loop_count_0_vld_reg = 1'b0;
-#0 len_0_data_reg = 32'd0;
-#0 len_0_vld_reg = 1'b0;
+#0 ap_CS_fsm = 6'd1;
+#0 loop_count_preg = 32'd0;
+#0 loop_count_ap_vld_preg = 1'b0;
+#0 len_preg = 32'd0;
+#0 len_ap_vld_preg = 1'b0;
 #0 acc_fu_60 = 64'd0;
 #0 cnt_fu_64 = 32'd0;
 #0 b_fu_68 = 32'd0;
@@ -157,47 +163,91 @@ always @ (posedge ap_clk) begin
 end
 
 always @ (posedge ap_clk) begin
-    if ((((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1)) | (~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd1)))) begin
+    if (ap_rst_n_inv == 1'b1) begin
+        len_ap_vld_preg <= 1'b0;
+    end else begin
+        if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
+            len_ap_vld_preg <= 1'b0;
+        end else if ((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (len_ap_vld == 1'b1))) begin
+            len_ap_vld_preg <= len_ap_vld;
+        end
+    end
+end
+
+always @ (posedge ap_clk) begin
+    if (ap_rst_n_inv == 1'b1) begin
+        len_preg <= 32'd0;
+    end else begin
+        if ((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (len_ap_vld == 1'b1))) begin
+            len_preg <= len;
+        end
+    end
+end
+
+always @ (posedge ap_clk) begin
+    if (ap_rst_n_inv == 1'b1) begin
+        loop_count_ap_vld_preg <= 1'b0;
+    end else begin
+        if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
+            loop_count_ap_vld_preg <= 1'b0;
+        end else if ((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (loop_count_ap_vld == 1'b1))) begin
+            loop_count_ap_vld_preg <= loop_count_ap_vld;
+        end
+    end
+end
+
+always @ (posedge ap_clk) begin
+    if (ap_rst_n_inv == 1'b1) begin
+        loop_count_preg <= 32'd0;
+    end else begin
+        if ((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (loop_count_ap_vld == 1'b1))) begin
+            loop_count_preg <= loop_count;
+        end
+    end
+end
+
+always @ (posedge ap_clk) begin
+    if ((((1'b1 == ap_CS_fsm_state1) & (1'b0 == ap_block_state1)) | (~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (or_ln22_reg_343 == 1'd1) & (1'b1 == ap_CS_fsm_state6)))) begin
         acc_fu_60 <= 64'd0;
-    end else if ((~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd0))) begin
+    end else if ((~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (or_ln22_reg_343 == 1'd0) & (1'b1 == ap_CS_fsm_state6))) begin
         acc_fu_60 <= sum_fu_237_p2;
     end
 end
 
 always @ (posedge ap_clk) begin
-    if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+    if (((1'b1 == ap_CS_fsm_state1) & (1'b0 == ap_block_state1))) begin
         b_fu_68 <= 32'd0;
-    end else if ((~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7))) begin
+    end else if ((~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (1'b1 == ap_CS_fsm_state6))) begin
         b_fu_68 <= add_ln22_1_reg_304;
     end
 end
 
 always @ (posedge ap_clk) begin
-    if ((((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1)) | (~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd1)))) begin
+    if ((((1'b1 == ap_CS_fsm_state1) & (1'b0 == ap_block_state1)) | (~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (or_ln22_reg_343 == 1'd1) & (1'b1 == ap_CS_fsm_state6)))) begin
         cnt_fu_64 <= 32'd0;
-    end else if ((~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd0))) begin
+    end else if ((~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (or_ln22_reg_343 == 1'd0) & (1'b1 == ap_CS_fsm_state6))) begin
         cnt_fu_64 <= add_ln22_reg_338;
     end
 end
 
 always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state6)) begin
+    if ((1'b1 == ap_CS_fsm_state5)) begin
         l_1_reg_103 <= l_reg_323;
-    end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         l_1_reg_103 <= 3'd0;
     end
 end
 
 always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state6)) begin
+    if ((1'b1 == ap_CS_fsm_state5)) begin
         s_reg_114 <= s_1_fu_229_p2;
-    end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         s_reg_114 <= 64'd0;
     end
 end
 
 always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
+    if ((1'b1 == ap_CS_fsm_state2)) begin
         a_reg_310 <= A_TDATA;
         add_ln22_1_reg_304 <= add_ln22_1_fu_149_p2;
         bb_reg_315 <= B_TDATA;
@@ -205,7 +255,7 @@ always @ (posedge ap_clk) begin
 end
 
 always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state4)) begin
+    if ((1'b1 == ap_CS_fsm_state3)) begin
         add_ln22_reg_338 <= add_ln22_fu_204_p2;
         l_reg_323 <= l_fu_161_p2;
         or_ln22_reg_343 <= or_ln22_fu_219_p2;
@@ -215,25 +265,13 @@ always @ (posedge ap_clk) begin
 end
 
 always @ (posedge ap_clk) begin
-    if (((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (len_0_ack_out == 1'b1) & (1'b1 == 1'b1) & (len_0_vld_reg == 1'b1)) | (~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (1'b1 == 1'b1) & (len_0_vld_reg == 1'b0)))) begin
-        len_0_data_reg <= len;
-    end
-end
-
-always @ (posedge ap_clk) begin
-    if (((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (loop_count_0_ack_out == 1'b1) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b1)) | (~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b0)))) begin
-        loop_count_0_data_reg <= loop_count;
-    end
-end
-
-always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state5)) begin
+    if ((1'b1 == ap_CS_fsm_state4)) begin
         mul_ln19_reg_347 <= mul_ln19_fu_225_p2;
     end
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2))) begin
         A_TDATA_blk_n = A_TVALID;
     end else begin
         A_TDATA_blk_n = 1'b1;
@@ -241,7 +279,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         A_TREADY = 1'b1;
     end else begin
         A_TREADY = 1'b0;
@@ -249,7 +287,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2))) begin
         B_TDATA_blk_n = B_TVALID;
     end else begin
         B_TDATA_blk_n = 1'b1;
@@ -257,7 +295,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         B_TREADY = 1'b1;
     end else begin
         B_TREADY = 1'b0;
@@ -265,39 +303,37 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((ap_start == 1'b0)) begin
+    if ((1'b1 == ap_block_state1)) begin
         ap_ST_fsm_state1_blk = 1'b1;
     end else begin
         ap_ST_fsm_state1_blk = 1'b0;
     end
 end
 
-assign ap_ST_fsm_state2_blk = 1'b0;
-
 always @ (*) begin
-    if ((1'b1 == ap_block_state3)) begin
-        ap_ST_fsm_state3_blk = 1'b1;
+    if ((1'b1 == ap_block_state2)) begin
+        ap_ST_fsm_state2_blk = 1'b1;
     end else begin
-        ap_ST_fsm_state3_blk = 1'b0;
+        ap_ST_fsm_state2_blk = 1'b0;
     end
 end
+
+assign ap_ST_fsm_state3_blk = 1'b0;
 
 assign ap_ST_fsm_state4_blk = 1'b0;
 
 assign ap_ST_fsm_state5_blk = 1'b0;
 
-assign ap_ST_fsm_state6_blk = 1'b0;
-
 always @ (*) begin
-    if (((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7))) begin
-        ap_ST_fsm_state7_blk = 1'b1;
+    if (((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6))) begin
+        ap_ST_fsm_state6_blk = 1'b1;
     end else begin
-        ap_ST_fsm_state7_blk = 1'b0;
+        ap_ST_fsm_state6_blk = 1'b0;
     end
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         ap_done = 1'b1;
     end else begin
         ap_done = 1'b0;
@@ -313,7 +349,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
+    if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
         ap_ready = 1'b1;
     end else begin
         ap_ready = 1'b0;
@@ -321,23 +357,55 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state2) | ((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3)))) begin
-        len_0_ack_out = 1'b1;
+    if ((len_ap_vld == 1'b1)) begin
+        len_ap_vld_in_sig = len_ap_vld;
     end else begin
-        len_0_ack_out = 1'b0;
+        len_ap_vld_in_sig = len_ap_vld_preg;
     end
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state2) | ((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3)))) begin
-        loop_count_0_ack_out = 1'b1;
+    if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+        len_blk_n = len_ap_vld;
     end else begin
-        loop_count_0_ack_out = 1'b0;
+        len_blk_n = 1'b1;
     end
 end
 
 always @ (*) begin
-    if (((1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd1))) begin
+    if ((len_ap_vld == 1'b1)) begin
+        len_in_sig = len;
+    end else begin
+        len_in_sig = len_preg;
+    end
+end
+
+always @ (*) begin
+    if ((loop_count_ap_vld == 1'b1)) begin
+        loop_count_ap_vld_in_sig = loop_count_ap_vld;
+    end else begin
+        loop_count_ap_vld_in_sig = loop_count_ap_vld_preg;
+    end
+end
+
+always @ (*) begin
+    if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+        loop_count_blk_n = loop_count_ap_vld;
+    end else begin
+        loop_count_blk_n = 1'b1;
+    end
+end
+
+always @ (*) begin
+    if ((loop_count_ap_vld == 1'b1)) begin
+        loop_count_in_sig = loop_count;
+    end else begin
+        loop_count_in_sig = loop_count_preg;
+    end
+end
+
+always @ (*) begin
+    if (((or_ln22_reg_343 == 1'd1) & (1'b1 == ap_CS_fsm_state6))) begin
         out_r_TDATA_blk_n = out_r_TREADY;
     end else begin
         out_r_TDATA_blk_n = 1'b1;
@@ -345,7 +413,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7) & (or_ln22_reg_343 == 1'd1))) begin
+    if ((~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (or_ln22_reg_343 == 1'd1) & (1'b1 == ap_CS_fsm_state6))) begin
         out_r_TVALID = 1'b1;
     end else begin
         out_r_TVALID = 1'b0;
@@ -355,42 +423,39 @@ end
 always @ (*) begin
     case (ap_CS_fsm)
         ap_ST_fsm_state1 : begin
-            if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
+            if (((1'b1 == ap_CS_fsm_state1) & (1'b0 == ap_block_state1))) begin
                 ap_NS_fsm = ap_ST_fsm_state2;
             end else begin
                 ap_NS_fsm = ap_ST_fsm_state1;
             end
         end
         ap_ST_fsm_state2 : begin
-            ap_NS_fsm = ap_ST_fsm_state3;
+            if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
+                ap_NS_fsm = ap_ST_fsm_state1;
+            end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
+                ap_NS_fsm = ap_ST_fsm_state3;
+            end else begin
+                ap_NS_fsm = ap_ST_fsm_state2;
+            end
         end
         ap_ST_fsm_state3 : begin
-            if (((icmp_ln14_fu_144_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
-                ap_NS_fsm = ap_ST_fsm_state1;
-            end else if (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3) & (1'b0 == ap_block_state3))) begin
-                ap_NS_fsm = ap_ST_fsm_state4;
+            if (((1'b1 == ap_CS_fsm_state3) & (icmp_ln18_fu_155_p2 == 1'd1))) begin
+                ap_NS_fsm = ap_ST_fsm_state6;
             end else begin
-                ap_NS_fsm = ap_ST_fsm_state3;
+                ap_NS_fsm = ap_ST_fsm_state4;
             end
         end
         ap_ST_fsm_state4 : begin
-            if (((1'b1 == ap_CS_fsm_state4) & (icmp_ln18_fu_155_p2 == 1'd1))) begin
-                ap_NS_fsm = ap_ST_fsm_state7;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state5;
-            end
+            ap_NS_fsm = ap_ST_fsm_state5;
         end
         ap_ST_fsm_state5 : begin
-            ap_NS_fsm = ap_ST_fsm_state6;
+            ap_NS_fsm = ap_ST_fsm_state3;
         end
         ap_ST_fsm_state6 : begin
-            ap_NS_fsm = ap_ST_fsm_state4;
-        end
-        ap_ST_fsm_state7 : begin
-            if ((~((1'b1 == ap_block_state7_io) | (1'b1 == ap_block_state7)) & (1'b1 == ap_CS_fsm_state7))) begin
-                ap_NS_fsm = ap_ST_fsm_state3;
+            if ((~((1'b1 == ap_block_state6_io) | (1'b1 == ap_block_state6)) & (1'b1 == ap_CS_fsm_state6))) begin
+                ap_NS_fsm = ap_ST_fsm_state2;
             end else begin
-                ap_NS_fsm = ap_ST_fsm_state7;
+                ap_NS_fsm = ap_ST_fsm_state6;
             end
         end
         default : begin
@@ -415,31 +480,33 @@ assign ap_CS_fsm_state5 = ap_CS_fsm[32'd4];
 
 assign ap_CS_fsm_state6 = ap_CS_fsm[32'd5];
 
-assign ap_CS_fsm_state7 = ap_CS_fsm[32'd6];
-
 always @ (*) begin
-    ap_block_state3 = (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b0 == B_TVALID)) | ((icmp_ln14_fu_144_p2 == 1'd0) & (1'b0 == A_TVALID)));
+    ap_block_state1 = ((len_ap_vld_in_sig == 1'b0) | (loop_count_ap_vld_in_sig == 1'b0) | (ap_start == 1'b0));
 end
 
 always @ (*) begin
-    ap_block_state7 = ((out_r_TREADY == 1'b0) & (or_ln22_reg_343 == 1'd1));
+    ap_block_state2 = (((icmp_ln14_fu_144_p2 == 1'd0) & (1'b0 == B_TVALID)) | ((icmp_ln14_fu_144_p2 == 1'd0) & (1'b0 == A_TVALID)));
 end
 
 always @ (*) begin
-    ap_block_state7_io = ((out_r_TREADY == 1'b0) & (or_ln22_reg_343 == 1'd1));
+    ap_block_state6 = ((or_ln22_reg_343 == 1'd1) & (out_r_TREADY == 1'b0));
+end
+
+always @ (*) begin
+    ap_block_state6_io = ((or_ln22_reg_343 == 1'd1) & (out_r_TREADY == 1'b0));
 end
 
 always @ (*) begin
     ap_rst_n_inv = ~ap_rst_n;
 end
 
-assign icmp_ln14_fu_144_p2 = ((b_fu_68 == loop_count_0_data_reg) ? 1'b1 : 1'b0);
+assign icmp_ln14_fu_144_p2 = ((b_fu_68 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
 assign icmp_ln18_fu_155_p2 = ((l_1_reg_103 == 3'd4) ? 1'b1 : 1'b0);
 
-assign icmp_ln22_1_fu_215_p2 = ((add_ln22_1_reg_304 == loop_count_0_data_reg) ? 1'b1 : 1'b0);
+assign icmp_ln22_1_fu_215_p2 = ((add_ln22_1_reg_304 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign icmp_ln22_fu_210_p2 = ((add_ln22_fu_204_p2 == len_0_data_reg) ? 1'b1 : 1'b0);
+assign icmp_ln22_fu_210_p2 = ((add_ln22_fu_204_p2 == len_in_sig) ? 1'b1 : 1'b0);
 
 assign l_fu_161_p2 = (l_1_reg_103 + 3'd1);
 

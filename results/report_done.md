@@ -18,19 +18,19 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | vs unopt | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| unopt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 194 | 3.03 | 130 | 1.0x | 194-194 | 195 | 0 | 0 | yes | unopt_w1 (ref) |
-| unopt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 242 | 3.78 | 226 | 1.0x | 242-242 | 243 | 0 | 0 | yes | unopt_w4 (ref) |
-| unopt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 218 | 3.41 | 210 | 1.0x | 218-218 | 219 | 0 | 0 | yes | unopt_w8 (ref) |
-| opt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 68 | 1.06 | 4 | 2.9x | 68-68 | 69 | 0 | 0 | yes | opt_w1 (ref) |
-| opt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 20 | 0.31 | 4 | 12.1x | 20-20 | 21 | 0 | 0 | yes | opt_w4 (ref) |
-| opt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 13 | 0.20 | 5 | 16.8x | 13-13 | 14 | 0 | 0 | yes | opt_w8 (ref) |
+| unopt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 193 | 3.02 | 129 | 1.0x | 193-193 | 194 | 0 | 0 | yes | unopt_w1 (ref) |
+| unopt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 241 | 3.77 | 225 | 1.0x | 241-241 | 242 | 0 | 0 | yes | unopt_w4 (ref) |
+| unopt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 217 | 3.39 | 209 | 1.0x | 217-217 | 218 | 0 | 0 | yes | unopt_w8 (ref) |
+| opt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 67 | 1.05 | 3 | 2.9x | 67-67 | 68 | 0 | 0 | yes | opt_w1 (ref) |
+| opt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 19 | 0.30 | 3 | 12.7x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
+| opt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 12 | 0.19 | 4 | 18.1x | 12-12 | 13 | 0 | 0 | yes | opt_w8 (ref) |
 | dace | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 135 | 2.11 | 71 | 1.4x | 13-? | ? | 0 | 2 | yes | dace_w1 (ref) |
-| unopt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1538 | 3.00 | 1026 | 1.0x | 1538-1538 | 1539 | 0 | 0 | yes | unopt_w1 (yes) |
-| unopt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 1922 | 3.75 | 1794 | 1.0x | 1922-1922 | 1923 | 0 | 0 | yes | unopt_w4 (yes) |
-| unopt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 1730 | 3.38 | 1666 | 1.0x | 1730-1730 | 1731 | 0 | 0 | yes | unopt_w8 (renamed) |
-| opt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 516 | 1.01 | 4 | 3.0x | 516-516 | 517 | 0 | 0 | yes | opt_w1 (yes) |
-| opt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 132 | 0.26 | 4 | 14.6x | 132-132 | 133 | 0 | 0 | yes | opt_w4 (yes) |
-| opt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 69 | 0.13 | 5 | 25.1x | 69-69 | 70 | 0 | 0 | yes | opt_w8 (yes) |
+| unopt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1537 | 3.00 | 1025 | 1.0x | 1537-1537 | 1538 | 0 | 0 | yes | unopt_w1 (yes) |
+| unopt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 1921 | 3.75 | 1793 | 1.0x | 1921-1921 | 1922 | 0 | 0 | yes | unopt_w4 (yes) |
+| unopt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 1729 | 3.38 | 1665 | 1.0x | 1729-1729 | 1730 | 0 | 0 | yes | unopt_w8 (renamed) |
+| opt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 515 | 1.01 | 3 | 3.0x | 515-515 | 516 | 0 | 0 | yes | opt_w1 (yes) |
+| opt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 131 | 0.26 | 3 | 14.7x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
+| opt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 68 | 0.13 | 4 | 25.4x | 68-68 | 69 | 0 | 0 | yes | opt_w8 (yes) |
 | dace | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1031 | 2.01 | 519 | 1.5x | 13-? | ? | 0 | 2 | yes | dace_w1 (yes) |
 
 Loops:
@@ -64,24 +64,24 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | vs unopt | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| unopt | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 1.0x | 66-66 | 67 | 0 | 0 | yes | unopt_w1 (ref) |
-| unopt | n64 | 4 | loop_count=16 | 3.33 | ok | 226 | 3.53 | 210 | 1.0x | 226-226 | 227 | 0 | 0 | yes | unopt_w4 (ref) |
-| unopt | n64 | 8 | loop_count=8 | 3.33 | ok | 210 | 3.28 | 202 | 1.0x | 210-210 | 211 | 0 | 0 | yes | unopt_w8 (ref) |
-| opt | n64 | 1 | loop_count=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.0x | 67-67 | 68 | 0 | 0 | yes | opt_w1 (ref) |
-| opt | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.9x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
-| opt | n64 | 8 | loop_count=8 | 3.33 | ok | 11 | 0.17 | 3 | 19.1x | 11-11 | 12 | 0 | 0 | yes | opt_w8 (ref) |
-| dace | n64 | 1 | loop_count=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.0x | 4-? | ? | 0 | 0 | yes | dace_w1 (ref) |
-| dace | n64 | 4 | loop_count=16 | 3.33 | ok | 20 | 0.31 | 4 | 11.3x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
-| dace | n64 | 8 | loop_count=8 | 3.33 | ok | 12 | 0.19 | 4 | 17.5x | ?-? | ? | 0 | 0 | yes | dace_w8 (ref) |
-| unopt | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 1.0x | 514-514 | 515 | 0 | 0 | yes | unopt_w1 (yes) |
-| unopt | n512 | 4 | loop_count=128 | 3.33 | ok | 1794 | 3.50 | 1666 | 1.0x | 1794-1794 | 1795 | 0 | 0 | yes | unopt_w4 (yes) |
-| unopt | n512 | 8 | loop_count=64 | 3.33 | ok | 1666 | 3.25 | 1602 | 1.0x | 1666-1666 | 1667 | 0 | 0 | yes | unopt_w8 (renamed) |
-| opt | n512 | 1 | loop_count=512 | 3.33 | ok | 515 | 1.01 | 3 | 1.0x | 515-515 | 516 | 0 | 0 | yes | opt_w1 (yes) |
-| opt | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
-| opt | n512 | 8 | loop_count=64 | 3.33 | ok | 67 | 0.13 | 3 | 24.9x | 67-67 | 68 | 0 | 0 | yes | opt_w8 (yes) |
-| dace | n512 | 1 | loop_count=512 | 3.33 | ok | 515 | 1.01 | 3 | 1.0x | 4-? | ? | 0 | 0 | yes | dace_w1 (yes) |
-| dace | n512 | 4 | loop_count=128 | 3.33 | ok | 132 | 0.26 | 4 | 13.6x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
-| dace | n512 | 8 | loop_count=64 | 3.33 | ok | 68 | 0.13 | 4 | 24.5x | ?-? | ? | 0 | 0 | yes | dace_w8 (yes) |
+| unopt | n64 | 1 | loop_count=64 | 3.33 | ok | 65 | 1.02 | 1 | 1.0x | 65-65 | 66 | 0 | 0 | yes | unopt_w1 (ref) |
+| unopt | n64 | 4 | loop_count=16 | 3.33 | ok | 225 | 3.52 | 209 | 1.0x | 225-225 | 226 | 0 | 0 | yes | unopt_w4 (ref) |
+| unopt | n64 | 8 | loop_count=8 | 3.33 | ok | 209 | 3.27 | 201 | 1.0x | 209-209 | 210 | 0 | 0 | yes | unopt_w8 (ref) |
+| opt | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 1.0x | 66-66 | 67 | 0 | 0 | yes | opt_w1 (ref) |
+| opt | n64 | 4 | loop_count=16 | 3.33 | ok | 18 | 0.28 | 2 | 12.5x | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
+| opt | n64 | 8 | loop_count=8 | 3.33 | ok | 10 | 0.16 | 2 | 20.9x | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
+| dace | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (ref) |
+| dace | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.8x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
+| dace | n64 | 8 | loop_count=8 | 3.33 | ok | 11 | 0.17 | 3 | 19.0x | ?-? | ? | 0 | 0 | yes | dace_w8 (ref) |
+| unopt | n512 | 1 | loop_count=512 | 3.33 | ok | 513 | 1.00 | 1 | 1.0x | 513-513 | 514 | 0 | 0 | yes | unopt_w1 (yes) |
+| unopt | n512 | 4 | loop_count=128 | 3.33 | ok | 1793 | 3.50 | 1665 | 1.0x | 1793-1793 | 1794 | 0 | 0 | yes | unopt_w4 (yes) |
+| unopt | n512 | 8 | loop_count=64 | 3.33 | ok | 1665 | 3.25 | 1601 | 1.0x | 1665-1665 | 1666 | 0 | 0 | yes | unopt_w8 (renamed) |
+| opt | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 1.0x | 514-514 | 515 | 0 | 0 | yes | opt_w1 (yes) |
+| opt | n512 | 4 | loop_count=128 | 3.33 | ok | 130 | 0.25 | 2 | 13.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
+| opt | n512 | 8 | loop_count=64 | 3.33 | ok | 66 | 0.13 | 2 | 25.2x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
+| dace | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (yes) |
+| dace | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
+| dace | n512 | 8 | loop_count=64 | 3.33 | ok | 67 | 0.13 | 3 | 24.9x | ?-? | ? | 0 | 0 | yes | dace_w8 (yes) |
 
 Loops:
 
@@ -122,24 +122,24 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | vs unopt | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| unopt | n64 | 1 | loop_count=64 | 3.33 | ok | 130 | 2.03 | 66 | 1.0x | 130-130 | 131 | 0 | 0 | yes | unopt_w1 (ref) |
-| unopt | n64 | 4 | loop_count=16 | 3.33 | ok | 226 | 3.53 | 210 | 1.0x | 226-226 | 227 | 0 | 0 | yes | unopt_w4 (ref) |
-| unopt | n64 | 8 | loop_count=8 | 3.33 | ok | 210 | 3.28 | 202 | 1.0x | 210-210 | 211 | 0 | 0 | yes | unopt_w8 (ref) |
-| opt | n64 | 1 | loop_count=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.9x | 67-67 | 68 | 0 | 0 | yes | opt_w1 (ref) |
-| opt | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.9x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
-| opt | n64 | 8 | loop_count=8 | 3.33 | ok | 11 | 0.17 | 3 | 19.1x | 11-11 | 12 | 0 | 0 | yes | opt_w8 (ref) |
-| dace | n64 | 1 | loop_count=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.9x | 4-? | ? | 0 | 0 | yes | dace_w1 (ref) |
-| dace | n64 | 4 | loop_count=16 | 3.33 | ok | 20 | 0.31 | 4 | 11.3x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
-| dace | n64 | 8 | loop_count=8 | 3.33 | ok | 12 | 0.19 | 4 | 17.5x | ?-? | ? | 0 | 0 | yes | dace_w8 (ref) |
-| unopt | n512 | 1 | loop_count=512 | 3.33 | ok | 1026 | 2.00 | 514 | 1.0x | 1026-1026 | 1027 | 0 | 0 | yes | unopt_w1 (yes) |
-| unopt | n512 | 4 | loop_count=128 | 3.33 | ok | 1794 | 3.50 | 1666 | 1.0x | 1794-1794 | 1795 | 0 | 0 | yes | unopt_w4 (yes) |
-| unopt | n512 | 8 | loop_count=64 | 3.33 | ok | 1666 | 3.25 | 1602 | 1.0x | 1666-1666 | 1667 | 0 | 0 | yes | unopt_w8 (renamed) |
-| opt | n512 | 1 | loop_count=512 | 3.33 | ok | 515 | 1.01 | 3 | 2.0x | 515-515 | 516 | 0 | 0 | yes | opt_w1 (yes) |
-| opt | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
-| opt | n512 | 8 | loop_count=64 | 3.33 | ok | 67 | 0.13 | 3 | 24.9x | 67-67 | 68 | 0 | 0 | yes | opt_w8 (yes) |
-| dace | n512 | 1 | loop_count=512 | 3.33 | ok | 515 | 1.01 | 3 | 2.0x | 4-? | ? | 0 | 0 | yes | dace_w1 (yes) |
-| dace | n512 | 4 | loop_count=128 | 3.33 | ok | 132 | 0.26 | 4 | 13.6x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
-| dace | n512 | 8 | loop_count=64 | 3.33 | ok | 68 | 0.13 | 4 | 24.5x | ?-? | ? | 0 | 0 | yes | dace_w8 (yes) |
+| unopt | n64 | 1 | loop_count=64 | 3.33 | ok | 129 | 2.02 | 65 | 1.0x | 129-129 | 130 | 0 | 0 | yes | unopt_w1 (ref) |
+| unopt | n64 | 4 | loop_count=16 | 3.33 | ok | 225 | 3.52 | 209 | 1.0x | 225-225 | 226 | 0 | 0 | yes | unopt_w4 (ref) |
+| unopt | n64 | 8 | loop_count=8 | 3.33 | ok | 209 | 3.27 | 201 | 1.0x | 209-209 | 210 | 0 | 0 | yes | unopt_w8 (ref) |
+| opt | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 2.0x | 66-66 | 67 | 0 | 0 | yes | opt_w1 (ref) |
+| opt | n64 | 4 | loop_count=16 | 3.33 | ok | 18 | 0.28 | 2 | 12.5x | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
+| opt | n64 | 8 | loop_count=8 | 3.33 | ok | 10 | 0.16 | 2 | 20.9x | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
+| dace | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 2.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (ref) |
+| dace | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.8x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
+| dace | n64 | 8 | loop_count=8 | 3.33 | ok | 11 | 0.17 | 3 | 19.0x | ?-? | ? | 0 | 0 | yes | dace_w8 (ref) |
+| unopt | n512 | 1 | loop_count=512 | 3.33 | ok | 1025 | 2.00 | 513 | 1.0x | 1025-1025 | 1026 | 0 | 0 | yes | unopt_w1 (yes) |
+| unopt | n512 | 4 | loop_count=128 | 3.33 | ok | 1793 | 3.50 | 1665 | 1.0x | 1793-1793 | 1794 | 0 | 0 | yes | unopt_w4 (yes) |
+| unopt | n512 | 8 | loop_count=64 | 3.33 | ok | 1665 | 3.25 | 1601 | 1.0x | 1665-1665 | 1666 | 0 | 0 | yes | unopt_w8 (renamed) |
+| opt | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 2.0x | 514-514 | 515 | 0 | 0 | yes | opt_w1 (yes) |
+| opt | n512 | 4 | loop_count=128 | 3.33 | ok | 130 | 0.25 | 2 | 13.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
+| opt | n512 | 8 | loop_count=64 | 3.33 | ok | 66 | 0.13 | 2 | 25.2x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
+| dace | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 2.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (yes) |
+| dace | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
+| dace | n512 | 8 | loop_count=64 | 3.33 | ok | 67 | 0.13 | 3 | 24.9x | ?-? | ? | 0 | 0 | yes | dace_w8 (yes) |
 
 Loops:
 
@@ -174,19 +174,19 @@ Interface: axis, register slices off.
 
 | case | size | W | config | HLS clock ns | status | cycles | cyc/elem | overhead | vs unopt | est. latency | II | DSP | BRAM | portable | RTL |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| unopt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 130 | 2.03 | 66 | 1.0x | 130-130 | 131 | 0 | 0 | yes | unopt_w1 (ref) |
-| unopt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 178 | 2.78 | 162 | 1.0x | 178-178 | 179 | 0 | 0 | yes | unopt_w4 (ref) |
-| unopt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 154 | 2.41 | 146 | 1.0x | 154-154 | 155 | 0 | 0 | yes | unopt_w8 (ref) |
-| opt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.9x | 67-67 | 68 | 0 | 0 | yes | opt_w1 (ref) |
-| opt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 19 | 0.30 | 3 | 9.4x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
-| opt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 11 | 0.17 | 3 | 14.0x | 11-11 | 12 | 0 | 0 | yes | opt_w8 (ref) |
+| unopt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 129 | 2.02 | 65 | 1.0x | 129-129 | 130 | 0 | 0 | yes | unopt_w1 (ref) |
+| unopt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 177 | 2.77 | 161 | 1.0x | 177-177 | 178 | 0 | 0 | yes | unopt_w4 (ref) |
+| unopt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 153 | 2.39 | 145 | 1.0x | 153-153 | 154 | 0 | 0 | yes | unopt_w8 (ref) |
+| opt | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 66 | 1.03 | 2 | 2.0x | 66-66 | 67 | 0 | 0 | yes | opt_w1 (ref) |
+| opt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 18 | 0.28 | 2 | 9.8x | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
+| opt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 10 | 0.16 | 2 | 15.3x | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
 | dace | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 67 | 1.05 | 3 | 1.9x | 6-? | ? | 0 | 0 | yes | dace_w1 (ref) |
-| unopt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1026 | 2.00 | 514 | 1.0x | 1026-1026 | 1027 | 0 | 0 | yes | unopt_w1 (yes) |
-| unopt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 1410 | 2.75 | 1282 | 1.0x | 1410-1410 | 1411 | 0 | 0 | yes | unopt_w4 (yes) |
-| unopt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 1218 | 2.38 | 1154 | 1.0x | 1218-1218 | 1219 | 0 | 0 | yes | unopt_w8 (renamed) |
-| opt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 515 | 1.01 | 3 | 2.0x | 515-515 | 516 | 0 | 0 | yes | opt_w1 (yes) |
-| opt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 131 | 0.26 | 3 | 10.8x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
-| opt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 67 | 0.13 | 3 | 18.2x | 67-67 | 68 | 0 | 0 | yes | opt_w8 (yes) |
+| unopt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1025 | 2.00 | 513 | 1.0x | 1025-1025 | 1026 | 0 | 0 | yes | unopt_w1 (yes) |
+| unopt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 1409 | 2.75 | 1281 | 1.0x | 1409-1409 | 1410 | 0 | 0 | yes | unopt_w4 (yes) |
+| unopt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 1217 | 2.38 | 1153 | 1.0x | 1217-1217 | 1218 | 0 | 0 | yes | unopt_w8 (renamed) |
+| opt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 514 | 1.00 | 2 | 2.0x | 514-514 | 515 | 0 | 0 | yes | opt_w1 (yes) |
+| opt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 130 | 0.25 | 2 | 10.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
+| opt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 66 | 0.13 | 2 | 18.4x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
 | dace | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 515 | 1.01 | 3 | 2.0x | 6-? | ? | 0 | 0 | yes | dace_w1 (yes) |
 
 Loops:
