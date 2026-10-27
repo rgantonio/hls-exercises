@@ -252,11 +252,12 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
 
 - Size keys are `make_inputs`'s argument names (`n`, `m`). They give the tag (`n64`, `m38_n42`) and the macros (`SIZE_N`, `SIZE_M`).
 - `config` gives each run-time pin's value as a Python expression over the size keys and `W`; the testbench gets `-DCFG_<PIN>=<value>`. A case's `tripcount` maps a loop label to an expression over the same names and the pins (section 2).
+- `scalars` lists data scalars of the top (`axpy`'s `alpha`) that are run-time pins too: forge would hold them in a CSR. They get `ap_vld` like the config pins; the testbench passes their values from `data.h`.
 - `{size}`, `{W}` and `{bench}` (the absolute path of `bench/`) in paths and `cflags` are filled per point. Every path that reaches Vitis is absolute, because cosim compiles from inside the project.
 - `iface`, `axis` and `axis_register_mode`: with `"iface": "axis"`, every argument in `axis` gets an axis interface in every case, with register slices set by `axis_register_mode` (`off`, `forward`, `reverse` or `both`; `both` is Vitis's default when the key is missing). The interface and mode are recorded per row.
 - `cflags` at the top go to every case, a case's own `cflags` after them. A case's `W` list replaces the kernel's (the reductions' `dace` case runs at W = 1 only).
 - Optional keys: `acc_dtype` (tier P, gives `ACC_T`), `clock_ns` (default 3.33), and per case `tb` or `directives` to override the defaults.
-- The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`), and `symbols` maps each DaCe symbol to a C++ expression over the top's pins.
+- The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`), `symbols` maps each DaCe symbol to a C++ expression over the top's pins, `split_inout` renames the written side of an in-place array (`{"y": "y_out"}`), and `buffer_outputs` names outputs DaCe writes more than once, with their element count (`{"y": "M"}`): the generated top gives DaCe a local buffer and streams it out afterwards.
 
 ### 5.2 What is kept: `results/`
 
@@ -348,7 +349,14 @@ The sizes are a proposal until forge's tier A recipes set theirs (`docs/SIZES.md
 
 ### Untiered — `matadd`, `relu`, `rowsum`, `axpy`
 
-These are added as forge picks them up. `rowsum` is `vsum` with `len` < `loop_count` (one result per row). `axpy` gets separate `y` in and `y_out` ports, since an axis port cannot be read and written in place (forge open item 47).
+| Kernel | Sizes | W (`opt`) | `dace` | Notes |
+|---|---|---|---|---|
+| `relu` | n64, n512 | 1, 4, 8 | W = 1 | Compare and select. DaCe's vectorized code calls `max(vec, 0)`, which does not compile. |
+| `matadd` | m8_n16 (recipe), m16_n32 | 1, 4, 8 | 1, 4, 8 | `vecadd`'s unit on a flat run of M × N / W beats; DaCe's M and N set to 1 and `loop_count` × W. |
+| `rowsum` | m4_n16, m8_n64 (both recipes) | 1, 4, 8 | W = 1 | `vsum`'s unit with `len` < `loop_count`. DaCe adds into `y` in place, so its top buffers `y` (a RAM). |
+| `axpy` | n64, n512 | 1, 4, 8 | W = 1 | `y` in and `y_out` (forge open item 47); `alpha` is a 64-bit run-time pin (`scalars`). DaCe's transient `__tmp0[N]` is a RAM; `Vectorization` rejects the scalar. |
+
+30 hardware points, 60 run points. The two DaCe points with a RAM (`rowsum`, `axpy`) are parked in synthesis.
 
 ### Later tiers
 

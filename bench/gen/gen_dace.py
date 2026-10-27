@@ -108,8 +108,32 @@ def split_args(sig: str) -> list[str]:
     return out
 
 
+def split_inout(sdfg, renames: dict) -> None:
+    """An inout array (axpy's y) becomes two: reads keep the name, writes go to the new one
+    (y_out), because an axis port cannot be read and written in place. Every access node
+    that is written to, and the memlets into it, take the new name."""
+    import copy
+
+    for old, new in renames.items():
+        if old not in sdfg.arrays:
+            sys.exit(f"split_inout: no array '{old}' in the SDFG")
+        sdfg.add_datadesc(new, copy.deepcopy(sdfg.arrays[old]))
+        written = 0
+        for state in sdfg.states():
+            for node in state.data_nodes():
+                if node.data == old and state.in_degree(node) > 0:
+                    node.data = new
+                    for e in state.in_edges(node):  # the whole path, through map exits
+                        for pe in state.memlet_path(e):
+                            if pe.data.data == old:
+                                pe.data.data = new
+                    written += 1
+        if not written:
+            sys.exit(f"split_inout: '{old}' is never written")
+
+
 def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, symbols: dict,
-            sym_map: dict, max_tag: str) -> str:
+            sym_map: dict, max_tag: str, buffers: dict) -> str:
     """The top <kernel>_dace: the hand-written top's arguments, DaCe's module inside.
 
     Module arguments named fpga_<X>, with X an argument of the hand-written top,
@@ -118,19 +142,32 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
     expression, e.g. "loop_count * W"). Everything else is a DaCe transient: an
     array becomes a local static array sized at `symbols` (the largest size), a
     scalar a local variable passed by value (DaCe's module takes scalar
-    transients by value).
+    transients by value). A scalar argument named like an argument of the top (axpy's
+    alpha) is passed through. An output listed in `buffers` (name -> element count,
+    a C++ expression) is written by DaCe more than once or out of order (rowsum's
+    reduction adds into y[i] every cycle), so it goes to a local buffer, which the top
+    then streams out in order.
     """
     import dace
 
     args = split_args(module_sig)
     names = param_names(params)
-    lines, call, notes = [], [], []
+    lines, call, notes, post = [], [], [], []
     for a in args:
         ptr = re.match(r"(.+?)\s*\*\s*(?:__restrict__\s*)?([A-Za-z_]\w*)$", a)
         scalar = re.match(r"(.+?)\s+([A-Za-z_]\w*)$", a)
         if ptr:
             ctype, name = ptr.group(1).strip(), ptr.group(2)
             plain = name.removeprefix("fpga_")
+            if name.startswith("fpga_") and plain in buffers:
+                desc = sdfg.arrays.get(plain)
+                size = int(dace.symbolic.evaluate(desc.total_size, symbols)) if desc is not None else 1
+                lines.append(f"    static {ctype} {plain}_buf[{size}];  // DaCe adds into {plain} in place: buffered, "
+                             f"sized for {max_tag}")
+                call.append(f"{plain}_buf")
+                post.append(f"OUT_{plain}:\n    for (int i = 0; i < (int)({buffers[plain]}); i++) {plain}[i] = {plain}_buf[i];")
+                notes.append(f"{plain}_buf[{size}] (the output, buffered)")
+                continue
             if name.startswith("fpga_") and plain in names:
                 call.append(f"({ctype} *){plain}")
                 continue
@@ -143,6 +180,8 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
             ctype, name = scalar.group(1).strip(), scalar.group(2)
             lines.append(f"    {ctype} {name} = ({ctype})({sym_map[name]});  // DaCe symbol, from the run-time pins")
             call.append(name)
+        elif scalar and scalar.group(2) in names:
+            call.append(scalar.group(2))  # a scalar argument of the top, e.g. axpy's alpha
         elif scalar and scalar.group(2) in {str(s) for s in sdfg.free_symbols} | set(sdfg.symbols):
             sys.exit(f"{module_name}: argument '{a}' is a DaCe symbol with no entry in params['dace']['symbols']")
         elif scalar:
@@ -152,7 +191,7 @@ def wrapper(kernel: str, params: str, module_sig: str, module_name: str, sdfg, s
             call.append(name)
         else:
             sys.exit(f"{module_name}: cannot read argument '{a}'")
-    body = "\n".join(lines + [f"    {module_name}({', '.join(call)});"])
+    body = "\n".join(lines + [f"    {module_name}({', '.join(call)});"] + post)
     extra = ""
     if notes:
         extra = ("// DaCe transients " + ", ".join(notes) + f" stay inside the block for now (arrays sized for\n"
@@ -197,6 +236,7 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
         tag = f"w{width}"
         sdfg = build(spec, simplify=True)
         sdfg.name = kernel
+        split_inout(sdfg, cfg.get("split_inout", {}))
         if width > 1:
             if not cfg.get("vectorize", False):
                 sys.exit(f"{kernel}: dace case asks for W = {width} but params['dace']['vectorize'] is false")
@@ -242,7 +282,7 @@ def generate(kdir: Path, params: dict, forge: Path) -> None:
                  f"// DaCe's device file, unchanged below this header. Do not edit.\n\n")
         (out / f"{kernel}_0_0.cpp").write_text(stamp + code)
         (out / f"{kernel}_dace.cpp").write_text(wrapper(kernel, tparams, module_sig, module_name, sdfg, symbols,
-                                                        sym_map, max_tag))
+                                                        sym_map, max_tag, cfg.get("buffer_outputs", {})))
         print(f"wrote {out.relative_to(ROOT)}/{kernel}_0_0.cpp and {kernel}_dace.cpp ({module_name})")
 
 

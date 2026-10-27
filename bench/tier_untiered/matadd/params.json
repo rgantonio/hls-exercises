@@ -1,0 +1,28 @@
+{
+  "kernel": "matadd",
+  "tier": "untiered",
+  "forge_kernel": "elementwise/matadd",
+  "forge_recipe": "recipes/matadd.json (M = 8, N = 16, W = 4)",
+  "dtype": "int64",
+  "seed": 0,
+  "sizes": [{"m": 8, "n": 16}, {"m": 16, "n": 32}],
+  "W": [1, 4, 8],
+  "iface": "axis",
+  "axis": ["A", "B", "C"],
+  "axis_register_mode": "off",
+  "config": {"loop_count": "m * n // W"},
+  "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-I{bench}/include", "-I{bench}/gen/dace_include"],
+  "tb": "src/tb_matadd.cpp",
+  "cases": {
+    "unopt": {"top": "matadd", "src": ["src/matadd.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
+    "opt": {"top": "matadd", "src": ["src/matadd.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
+    "dace": {
+      "top": "matadd_dace",
+      "per_w": true,
+      "W": [1, 4, 8],
+      "src": ["dace/w{W}/matadd_dace.cpp", "dace/w{W}/matadd_0_0.cpp"],
+      "cflags": ["-DDACE_SYNTHESIS", "-DDACE_XILINX", "-DDACE_XILINX_DEVICE_CODE"]
+    }
+  },
+  "dace": {"vectorize": true, "passes": [], "expansions": {}, "symbols": {"M": "1", "N": "loop_count * W"}}
+}

@@ -211,7 +211,9 @@ def point_env(pt: dict, do_csim: bool, do_cosim: bool) -> dict:
         "CFLAGS": " ".join(flags),
         "TB_CFLAGS": " ".join(f"-DCFG_{k.upper()}={v}" for k, v in pt["config"].items()),
         "TRIPCOUNT": " ".join(f"{k}={v}" for k, v in pt["trips"].items()),
-        "PINS": " ".join(pt["config"]),
+        # Run-time pins: the config values, and the scalars a kernel takes as data (axpy's alpha),
+        # which forge would hold in a CSR. The testbench passes the scalars' values from data.h.
+        "PINS": " ".join(list(pt["config"]) + params.get("scalars", [])),
         "DIRECTIVES": str(dpath.resolve()) if dpath.is_file() else "",
         "W": "" if w is None else str(w),
         "AXIS": " ".join(params.get("axis", [])) if params.get("iface") == "axis" else "",
