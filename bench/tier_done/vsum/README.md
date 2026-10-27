@@ -18,7 +18,7 @@ Run-time pins, as forge's `Accumulator`: `loop_count` (beats in the run, N / W) 
 | `opt` | `vsum` (`src/vsum.cpp`) | `directives_opt.tcl`: `BEAT` pipelined at II = 1, `LANE` unrolled, so a whole beat goes through every cycle. |
 | `dace` | `vsum_dace` (`dace/w<W>/`) | DaCe expands `np.sum` into a loop at II = 1 that writes through a write-conflict resolution into a scalar. DaCe 1.0.2 cannot vectorize the reduction, so this case runs at W = 1 only. |
 
-Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
+Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 
 ## What to expect
 

@@ -18,7 +18,7 @@ Run-time pin, as forge's `loopCount`: `loop_count` (beats in the run, N / W), a 
 | `opt` | `vecadd` (`src/vecadd.cpp`) | `directives_opt.tcl`: `BEAT` pipelined at II = 1, `LANE` unrolled, so a whole beat goes through every cycle. |
 | `dace` | `vecadd_dace` (`dace/w<W>/`) | DaCe's map at II = 1. At W = 4 and 8, DaCe's `Vectorization` makes the arrays W-lane words, so the loop takes one beat per cycle. |
 
-Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
+Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 
 ## What to expect
 

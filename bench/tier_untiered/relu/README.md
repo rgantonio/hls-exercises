@@ -18,7 +18,7 @@ Run-time pin, as forge's `loopCount`: `loop_count` (beats in the run), 32 bits w
 | `opt` | `relu` (`src/relu.cpp`) | `directives_opt.tcl`: `BEAT` at II = 1, `LANE` unrolled. |
 | `dace` | `relu_dace` (`dace/w1/`) | DaCe's map at II = 1. W = 1 only: DaCe 1.0.2 vectorizes the map, but writes `max(dace::vec, 0)`, which does not compile (no `max` for a vector and a scalar). |
 
-Sizes n64 and n512, W = 1, 4 and 8 (`dace` W = 1).
+Sizes n64 and n512, W = 1, 2, 4, 8, 16 and 32 (`dace` W = 1).
 
 ## What to expect
 

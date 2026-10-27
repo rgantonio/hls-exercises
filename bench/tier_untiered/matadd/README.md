@@ -18,7 +18,7 @@ The rows are contiguous, so the block sees one flat run of M × N / W beats, as 
 | `opt` | `matadd` (`src/matadd.cpp`) | `directives_opt.tcl`: `BEAT` at II = 1, `LANE` unrolled. |
 | `dace` | `matadd_dace` (`dace/w<W>/`) | DaCe's 2-D map, vectorized along the columns at W = 4 and 8; its row loop runs once. |
 
-Sizes m8_n16 (the recipe) and m16_n32 (512 elements), W = 1, 4 and 8.
+Sizes m8_n16 (the recipe) and m16_n32 (512 elements), W = 1, 2, 4, 8, 16 and 32.
 
 ## What to expect
 

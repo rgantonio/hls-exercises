@@ -138,6 +138,20 @@ def config_values(params: dict, cfg: dict, size: dict, w) -> tuple[dict, dict]:
     return config, trips
 
 
+def point_valid(params: dict, size: dict, w) -> bool:
+    """False for a size and W the kernel cannot run: the elements must split into whole
+    beats, and params.json's optional "valid" adds a kernel's own rule (rowsum: a row
+    must fill whole beats, "n % W == 0"). Such points are left out, not failed."""
+    names = {k.lower(): int(v) for k, v in size.items()}
+    names["W"] = int(w) if w is not None else 1
+    elems = 1
+    for v in size.values():
+        elems *= int(v)
+    if elems % names["W"]:
+        return False
+    return bool(evaluate({"valid": params["valid"]}, names)["valid"]) if "valid" in params else True
+
+
 def config_label(config: dict) -> str:
     return " ".join(f"{k}={v}" for k, v in config.items())
 
@@ -164,6 +178,8 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
             if args.w and w is not None and w not in args.w:
                 continue
             name = f"{case}_{tag}" + (f"_w{w}" if w is not None else "") + f"{clock_tag(clock)}_proj"
+            if not point_valid(params, size, w):
+                continue
             config, trips = config_values(params, cfg, size, w)
             out.append({
                 "kdir": kdir, "params": params, "case": case, "cfg": cfg,

@@ -18,7 +18,7 @@ Run-time pins, as forge's `Accumulator`: `loop_count` (M × N / W beats) and `le
 | `opt` | `rowsum` (`src/rowsum.cpp`) | `directives_opt.tcl`: `BEAT` at II = 1, `LANE` unrolled into an adder tree. |
 | `dace` | `rowsum_dace` (`dace/w1/`) | DaCe's reduction first zeroes `y` (M cycles), then adds every element into `y[i]` in place (`xilinx_wcr_fixed`), so `y` is read and written N times per row. An axis port cannot do that, so the generated top keeps `y` in a local buffer (sized for m8_n64) and streams it out after DaCe's loops: M more cycles and a RAM, which parks its synthesis. W = 1 only, as for the other reductions. |
 
-Sizes m4_n16 and m8_n64 (the two recipes), W = 1, 4 and 8 (`dace` W = 1).
+Sizes m4_n16 and m8_n64 (the two recipes), W = 1, 2, 4, 8, 16 and 32 (`dace` W = 1).
 
 ## What to expect
 

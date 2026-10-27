@@ -250,6 +250,7 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
 }
 ```
 
+- `W` is the sweep of `notes/w_sweep.md`, 1 to 32. Beats of more than 1024 bits need `-DAP_INT_MAX_W=4096` in `cflags` (ap_int's default limit is 1024 bits); every kernel has it. A point whose elements do not split into whole beats is left out, and an optional `valid` expression over the size keys and `W` adds a kernel's own rule (`rowsum`: `"n % W == 0"`).
 - Size keys are `make_inputs`'s argument names (`n`, `m`). They give the tag (`n64`, `m38_n42`) and the macros (`SIZE_N`, `SIZE_M`).
 - `config` gives each run-time pin's value as a Python expression over the size keys and `W`; the testbench gets `-DCFG_<PIN>=<value>`. A case's `tripcount` maps a loop label to an expression over the same names and the pins (section 2).
 - `scalars` lists data scalars of the top (`axpy`'s `alpha`) that are run-time pins too: forge would hold them in a CSR. They get `ap_vld` like the config pins; the testbench passes their values from `data.h`.
@@ -326,12 +327,12 @@ The first runs used `ap_memory` ports (commits 4b7b617 and 99e6c80, in git histo
 
 | Kernel | Sizes | W (`opt`) | Notes |
 |---|---|---|---|
-| `vecadd` | n64 (recipe), n512 | 1, 4, 8 | The pipe-cleaner for every step |
-| `vecmul` | n64, n512 | 1, 4, 8 | First fabric multiplier: check `DSP = 0` |
-| `vsum` | n64, n512 | 1, 4, 8 | W = 1 is the `vsum` recipe, W = 4 is `vsum_tree`. `opt` adds the W lanes of a beat in a tree into one accumulator. `loop_count` and `len` pins, as forge's `Accumulator`. |
-| `dot` | n64 (recipe), n512 | 1, 4, 8 | Forge's dot study runs N = 512 at W = 4 and 8. Forge's dot variants (vmul + vsum through L1, FIFO link, MAC lanes) are the forge-side rows of this one HLS kernel. |
+| `vecadd` | n64 (recipe), n512 | 1, 2, 4, 8, 16, 32 | The pipe-cleaner for every step |
+| `vecmul` | n64, n512 | 1, 2, 4, 8, 16, 32 | First fabric multiplier: check `DSP = 0` |
+| `vsum` | n64, n512 | 1, 2, 4, 8, 16, 32 | W = 1 is the `vsum` recipe, W = 4 is `vsum_tree`. `opt` adds the W lanes of a beat in a tree into one accumulator. `loop_count` and `len` pins, as forge's `Accumulator`. |
+| `dot` | n64 (recipe), n512 | 1, 2, 4, 8, 16, 32 | Forge's dot study runs N = 512 at W = 4 and 8. Forge's dot variants (vmul + vsum through L1, FIFO link, MAC lanes) are the forge-side rows of this one HLS kernel. |
 
-Every case runs at every W, except the reductions' `dace` case, which runs at W = 1 (section 4.3): 64 run points (two sizes each) on 32 hardware points.
+Every case runs at every W, except the reductions' `dace` case, which runs at W = 1 (section 4.3). The first runs had W = 1, 4, 8: 64 run points (two sizes each) on 32 hardware points. From 27 Oct 2026 the sweep is W = 1, 2, 4, 8, 16, 32 (`notes/w_sweep.md`: 64 to 2048 bits per stream per cycle, one product class per step): 124 run points on 62 hardware points.
 
 The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 (d2062af) has the run-time pins as `ap_vld`; its numbers and findings are in each kernel's README and `results/runs/2026-10-27_done_r3.md`. **Status:** HLS side done (cycles and area, `dot` `dace`'s area parked); forge's columns wait for forge's runs.
 
@@ -351,12 +352,12 @@ The sizes are a proposal until forge's tier A recipes set theirs (`docs/SIZES.md
 
 | Kernel | Sizes | W (`opt`) | `dace` | Notes |
 |---|---|---|---|---|
-| `relu` | n64, n512 | 1, 4, 8 | W = 1 | Compare and select. DaCe's vectorized code calls `max(vec, 0)`, which does not compile. |
-| `matadd` | m8_n16 (recipe), m16_n32 | 1, 4, 8 | 1, 4, 8 | `vecadd`'s unit on a flat run of M × N / W beats; DaCe's M and N set to 1 and `loop_count` × W. |
-| `rowsum` | m4_n16, m8_n64 (both recipes) | 1, 4, 8 | W = 1 | `vsum`'s unit with `len` < `loop_count`. DaCe adds into `y` in place, so its top buffers `y` (a RAM). |
-| `axpy` | n64, n512 | 1, 4, 8 | W = 1 | `y` in and `y_out` (forge open item 47); `alpha` is a 64-bit run-time pin (`scalars`). DaCe's transient `__tmp0[N]` is a RAM; `Vectorization` rejects the scalar. |
+| `relu` | n64, n512 | 1, 2, 4, 8, 16, 32 | W = 1 | Compare and select. DaCe's vectorized code calls `max(vec, 0)`, which does not compile. |
+| `matadd` | m8_n16 (recipe), m16_n32 | 1, 2, 4, 8, 16, 32 | 1, 4, 8 | `vecadd`'s unit on a flat run of M × N / W beats; DaCe's M and N set to 1 and `loop_count` × W. |
+| `rowsum` | m4_n16, m8_n64 (both recipes) | 1, 2, 4, 8, 16, 32 | W = 1 | `vsum`'s unit with `len` < `loop_count`. DaCe adds into `y` in place, so its top buffers `y` (a RAM). |
+| `axpy` | n64, n512 | 1, 2, 4, 8, 16, 32 | W = 1 | `y` in and `y_out` (forge open item 47); `alpha` is a 64-bit run-time pin (`scalars`). DaCe's transient `__tmp0[N]` is a RAM; `Vectorization` rejects the scalar. |
 
-30 hardware points, 60 run points. The two DaCe points with a RAM (`rowsum`, `axpy`) are parked in synthesis. **Status:** HLS side done (1aa2298); findings in each kernel's README. `matadd` and `rowsum` turned out to be `vecadd` and `vsum` exactly (same Verilog apart from names), which confirms that the 2-D shape and the restart live in the streamer and the pins.
+With W = 1, 4, 8: 30 hardware points, 60 run points. With W = 1 to 32: 57 hardware points, 112 run points (`rowsum` m4_n16 has no W = 32 point: a 16-element row does not fill a 32-lane beat). The two DaCe points with a RAM (`rowsum`, `axpy`) are parked in synthesis. **Status:** HLS side done (1aa2298); findings in each kernel's README. `matadd` and `rowsum` turned out to be `vecadd` and `vsum` exactly (same Verilog apart from names), which confirms that the 2-D shape and the restart live in the streamer and the pins.
 
 ### Later tiers
 

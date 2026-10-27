@@ -18,7 +18,7 @@ Run-time pin, as forge's `loopCount`: `loop_count` (beats in the run, N / W), a 
 | `opt` | `vecmul` (`src/vecmul.cpp`) | `directives_opt.tcl`: `BEAT` pipelined at II = 1, `LANE` unrolled, so a whole beat goes through every cycle. |
 | `dace` | `vecmul_dace` (`dace/w<W>/`) | As `vecadd`: II = 1, vectorized at W = 4 and 8. |
 
-Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
+Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 
 ## What to expect
 

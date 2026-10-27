@@ -18,7 +18,7 @@ An axis port cannot be read and written in place (forge open item 47), so `y` co
 | `opt` | `axpy` (`src/axpy.cpp`) | `directives_opt.tcl`: `BEAT` at II = 1, `LANE` unrolled: W multipliers and W adders. |
 | `dace` | `axpy_dace` (`dace/w1/`) | DaCe writes two loops, `alpha * x` into a transient `__tmp0[N]`, then `y + __tmp0`, as `dot`. The transient is a RAM sized for n512, which parks its synthesis. W = 1 only: DaCe 1.0.2's `Vectorization` rejects the scalar `alpha` (memlet out of bounds). |
 
-Sizes n64 and n512, W = 1, 4 and 8 (`dace` W = 1).
+Sizes n64 and n512, W = 1, 2, 4, 8, 16 and 32 (`dace` W = 1).
 
 ## What to expect
 
