@@ -356,7 +356,7 @@ The sizes are a proposal until forge's tier A recipes set theirs (`docs/SIZES.md
 | `rowsum` | m4_n16, m8_n64 (both recipes) | 1, 4, 8 | W = 1 | `vsum`'s unit with `len` < `loop_count`. DaCe adds into `y` in place, so its top buffers `y` (a RAM). |
 | `axpy` | n64, n512 | 1, 4, 8 | W = 1 | `y` in and `y_out` (forge open item 47); `alpha` is a 64-bit run-time pin (`scalars`). DaCe's transient `__tmp0[N]` is a RAM; `Vectorization` rejects the scalar. |
 
-30 hardware points, 60 run points. The two DaCe points with a RAM (`rowsum`, `axpy`) are parked in synthesis.
+30 hardware points, 60 run points. The two DaCe points with a RAM (`rowsum`, `axpy`) are parked in synthesis. **Status:** HLS side done (1aa2298); findings in each kernel's README. `matadd` and `rowsum` turned out to be `vecadd` and `vsum` exactly (same Verilog apart from names), which confirms that the 2-D shape and the restart live in the streamer and the pins.
 
 ### Later tiers
 

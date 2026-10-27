@@ -27,4 +27,19 @@ Sizes m8_n16 (the recipe) and m16_n32 (512 elements), W = 1, 4 and 8.
 
 ## Results
 
-Not run yet. The numbers will be in `results/report_untiered.md`.
+First run on 27 Oct 2026 (commit 1aa2298): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. All 60 points of the tier pass csim and cosim and are portable; both sizes run on the same hardware point (`rtl_same` `yes`, or `renamed` for `unopt` W = 8). `results/report_untiered.md` has every column and `results/runs/2026-10-27_untiered.md` the run note.
+
+| Case | W | cycles m8_n16 | cycles m16_n32 | over the beats (m16_n32) | area µm² | of which flops | critical path ns |
+|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 129 | 513 | 1 | 1,958 | 535 | 5.24 |
+| `unopt` | 4 | 449 | 1793 | 1665 | 15,768 | 8,537 | 5.30 |
+| `unopt` | 8 | 417 | 1665 | 1601 | 28,519 | 14,688 | 5.29 |
+| `opt` | 1 | 130 | 514 | 2 | 2,845 | 1,069 | 5.25 |
+| `opt` | 4 | 34 | 130 | 2 | 7,033 | 2,601 | 5.25 |
+| `opt` | 8 | 18 | 66 | 2 | 12,617 | 4,643 | 5.25 |
+| `dace` | 1 | 130 | 514 | 2 | 3,078 | 1,300 | 5.25 |
+| `dace` | 4 | 35 | 131 | 3 | 7,964 | 3,064 | 5.25 |
+| `dace` | 8 | 19 | 67 | 3 | 13,474 | 5,074 | 5.25 |
+
+- `matadd` is `vecadd`. At 512 elements the cycles and the area are the same in all nine case and W pairs, the Verilog differs only in names and the latency comment, and DC gives the same cells and critical path. The 2-D shape costs the unit nothing, because the streamer holds it.
+- DaCe's 2-D map with M = 1 also lands on `vecadd`'s DaCe numbers (131 cycles at W = 4, 7,964 µm²).
