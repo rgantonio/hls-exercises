@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="vsum_dace_vsum_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=1.859813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=198,HLS_SYN_LUT=251,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="vsum_dace_vsum_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=1.859813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=230,HLS_SYN_LUT=251,HLS_VERSION=2023_2_2}" *)
 
 module vsum_dace (
         ap_clk,
@@ -54,19 +54,22 @@ reg out_r_TVALID;
  reg    ap_rst_n_inv;
 (* fsm_encoding = "none" *) reg   [3:0] ap_CS_fsm;
 wire    ap_CS_fsm_state1;
+reg   [31:0] loop_count_0_data_reg;
+reg    loop_count_0_vld_reg;
+reg    loop_count_0_ack_out;
 reg    out_r_TDATA_blk_n;
 wire    ap_CS_fsm_state4;
-wire   [30:0] trunc_ln37_fu_61_p1;
-reg   [30:0] trunc_ln37_reg_75;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_done;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_idle;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_ready;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_A_TREADY;
-wire   [63:0] grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_old_val_out;
-wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_old_val_out_ap_vld;
-reg    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg;
+wire   [30:0] trunc_ln37_fu_63_p1;
+reg   [30:0] trunc_ln37_reg_78;
 wire    ap_CS_fsm_state2;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_done;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_idle;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_ready;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_A_TREADY;
+wire   [63:0] grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_old_val_out;
+wire    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_old_val_out_ap_vld;
+reg    grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg;
 wire    ap_CS_fsm_state3;
 reg   [3:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -78,22 +81,24 @@ wire    ap_ce_reg;
 // power-on initialization
 initial begin
 #0 ap_CS_fsm = 4'd1;
-#0 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg = 1'b0;
+#0 loop_count_0_data_reg = 32'd0;
+#0 loop_count_0_vld_reg = 1'b0;
+#0 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg = 1'b0;
 end
 
-vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53(
+vsum_dace_vsum_dace_Pipeline_VITIS_LOOP_37_1 grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55(
     .ap_clk(ap_clk),
     .ap_rst(ap_rst_n_inv),
-    .ap_start(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start),
-    .ap_done(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_done),
-    .ap_idle(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_idle),
-    .ap_ready(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_ready),
+    .ap_start(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start),
+    .ap_done(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_done),
+    .ap_idle(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_idle),
+    .ap_ready(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_ready),
     .A_TVALID(A_TVALID),
-    .empty(trunc_ln37_reg_75),
+    .empty(trunc_ln37_reg_78),
     .A_TDATA(A_TDATA),
-    .A_TREADY(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_A_TREADY),
-    .old_val_out(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_old_val_out),
-    .old_val_out_ap_vld(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_old_val_out_ap_vld)
+    .A_TREADY(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_A_TREADY),
+    .old_val_out(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_old_val_out),
+    .old_val_out_ap_vld(grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_old_val_out_ap_vld)
 );
 
 always @ (posedge ap_clk) begin
@@ -106,25 +111,31 @@ end
 
 always @ (posedge ap_clk) begin
     if (ap_rst_n_inv == 1'b1) begin
-        grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg <= 1'b0;
+        grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg <= 1'b0;
     end else begin
         if ((1'b1 == ap_CS_fsm_state2)) begin
-            grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg <= 1'b1;
-        end else if ((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_ready == 1'b1)) begin
-            grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg <= 1'b0;
+            grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg <= 1'b1;
+        end else if ((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_ready == 1'b1)) begin
+            grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg <= 1'b0;
         end
     end
 end
 
 always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state1)) begin
-        trunc_ln37_reg_75 <= trunc_ln37_fu_61_p1;
+    if (((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (loop_count_0_ack_out == 1'b1) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b1)) | (~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b0)))) begin
+        loop_count_0_data_reg <= loop_count;
+    end
+end
+
+always @ (posedge ap_clk) begin
+    if ((1'b1 == ap_CS_fsm_state2)) begin
+        trunc_ln37_reg_78 <= trunc_ln37_fu_63_p1;
     end
 end
 
 always @ (*) begin
     if ((1'b1 == ap_CS_fsm_state3)) begin
-        A_TREADY = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_A_TREADY;
+        A_TREADY = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_A_TREADY;
     end else begin
         A_TREADY = 1'b0;
     end
@@ -141,7 +152,7 @@ end
 assign ap_ST_fsm_state2_blk = 1'b0;
 
 always @ (*) begin
-    if ((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_done == 1'b0)) begin
+    if ((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_done == 1'b0)) begin
         ap_ST_fsm_state3_blk = 1'b1;
     end else begin
         ap_ST_fsm_state3_blk = 1'b0;
@@ -181,6 +192,14 @@ always @ (*) begin
 end
 
 always @ (*) begin
+    if (((1'b1 == ap_CS_fsm_state2) | ((out_r_TREADY == 1'b1) & (1'b1 == ap_CS_fsm_state4)))) begin
+        loop_count_0_ack_out = 1'b1;
+    end else begin
+        loop_count_0_ack_out = 1'b0;
+    end
+end
+
+always @ (*) begin
     if ((1'b1 == ap_CS_fsm_state4)) begin
         out_r_TDATA_blk_n = out_r_TREADY;
     end else begin
@@ -209,7 +228,7 @@ always @ (*) begin
             ap_NS_fsm = ap_ST_fsm_state3;
         end
         ap_ST_fsm_state3 : begin
-            if (((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
+            if (((grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_done == 1'b1) & (1'b1 == ap_CS_fsm_state3))) begin
                 ap_NS_fsm = ap_ST_fsm_state4;
             end else begin
                 ap_NS_fsm = ap_ST_fsm_state3;
@@ -240,10 +259,10 @@ always @ (*) begin
     ap_rst_n_inv = ~ap_rst_n;
 end
 
-assign grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_ap_start_reg;
+assign grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_ap_start_reg;
 
-assign out_r_TDATA = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_53_old_val_out;
+assign out_r_TDATA = grp_vsum_dace_Pipeline_VITIS_LOOP_37_1_fu_55_old_val_out;
 
-assign trunc_ln37_fu_61_p1 = loop_count[30:0];
+assign trunc_ln37_fu_63_p1 = loop_count_0_data_reg[30:0];
 
 endmodule //vsum_dace

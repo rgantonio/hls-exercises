@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="vecmul_vecmul,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=129,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=35,HLS_SYN_LUT=4396,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="vecmul_vecmul,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=3.330000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.648000,HLS_SYN_LAT=130,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=68,HLS_SYN_LUT=4402,HLS_VERSION=2023_2_2}" *)
 
 module vecmul (
         ap_clk,
@@ -27,9 +27,10 @@ module vecmul (
         loop_count
 );
 
-parameter    ap_ST_fsm_state1 = 3'd1;
-parameter    ap_ST_fsm_state2 = 3'd2;
-parameter    ap_ST_fsm_state3 = 3'd4;
+parameter    ap_ST_fsm_state1 = 4'd1;
+parameter    ap_ST_fsm_state2 = 4'd2;
+parameter    ap_ST_fsm_state3 = 4'd4;
+parameter    ap_ST_fsm_state4 = 4'd8;
 
 input   ap_clk;
 input   ap_rst_n;
@@ -56,27 +57,34 @@ reg B_TREADY;
 reg C_TVALID;
 
  reg    ap_rst_n_inv;
-(* fsm_encoding = "none" *) reg   [2:0] ap_CS_fsm;
+(* fsm_encoding = "none" *) reg   [3:0] ap_CS_fsm;
 wire    ap_CS_fsm_state1;
+reg   [31:0] loop_count_0_data_reg;
+reg    loop_count_0_vld_reg;
+reg    loop_count_0_ack_out;
 reg    A_TDATA_blk_n;
-wire    ap_CS_fsm_state3;
+wire    ap_CS_fsm_state4;
 reg    B_TDATA_blk_n;
 reg    C_TDATA_blk_n;
+wire    ap_CS_fsm_state2;
 reg   [31:0] b_fu_42;
 wire   [31:0] add_ln9_fu_84_p2;
-wire    ap_CS_fsm_state2;
+wire    ap_CS_fsm_state3;
 wire   [0:0] icmp_ln9_fu_79_p2;
-reg    ap_block_state3;
+reg    ap_block_state4;
 wire   [63:0] c_fu_95_p2;
-reg   [2:0] ap_NS_fsm;
+reg   [3:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
 wire    ap_ST_fsm_state2_blk;
-reg    ap_ST_fsm_state3_blk;
+wire    ap_ST_fsm_state3_blk;
+reg    ap_ST_fsm_state4_blk;
 wire    ap_ce_reg;
 
 // power-on initialization
 initial begin
-#0 ap_CS_fsm = 3'd1;
+#0 ap_CS_fsm = 4'd1;
+#0 loop_count_0_data_reg = 32'd0;
+#0 loop_count_0_vld_reg = 1'b0;
 #0 b_fu_42 = 32'd0;
 end
 
@@ -103,13 +111,19 @@ end
 always @ (posedge ap_clk) begin
     if (((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b1))) begin
         b_fu_42 <= 32'd0;
-    end else if (((icmp_ln9_fu_79_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2))) begin
+    end else if (((icmp_ln9_fu_79_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state3))) begin
         b_fu_42 <= add_ln9_fu_84_p2;
     end
 end
 
+always @ (posedge ap_clk) begin
+    if (((~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (loop_count_0_ack_out == 1'b1) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b1)) | (~((1'b1 == ap_CS_fsm_state1) & (ap_start == 1'b0)) & (1'b1 == 1'b1) & (loop_count_0_vld_reg == 1'b0)))) begin
+        loop_count_0_data_reg <= loop_count;
+    end
+end
+
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
+    if ((1'b1 == ap_CS_fsm_state4)) begin
         A_TDATA_blk_n = A_TVALID;
     end else begin
         A_TDATA_blk_n = 1'b1;
@@ -117,7 +131,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state3)) & (1'b1 == ap_CS_fsm_state3))) begin
+    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state4)) & (1'b1 == ap_CS_fsm_state4))) begin
         A_TREADY = 1'b1;
     end else begin
         A_TREADY = 1'b0;
@@ -125,7 +139,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
+    if ((1'b1 == ap_CS_fsm_state4)) begin
         B_TDATA_blk_n = B_TVALID;
     end else begin
         B_TDATA_blk_n = 1'b1;
@@ -133,7 +147,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state3)) & (1'b1 == ap_CS_fsm_state3))) begin
+    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state4)) & (1'b1 == ap_CS_fsm_state4))) begin
         B_TREADY = 1'b1;
     end else begin
         B_TREADY = 1'b0;
@@ -141,7 +155,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((1'b1 == ap_CS_fsm_state3)) begin
+    if ((1'b1 == ap_CS_fsm_state4)) begin
         C_TDATA_blk_n = C_TREADY;
     end else begin
         C_TDATA_blk_n = 1'b1;
@@ -149,7 +163,7 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state3)) & (1'b1 == ap_CS_fsm_state3))) begin
+    if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state4)) & (1'b1 == ap_CS_fsm_state4))) begin
         C_TVALID = 1'b1;
     end else begin
         C_TVALID = 1'b0;
@@ -166,16 +180,18 @@ end
 
 assign ap_ST_fsm_state2_blk = 1'b0;
 
+assign ap_ST_fsm_state3_blk = 1'b0;
+
 always @ (*) begin
-    if (((1'b0 == C_TREADY) | (1'b1 == ap_block_state3))) begin
-        ap_ST_fsm_state3_blk = 1'b1;
+    if (((1'b0 == C_TREADY) | (1'b1 == ap_block_state4))) begin
+        ap_ST_fsm_state4_blk = 1'b1;
     end else begin
-        ap_ST_fsm_state3_blk = 1'b0;
+        ap_ST_fsm_state4_blk = 1'b0;
     end
 end
 
 always @ (*) begin
-    if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2))) begin
+    if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3))) begin
         ap_done = 1'b1;
     end else begin
         ap_done = 1'b0;
@@ -191,10 +207,18 @@ always @ (*) begin
 end
 
 always @ (*) begin
-    if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2))) begin
+    if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3))) begin
         ap_ready = 1'b1;
     end else begin
         ap_ready = 1'b0;
+    end
+end
+
+always @ (*) begin
+    if (((1'b1 == ap_CS_fsm_state2) | ((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3)))) begin
+        loop_count_0_ack_out = 1'b1;
+    end else begin
+        loop_count_0_ack_out = 1'b0;
     end
 end
 
@@ -208,17 +232,20 @@ always @ (*) begin
             end
         end
         ap_ST_fsm_state2 : begin
-            if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state2))) begin
-                ap_NS_fsm = ap_ST_fsm_state1;
-            end else begin
-                ap_NS_fsm = ap_ST_fsm_state3;
-            end
+            ap_NS_fsm = ap_ST_fsm_state3;
         end
         ap_ST_fsm_state3 : begin
-            if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state3)) & (1'b1 == ap_CS_fsm_state3))) begin
-                ap_NS_fsm = ap_ST_fsm_state2;
+            if (((icmp_ln9_fu_79_p2 == 1'd1) & (1'b1 == ap_CS_fsm_state3))) begin
+                ap_NS_fsm = ap_ST_fsm_state1;
             end else begin
+                ap_NS_fsm = ap_ST_fsm_state4;
+            end
+        end
+        ap_ST_fsm_state4 : begin
+            if ((~((1'b0 == C_TREADY) | (1'b1 == ap_block_state4)) & (1'b1 == ap_CS_fsm_state4))) begin
                 ap_NS_fsm = ap_ST_fsm_state3;
+            end else begin
+                ap_NS_fsm = ap_ST_fsm_state4;
             end
         end
         default : begin
@@ -237,14 +264,16 @@ assign ap_CS_fsm_state2 = ap_CS_fsm[32'd1];
 
 assign ap_CS_fsm_state3 = ap_CS_fsm[32'd2];
 
+assign ap_CS_fsm_state4 = ap_CS_fsm[32'd3];
+
 always @ (*) begin
-    ap_block_state3 = ((1'b0 == C_TREADY) | (1'b0 == B_TVALID) | (1'b0 == A_TVALID));
+    ap_block_state4 = ((1'b0 == C_TREADY) | (1'b0 == B_TVALID) | (1'b0 == A_TVALID));
 end
 
 always @ (*) begin
     ap_rst_n_inv = ~ap_rst_n;
 end
 
-assign icmp_ln9_fu_79_p2 = ((b_fu_42 == loop_count) ? 1'b1 : 1'b0);
+assign icmp_ln9_fu_79_p2 = ((b_fu_42 == loop_count_0_data_reg) ? 1'b1 : 1'b0);
 
 endmodule //vecmul
