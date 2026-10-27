@@ -88,8 +88,8 @@ wire   [31:0] add_ln10_fu_138_p2;
 reg   [31:0] add_ln10_reg_253;
 reg   [255:0] xb_reg_258;
 reg   [255:0] yb_reg_263;
-wire   [2:0] l_fu_150_p2;
-reg   [2:0] l_reg_271;
+wire   [2:0] l_1_fu_150_p2;
+reg   [2:0] l_1_reg_271;
 reg    ap_block_state3;
 reg    ap_block_state3_io;
 wire   [255:0] zext_ln170_fu_168_p1;
@@ -101,14 +101,14 @@ reg  signed [63:0] temp_1_reg_287;
 wire   [63:0] mul_ln14_fu_194_p2;
 reg   [63:0] mul_ln14_reg_292;
 wire    ap_CS_fsm_state4;
-wire   [63:0] x_1_fu_198_p2;
-reg   [63:0] x_1_reg_297;
+wire   [63:0] add_ln14_fu_198_p2;
+reg   [63:0] add_ln14_reg_297;
 wire    ap_CS_fsm_state5;
-wire   [255:0] o_1_fu_227_p2;
+wire   [255:0] or_ln183_fu_227_p2;
 wire    ap_CS_fsm_state6;
-reg   [255:0] o_reg_101;
+reg   [255:0] empty_reg_101;
 reg    ap_block_state2;
-reg   [2:0] l_1_reg_114;
+reg   [2:0] l_reg_114;
 reg   [31:0] b_fu_66;
 reg    ap_block_state1;
 wire   [1:0] trunc_ln170_fu_156_p1;
@@ -213,17 +213,17 @@ end
 
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state6)) begin
-        l_1_reg_114 <= l_reg_271;
+        empty_reg_101 <= or_ln183_fu_227_p2;
     end else if (((icmp_ln10_fu_133_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
-        l_1_reg_114 <= 3'd0;
+        empty_reg_101 <= 256'd0;
     end
 end
 
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state6)) begin
-        o_reg_101 <= o_1_fu_227_p2;
+        l_reg_114 <= l_1_reg_271;
     end else if (((icmp_ln10_fu_133_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
-        o_reg_101 <= 256'd0;
+        l_reg_114 <= 3'd0;
     end
 end
 
@@ -236,8 +236,14 @@ always @ (posedge ap_clk) begin
 end
 
 always @ (posedge ap_clk) begin
+    if ((1'b1 == ap_CS_fsm_state5)) begin
+        add_ln14_reg_297 <= add_ln14_fu_198_p2;
+    end
+end
+
+always @ (posedge ap_clk) begin
     if ((~((1'b1 == ap_block_state3_io) | (1'b1 == ap_block_state3)) & (1'b1 == ap_CS_fsm_state3))) begin
-        l_reg_271 <= l_fu_150_p2;
+        l_1_reg_271 <= l_1_fu_150_p2;
     end
 end
 
@@ -252,12 +258,6 @@ always @ (posedge ap_clk) begin
         temp_1_reg_287 <= temp_1_fu_186_p1;
         temp_reg_282 <= temp_fu_177_p1;
         zext_ln170_reg_276[7 : 6] <= zext_ln170_fu_168_p1[7 : 6];
-    end
-end
-
-always @ (posedge ap_clk) begin
-    if ((1'b1 == ap_CS_fsm_state5)) begin
-        x_1_reg_297 <= x_1_fu_198_p2;
     end
 end
 
@@ -455,7 +455,9 @@ end
 
 assign add_ln10_fu_138_p2 = (b_fu_66 + 32'd1);
 
-assign and_ln183_fu_213_p2 = (xor_ln183_fu_207_p2 & o_reg_101);
+assign add_ln14_fu_198_p2 = (mul_ln14_reg_292 + temp_reg_282);
+
+assign and_ln183_fu_213_p2 = (xor_ln183_fu_207_p2 & empty_reg_101);
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
 
@@ -491,15 +493,15 @@ end
 
 assign icmp_ln10_fu_133_p2 = ((b_fu_66 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign icmp_ln13_fu_144_p2 = ((l_1_reg_114 == 3'd4) ? 1'b1 : 1'b0);
+assign icmp_ln13_fu_144_p2 = ((l_reg_114 == 3'd4) ? 1'b1 : 1'b0);
 
-assign l_fu_150_p2 = (l_1_reg_114 + 3'd1);
+assign l_1_fu_150_p2 = (l_reg_114 + 3'd1);
 
 assign lshr_ln170_1_fu_181_p2 = xb_reg_258 >> zext_ln170_fu_168_p1;
 
 assign lshr_ln170_fu_172_p2 = yb_reg_263 >> zext_ln170_fu_168_p1;
 
-assign o_1_fu_227_p2 = (shl_ln183_1_fu_222_p2 | and_ln183_fu_213_p2);
+assign or_ln183_fu_227_p2 = (shl_ln183_1_fu_222_p2 | and_ln183_fu_213_p2);
 
 assign shl_ln183_1_fu_222_p2 = zext_ln183_fu_219_p1 << zext_ln170_reg_276;
 
@@ -511,17 +513,15 @@ assign temp_1_fu_186_p1 = lshr_ln170_1_fu_181_p2[63:0];
 
 assign temp_fu_177_p1 = lshr_ln170_fu_172_p2[63:0];
 
-assign trunc_ln170_fu_156_p1 = l_1_reg_114[1:0];
-
-assign x_1_fu_198_p2 = (mul_ln14_reg_292 + temp_reg_282);
+assign trunc_ln170_fu_156_p1 = l_reg_114[1:0];
 
 assign xor_ln183_fu_207_p2 = (shl_ln183_fu_202_p2 ^ 256'd115792089237316195423570985008687907853269984665640564039457584007913129639935);
 
-assign y_out_TDATA = o_reg_101;
+assign y_out_TDATA = empty_reg_101;
 
 assign zext_ln170_fu_168_p1 = shl_ln_fu_160_p3;
 
-assign zext_ln183_fu_219_p1 = x_1_reg_297;
+assign zext_ln183_fu_219_p1 = add_ln14_reg_297;
 
 always @ (posedge ap_clk) begin
     zext_ln170_reg_276[5:0] <= 6'b000000;

@@ -174,22 +174,22 @@ reg    ap_enable_reg_pp0_iter1;
 reg   [31:0] b_fu_112;
 wire   [31:0] add_ln10_fu_160_p2;
 reg    ap_block_pp0_stage0_01001;
-wire   [63:0] x_16_fu_603_p2;
-wire   [63:0] x_15_fu_599_p2;
-wire   [63:0] x_14_fu_595_p2;
-wire   [63:0] x_13_fu_591_p2;
-wire   [63:0] x_12_fu_587_p2;
-wire   [63:0] x_11_fu_583_p2;
-wire   [63:0] x_10_fu_579_p2;
-wire   [63:0] x_9_fu_575_p2;
-wire   [63:0] x_8_fu_571_p2;
-wire   [63:0] x_7_fu_567_p2;
-wire   [63:0] x_6_fu_563_p2;
-wire   [63:0] x_5_fu_559_p2;
-wire   [63:0] x_4_fu_555_p2;
-wire   [63:0] x_3_fu_551_p2;
-wire   [63:0] x_2_fu_547_p2;
-wire   [63:0] x_1_fu_543_p2;
+wire   [63:0] add_ln14_15_fu_603_p2;
+wire   [63:0] add_ln14_14_fu_599_p2;
+wire   [63:0] add_ln14_13_fu_595_p2;
+wire   [63:0] add_ln14_12_fu_591_p2;
+wire   [63:0] add_ln14_11_fu_587_p2;
+wire   [63:0] add_ln14_10_fu_583_p2;
+wire   [63:0] add_ln14_9_fu_579_p2;
+wire   [63:0] add_ln14_8_fu_575_p2;
+wire   [63:0] add_ln14_7_fu_571_p2;
+wire   [63:0] add_ln14_6_fu_567_p2;
+wire   [63:0] add_ln14_5_fu_563_p2;
+wire   [63:0] add_ln14_4_fu_559_p2;
+wire   [63:0] add_ln14_3_fu_555_p2;
+wire   [63:0] add_ln14_2_fu_551_p2;
+wire   [63:0] add_ln14_1_fu_547_p2;
+wire   [63:0] add_ln14_fu_543_p2;
 wire    ap_CS_fsm_state5;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -745,6 +745,38 @@ end
 
 assign add_ln10_fu_160_p2 = (b_fu_112 + 32'd1);
 
+assign add_ln14_10_fu_583_p2 = (mul_ln14_10_reg_889 + temp_20_reg_779_pp0_iter1_reg);
+
+assign add_ln14_11_fu_587_p2 = (mul_ln14_11_reg_894 + temp_22_reg_789_pp0_iter1_reg);
+
+assign add_ln14_12_fu_591_p2 = (mul_ln14_12_reg_899 + temp_24_reg_799_pp0_iter1_reg);
+
+assign add_ln14_13_fu_595_p2 = (mul_ln14_13_reg_904 + temp_26_reg_809_pp0_iter1_reg);
+
+assign add_ln14_14_fu_599_p2 = (mul_ln14_14_reg_909 + temp_28_reg_819_pp0_iter1_reg);
+
+assign add_ln14_15_fu_603_p2 = (mul_ln14_15_reg_914 + temp_30_reg_829_pp0_iter1_reg);
+
+assign add_ln14_1_fu_547_p2 = (mul_ln14_1_reg_844 + temp_2_reg_689_pp0_iter1_reg);
+
+assign add_ln14_2_fu_551_p2 = (mul_ln14_2_reg_849 + temp_4_reg_699_pp0_iter1_reg);
+
+assign add_ln14_3_fu_555_p2 = (mul_ln14_3_reg_854 + temp_6_reg_709_pp0_iter1_reg);
+
+assign add_ln14_4_fu_559_p2 = (mul_ln14_4_reg_859 + temp_8_reg_719_pp0_iter1_reg);
+
+assign add_ln14_5_fu_563_p2 = (mul_ln14_5_reg_864 + temp_10_reg_729_pp0_iter1_reg);
+
+assign add_ln14_6_fu_567_p2 = (mul_ln14_6_reg_869 + temp_12_reg_739_pp0_iter1_reg);
+
+assign add_ln14_7_fu_571_p2 = (mul_ln14_7_reg_874 + temp_14_reg_749_pp0_iter1_reg);
+
+assign add_ln14_8_fu_575_p2 = (mul_ln14_8_reg_879 + temp_16_reg_759_pp0_iter1_reg);
+
+assign add_ln14_9_fu_579_p2 = (mul_ln14_9_reg_884 + temp_18_reg_769_pp0_iter1_reg);
+
+assign add_ln14_fu_543_p2 = (mul_ln14_reg_839 + temp_reg_679_pp0_iter1_reg);
+
 assign ap_CS_fsm_pp0_stage0 = ap_CS_fsm[32'd1];
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
@@ -789,38 +821,6 @@ assign temp_1_fu_170_p1 = x_TDATA[63:0];
 
 assign temp_fu_166_p1 = y_TDATA[63:0];
 
-assign x_10_fu_579_p2 = (mul_ln14_9_reg_884 + temp_18_reg_769_pp0_iter1_reg);
-
-assign x_11_fu_583_p2 = (mul_ln14_10_reg_889 + temp_20_reg_779_pp0_iter1_reg);
-
-assign x_12_fu_587_p2 = (mul_ln14_11_reg_894 + temp_22_reg_789_pp0_iter1_reg);
-
-assign x_13_fu_591_p2 = (mul_ln14_12_reg_899 + temp_24_reg_799_pp0_iter1_reg);
-
-assign x_14_fu_595_p2 = (mul_ln14_13_reg_904 + temp_26_reg_809_pp0_iter1_reg);
-
-assign x_15_fu_599_p2 = (mul_ln14_14_reg_909 + temp_28_reg_819_pp0_iter1_reg);
-
-assign x_16_fu_603_p2 = (mul_ln14_15_reg_914 + temp_30_reg_829_pp0_iter1_reg);
-
-assign x_1_fu_543_p2 = (mul_ln14_reg_839 + temp_reg_679_pp0_iter1_reg);
-
-assign x_2_fu_547_p2 = (mul_ln14_1_reg_844 + temp_2_reg_689_pp0_iter1_reg);
-
-assign x_3_fu_551_p2 = (mul_ln14_2_reg_849 + temp_4_reg_699_pp0_iter1_reg);
-
-assign x_4_fu_555_p2 = (mul_ln14_3_reg_854 + temp_6_reg_709_pp0_iter1_reg);
-
-assign x_5_fu_559_p2 = (mul_ln14_4_reg_859 + temp_8_reg_719_pp0_iter1_reg);
-
-assign x_6_fu_563_p2 = (mul_ln14_5_reg_864 + temp_10_reg_729_pp0_iter1_reg);
-
-assign x_7_fu_567_p2 = (mul_ln14_6_reg_869 + temp_12_reg_739_pp0_iter1_reg);
-
-assign x_8_fu_571_p2 = (mul_ln14_7_reg_874 + temp_14_reg_749_pp0_iter1_reg);
-
-assign x_9_fu_575_p2 = (mul_ln14_8_reg_879 + temp_16_reg_759_pp0_iter1_reg);
-
-assign y_out_TDATA = {{{{{{{{{{{{{{{{x_16_fu_603_p2}, {x_15_fu_599_p2}}, {x_14_fu_595_p2}}, {x_13_fu_591_p2}}, {x_12_fu_587_p2}}, {x_11_fu_583_p2}}, {x_10_fu_579_p2}}, {x_9_fu_575_p2}}, {x_8_fu_571_p2}}, {x_7_fu_567_p2}}, {x_6_fu_563_p2}}, {x_5_fu_559_p2}}, {x_4_fu_555_p2}}, {x_3_fu_551_p2}}, {x_2_fu_547_p2}}, {x_1_fu_543_p2}};
+assign y_out_TDATA = {{{{{{{{{{{{{{{{add_ln14_15_fu_603_p2}, {add_ln14_14_fu_599_p2}}, {add_ln14_13_fu_595_p2}}, {add_ln14_12_fu_591_p2}}, {add_ln14_11_fu_587_p2}}, {add_ln14_10_fu_583_p2}}, {add_ln14_9_fu_579_p2}}, {add_ln14_8_fu_575_p2}}, {add_ln14_7_fu_571_p2}}, {add_ln14_6_fu_567_p2}}, {add_ln14_5_fu_563_p2}}, {add_ln14_4_fu_559_p2}}, {add_ln14_3_fu_555_p2}}, {add_ln14_2_fu_551_p2}}, {add_ln14_1_fu_547_p2}}, {add_ln14_fu_543_p2}};
 
 endmodule //axpy

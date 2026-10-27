@@ -73,13 +73,13 @@ reg    B_TDATA_blk_n;
 reg    C_TDATA_blk_n;
 reg    ap_enable_reg_pp0_iter1;
 reg    loop_count_blk_n;
-wire   [63:0] x_fu_108_p2;
-reg   [63:0] x_reg_167;
+wire   [63:0] add_ln13_fu_108_p2;
+reg   [63:0] add_ln13_reg_167;
 reg    ap_block_state2_pp0_stage0_iter0;
 reg    ap_block_state3_pp0_stage0_iter1;
 reg    ap_block_pp0_stage0_11001;
-wire   [63:0] x_1_fu_134_p2;
-reg   [63:0] x_1_reg_172;
+wire   [63:0] add_ln13_1_fu_134_p2;
+reg   [63:0] add_ln13_1_reg_172;
 reg    ap_block_state1;
 reg    ap_block_pp0_stage0_subdone;
 reg    ap_condition_pp0_exit_iter0_state2;
@@ -174,8 +174,8 @@ end
 
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
-        x_1_reg_172 <= x_1_fu_134_p2;
-        x_reg_167 <= x_fu_108_p2;
+        add_ln13_1_reg_172 <= add_ln13_1_fu_134_p2;
+        add_ln13_reg_167 <= add_ln13_fu_108_p2;
     end
 end
 
@@ -328,7 +328,11 @@ always @ (*) begin
     endcase
 end
 
-assign C_TDATA = {{x_1_reg_172}, {x_reg_167}};
+assign C_TDATA = {{add_ln13_1_reg_172}, {add_ln13_reg_167}};
+
+assign add_ln13_1_fu_134_p2 = (temp_3_fu_124_p4 + temp_2_fu_114_p4);
+
+assign add_ln13_fu_108_p2 = (temp_1_fu_104_p1 + temp_fu_100_p1);
 
 assign add_ln9_fu_94_p2 = (b_fu_52 + 32'd1);
 
@@ -379,9 +383,5 @@ assign temp_2_fu_114_p4 = {{A_TDATA[127:64]}};
 assign temp_3_fu_124_p4 = {{B_TDATA[127:64]}};
 
 assign temp_fu_100_p1 = A_TDATA[63:0];
-
-assign x_1_fu_134_p2 = (temp_3_fu_124_p4 + temp_2_fu_114_p4);
-
-assign x_fu_108_p2 = (temp_1_fu_104_p1 + temp_fu_100_p1);
 
 endmodule //vecadd

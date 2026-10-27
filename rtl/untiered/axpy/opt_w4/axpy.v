@@ -114,10 +114,10 @@ reg    ap_enable_reg_pp0_iter1;
 reg   [31:0] b_fu_64;
 wire   [31:0] add_ln10_fu_112_p2;
 reg    ap_block_pp0_stage0_01001;
-wire   [63:0] x_4_fu_219_p2;
-wire   [63:0] x_3_fu_215_p2;
-wire   [63:0] x_2_fu_211_p2;
-wire   [63:0] x_1_fu_207_p2;
+wire   [63:0] add_ln14_3_fu_219_p2;
+wire   [63:0] add_ln14_2_fu_215_p2;
+wire   [63:0] add_ln14_1_fu_211_p2;
+wire   [63:0] add_ln14_fu_207_p2;
 wire    ap_CS_fsm_state5;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -481,6 +481,14 @@ end
 
 assign add_ln10_fu_112_p2 = (b_fu_64 + 32'd1);
 
+assign add_ln14_1_fu_211_p2 = (mul_ln14_1_reg_304 + temp_2_reg_269_pp0_iter1_reg);
+
+assign add_ln14_2_fu_215_p2 = (mul_ln14_2_reg_309 + temp_4_reg_279_pp0_iter1_reg);
+
+assign add_ln14_3_fu_219_p2 = (mul_ln14_3_reg_314 + temp_6_reg_289_pp0_iter1_reg);
+
+assign add_ln14_fu_207_p2 = (mul_ln14_reg_299 + temp_reg_259_pp0_iter1_reg);
+
 assign ap_CS_fsm_pp0_stage0 = ap_CS_fsm[32'd1];
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
@@ -525,14 +533,6 @@ assign temp_1_fu_122_p1 = x_TDATA[63:0];
 
 assign temp_fu_118_p1 = y_TDATA[63:0];
 
-assign x_1_fu_207_p2 = (mul_ln14_reg_299 + temp_reg_259_pp0_iter1_reg);
-
-assign x_2_fu_211_p2 = (mul_ln14_1_reg_304 + temp_2_reg_269_pp0_iter1_reg);
-
-assign x_3_fu_215_p2 = (mul_ln14_2_reg_309 + temp_4_reg_279_pp0_iter1_reg);
-
-assign x_4_fu_219_p2 = (mul_ln14_3_reg_314 + temp_6_reg_289_pp0_iter1_reg);
-
-assign y_out_TDATA = {{{{x_4_fu_219_p2}, {x_3_fu_215_p2}}, {x_2_fu_211_p2}}, {x_1_fu_207_p2}};
+assign y_out_TDATA = {{{{add_ln14_3_fu_219_p2}, {add_ln14_2_fu_215_p2}}, {add_ln14_1_fu_211_p2}}, {add_ln14_fu_207_p2}};
 
 endmodule //axpy

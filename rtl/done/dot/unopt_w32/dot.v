@@ -88,8 +88,8 @@ wire   [31:0] add_ln22_1_fu_147_p2;
 reg   [31:0] add_ln22_1_reg_302;
 reg   [2047:0] a_reg_308;
 reg   [2047:0] bb_reg_313;
-wire   [5:0] l_fu_159_p2;
-reg   [5:0] l_reg_321;
+wire   [5:0] l_1_fu_159_p2;
+reg   [5:0] l_1_reg_321;
 wire    ap_CS_fsm_state3;
 wire  signed [63:0] temp_fu_186_p1;
 reg  signed [63:0] temp_reg_326;
@@ -103,7 +103,7 @@ reg   [63:0] mul_ln19_reg_345;
 wire    ap_CS_fsm_state4;
 wire   [63:0] s_1_fu_227_p2;
 wire    ap_CS_fsm_state5;
-reg   [5:0] l_1_reg_101;
+reg   [5:0] l_reg_101;
 reg    ap_block_state2;
 reg   [63:0] s_reg_112;
 reg   [63:0] acc_fu_58;
@@ -232,9 +232,9 @@ end
 
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state5)) begin
-        l_1_reg_101 <= l_reg_321;
+        l_reg_101 <= l_1_reg_321;
     end else if (((icmp_ln14_fu_142_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
-        l_1_reg_101 <= 6'd0;
+        l_reg_101 <= 6'd0;
     end
 end
 
@@ -257,7 +257,7 @@ end
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state3)) begin
         add_ln22_reg_336 <= add_ln22_fu_202_p2;
-        l_reg_321 <= l_fu_159_p2;
+        l_1_reg_321 <= l_1_fu_159_p2;
         or_ln22_reg_341 <= or_ln22_fu_217_p2;
         temp_1_reg_331 <= temp_1_fu_195_p1;
         temp_reg_326 <= temp_fu_186_p1;
@@ -502,13 +502,13 @@ end
 
 assign icmp_ln14_fu_142_p2 = ((b_fu_66 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign icmp_ln18_fu_153_p2 = ((l_1_reg_101 == 6'd32) ? 1'b1 : 1'b0);
+assign icmp_ln18_fu_153_p2 = ((l_reg_101 == 6'd32) ? 1'b1 : 1'b0);
 
 assign icmp_ln22_1_fu_213_p2 = ((add_ln22_1_reg_302 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
 assign icmp_ln22_fu_208_p2 = ((add_ln22_fu_202_p2 == len_in_sig) ? 1'b1 : 1'b0);
 
-assign l_fu_159_p2 = (l_1_reg_101 + 6'd1);
+assign l_1_fu_159_p2 = (l_reg_101 + 6'd1);
 
 assign lshr_ln170_1_fu_190_p2 = bb_reg_313 >> zext_ln170_fu_177_p1;
 
@@ -528,7 +528,7 @@ assign temp_1_fu_195_p1 = lshr_ln170_1_fu_190_p2[63:0];
 
 assign temp_fu_186_p1 = lshr_ln170_fu_181_p2[63:0];
 
-assign trunc_ln170_fu_165_p1 = l_1_reg_101[4:0];
+assign trunc_ln170_fu_165_p1 = l_reg_101[4:0];
 
 assign zext_ln170_fu_177_p1 = shl_ln_fu_169_p3;
 

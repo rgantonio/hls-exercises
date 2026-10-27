@@ -2,6 +2,5 @@
 # Paths are relative to this folder. A '# ram:' line names a memory Vitis built; syn.py
 # parks such a point until a RAM macro replaces it.
 # top: dot
-dot_lane_long_32_s.v
 dot_mul_64s_64s_64_1_1.v
 dot.v

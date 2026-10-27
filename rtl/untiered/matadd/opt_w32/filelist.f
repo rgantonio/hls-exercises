@@ -2,5 +2,4 @@
 # Paths are relative to this folder. A '# ram:' line names a memory Vitis built; syn.py
 # parks such a point until a RAM macro replaces it.
 # top: matadd
-matadd_lane_long_32_s.v
 matadd.v

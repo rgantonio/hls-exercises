@@ -92,10 +92,10 @@ reg    ap_condition_pp0_exit_iter0_state2;
 reg   [31:0] b_fu_60;
 wire   [31:0] add_ln9_fu_102_p2;
 reg    ap_block_pp0_stage0_01001;
-wire   [63:0] x_3_fu_193_p2;
-wire   [63:0] x_2_fu_189_p2;
-wire   [63:0] x_1_fu_185_p2;
-wire   [63:0] x_fu_181_p2;
+wire   [63:0] mul_ln13_3_fu_193_p2;
+wire   [63:0] mul_ln13_2_fu_189_p2;
+wire   [63:0] mul_ln13_1_fu_185_p2;
+wire   [63:0] mul_ln13_fu_181_p2;
 wire    ap_CS_fsm_state4;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -123,7 +123,7 @@ vecmul_mul_64s_64s_64_1_1 #(
 mul_64s_64s_64_1_1_U1(
     .din0(temp_1_reg_230),
     .din1(temp_reg_225),
-    .dout(x_fu_181_p2)
+    .dout(mul_ln13_fu_181_p2)
 );
 
 vecmul_mul_64s_64s_64_1_1 #(
@@ -135,7 +135,7 @@ vecmul_mul_64s_64s_64_1_1 #(
 mul_64s_64s_64_1_1_U2(
     .din0(temp_3_reg_240),
     .din1(temp_2_reg_235),
-    .dout(x_1_fu_185_p2)
+    .dout(mul_ln13_1_fu_185_p2)
 );
 
 vecmul_mul_64s_64s_64_1_1 #(
@@ -147,7 +147,7 @@ vecmul_mul_64s_64s_64_1_1 #(
 mul_64s_64s_64_1_1_U3(
     .din0(temp_5_reg_250),
     .din1(temp_4_reg_245),
-    .dout(x_2_fu_189_p2)
+    .dout(mul_ln13_2_fu_189_p2)
 );
 
 vecmul_mul_64s_64s_64_1_1 #(
@@ -159,7 +159,7 @@ vecmul_mul_64s_64s_64_1_1 #(
 mul_64s_64s_64_1_1_U4(
     .din0(temp_7_reg_260),
     .din1(temp_6_reg_255),
-    .dout(x_3_fu_193_p2)
+    .dout(mul_ln13_3_fu_193_p2)
 );
 
 always @ (posedge ap_clk) begin
@@ -388,7 +388,7 @@ always @ (*) begin
     endcase
 end
 
-assign C_TDATA = {{{{x_3_fu_193_p2}, {x_2_fu_189_p2}}, {x_1_fu_185_p2}}, {x_fu_181_p2}};
+assign C_TDATA = {{{{mul_ln13_3_fu_193_p2}, {mul_ln13_2_fu_189_p2}}, {mul_ln13_1_fu_185_p2}}, {mul_ln13_fu_181_p2}};
 
 assign add_ln9_fu_102_p2 = (b_fu_60 + 32'd1);
 

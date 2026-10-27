@@ -2,6 +2,5 @@
 # Paths are relative to this folder. A '# ram:' line names a memory Vitis built; syn.py
 # parks such a point until a RAM macro replaces it.
 # top: axpy
-axpy_lane_long_32_s.v
 axpy_mul_64s_64s_64_1_1.v
 axpy.v

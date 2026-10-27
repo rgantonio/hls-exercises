@@ -29,7 +29,7 @@ Interface: axis, register slices off.
 | opt | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 15.2x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
 | opt | n64 | 8 | loop_count=8 | 3.33 | ok | 11 | 0.17 | 3 | 24.8x | 11-11 | 12 | 0 | 0 | yes | opt_w8 (ref) |
 | opt | n64 | 16 | loop_count=4 | 3.33 | ok | 7 | 0.11 | 3 | 37.9x | 7-7 | 8 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 6 | 0.09 | 4 | 43.5x | 6-6 | 7 | 0 | 0 | yes | opt_w32 (ref) |
+| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 5 | 0.08 | 3 | 52.2x | 5-5 | 6 | 0 | 0 | yes | opt_w32 (ref) |
 | dace | n64 | 1 | loop_count=64 | 3.33 | ok | 134 | 2.09 | 70 | 1.4x | 12-? | ? | 0 | 2 | yes | dace_w1 (ref) |
 | unopt | n512 | 1 | loop_count=512 | 3.33 | ok | 1537 | 3.00 | 1025 | 1.0x | 1537-1537 | 1538 | 0 | 0 | yes | unopt_w1 (yes) |
 | unopt | n512 | 2 | loop_count=256 | 3.33 | ok | 2561 | 5.00 | 2305 | 1.0x | 2561-2561 | 2562 | 0 | 0 | yes | unopt_w2 (yes) |
@@ -42,7 +42,7 @@ Interface: axis, register slices off.
 | opt | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 17.6x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
 | opt | n512 | 8 | loop_count=64 | 3.33 | ok | 67 | 0.13 | 3 | 32.5x | 67-67 | 68 | 0 | 0 | yes | opt_w8 (yes) |
 | opt | n512 | 16 | loop_count=32 | 3.33 | ok | 35 | 0.07 | 3 | 60.4x | 35-35 | 36 | 0 | 0 | yes | opt_w16 (yes) |
-| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 20 | 0.04 | 4 | 104.0x | 20-20 | 21 | 0 | 0 | yes | opt_w32 (yes) |
+| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 19 | 0.04 | 3 | 109.5x | 19-19 | 20 | 0 | 0 | yes | opt_w32 (yes) |
 | dace | n512 | 1 | loop_count=512 | 3.33 | ok | 1030 | 2.01 | 518 | 1.5x | 12-? | ? | 0 | 2 | yes | dace_w1 (yes) |
 
 Loops:
@@ -65,7 +65,7 @@ Loops:
 | opt | n64 | 4 | axpy | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
 | opt | n64 | 8 | axpy | BEAT | 8 | 3 | 1/1 | 9-9 | yes |
 | opt | n64 | 16 | axpy | BEAT | 4 | 3 | 1/1 | 5-5 | yes |
-| opt | n64 | 32 | axpy | BEAT | 2 | 4 | 1/1 | 4-4 | yes |
+| opt | n64 | 32 | axpy | BEAT | 2 | 3 | 1/1 | 3-3 | yes |
 | dace | n64 | 1 | axpy_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | 1 ~ ? | 3 | 1/1 | 2-? | yes |
 | dace | n64 | 1 | axpy_dace_Pipeline_VITIS_LOOP_37_2 | VITIS_LOOP_37_2 | 1 ~ 1023 | 2 | 1/1 | 1-1023 | yes |
 | unopt | n512 | 1 | axpy | BEAT | 512 | 3 | -/- | 1536-1536 | no |
@@ -84,7 +84,7 @@ Loops:
 | opt | n512 | 4 | axpy | BEAT | 128 | 3 | 1/1 | 129-129 | yes |
 | opt | n512 | 8 | axpy | BEAT | 64 | 3 | 1/1 | 65-65 | yes |
 | opt | n512 | 16 | axpy | BEAT | 32 | 3 | 1/1 | 33-33 | yes |
-| opt | n512 | 32 | axpy | BEAT | 16 | 4 | 1/1 | 18-18 | yes |
+| opt | n512 | 32 | axpy | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
 | dace | n512 | 1 | axpy_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | 1 ~ ? | 3 | 1/1 | 2-? | yes |
 | dace | n512 | 1 | axpy_dace_Pipeline_VITIS_LOOP_37_2 | VITIS_LOOP_37_2 | 1 ~ 1023 | 2 | 1/1 | 1-1023 | yes |
 
@@ -105,7 +105,7 @@ Interface: axis, register slices off.
 | opt | m8_n16 | 4 | loop_count=32 | 3.33 | ok | 34 | 0.27 | 2 | 13.2x | 34-34 | 35 | 0 | 0 | yes | opt_w4 (ref) |
 | opt | m8_n16 | 8 | loop_count=16 | 3.33 | ok | 18 | 0.14 | 2 | 23.2x | 18-18 | 19 | 0 | 0 | yes | opt_w8 (ref) |
 | opt | m8_n16 | 16 | loop_count=8 | 3.33 | ok | 10 | 0.08 | 2 | 40.1x | 10-10 | 11 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | m8_n16 | 32 | loop_count=4 | 3.33 | ok | 7 | 0.05 | 3 | 56.1x | 7-7 | 8 | 0 | 0 | yes | opt_w32 (ref) |
+| opt | m8_n16 | 32 | loop_count=4 | 3.33 | ok | 6 | 0.05 | 2 | 65.5x | 6-6 | 7 | 0 | 0 | yes | opt_w32 (ref) |
 | dace | m8_n16 | 1 | loop_count=128 | 3.33 | ok | 130 | 1.02 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (ref) |
 | dace | m8_n16 | 2 | loop_count=64 | 3.33 | ok | 66 | 0.52 | 2 | 7.8x | ?-? | ? | 0 | 0 | yes | dace_w2 (ref) |
 | dace | m8_n16 | 4 | loop_count=32 | 3.33 | ok | 35 | 0.27 | 3 | 12.8x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
@@ -123,7 +123,7 @@ Interface: axis, register slices off.
 | opt | m16_n32 | 4 | loop_count=128 | 3.33 | ok | 130 | 0.25 | 2 | 13.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
 | opt | m16_n32 | 8 | loop_count=64 | 3.33 | ok | 66 | 0.13 | 2 | 25.2x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
 | opt | m16_n32 | 16 | loop_count=32 | 3.33 | ok | 34 | 0.07 | 2 | 47.1x | 34-34 | 35 | 0 | 0 | yes | opt_w16 (yes) |
-| opt | m16_n32 | 32 | loop_count=16 | 3.33 | ok | 19 | 0.04 | 3 | 82.6x | 19-19 | 20 | 0 | 0 | yes | opt_w32 (yes) |
+| opt | m16_n32 | 32 | loop_count=16 | 3.33 | ok | 18 | 0.04 | 2 | 87.2x | 18-18 | 19 | 0 | 0 | yes | opt_w32 (yes) |
 | dace | m16_n32 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (yes) |
 | dace | m16_n32 | 2 | loop_count=256 | 3.33 | ok | 258 | 0.50 | 2 | 7.9x | ?-? | ? | 0 | 0 | yes | dace_w2 (yes) |
 | dace | m16_n32 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
@@ -151,7 +151,7 @@ Loops:
 | opt | m8_n16 | 4 | matadd | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
 | opt | m8_n16 | 8 | matadd | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | opt | m8_n16 | 16 | matadd | BEAT | 8 | 2 | 1/1 | 8-8 | yes |
-| opt | m8_n16 | 32 | matadd | BEAT | 4 | 3 | 1/1 | 5-5 | yes |
+| opt | m8_n16 | 32 | matadd | BEAT | 4 | 2 | 1/1 | 4-4 | yes |
 | dace | m8_n16 | 1 | matadd_dace | VITIS_LOOP_20_2 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | m8_n16 | 2 | matadd_dace_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |
 | dace | m8_n16 | 4 | module_matadd_0_0_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |
@@ -174,7 +174,7 @@ Loops:
 | opt | m16_n32 | 4 | matadd | BEAT | 128 | 2 | 1/1 | 128-128 | yes |
 | opt | m16_n32 | 8 | matadd | BEAT | 64 | 2 | 1/1 | 64-64 | yes |
 | opt | m16_n32 | 16 | matadd | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
-| opt | m16_n32 | 32 | matadd | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
+| opt | m16_n32 | 32 | matadd | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | dace | m16_n32 | 1 | matadd_dace | VITIS_LOOP_20_2 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | m16_n32 | 2 | matadd_dace_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |
 | dace | m16_n32 | 4 | module_matadd_0_0_Pipeline_VITIS_LOOP_20_2 | VITIS_LOOP_20_2 | ? | 2 | 1/1 | ?-? | yes |

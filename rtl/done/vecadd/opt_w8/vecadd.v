@@ -73,25 +73,25 @@ reg    B_TDATA_blk_n;
 reg    C_TDATA_blk_n;
 reg    ap_enable_reg_pp0_iter1;
 reg    loop_count_blk_n;
-wire   [63:0] x_fu_132_p2;
-reg   [63:0] x_reg_353;
+wire   [63:0] add_ln13_fu_132_p2;
+reg   [63:0] add_ln13_reg_353;
 reg    ap_block_state2_pp0_stage0_iter0;
 reg    ap_block_state3_pp0_stage0_iter1;
 reg    ap_block_pp0_stage0_11001;
-wire   [63:0] x_1_fu_158_p2;
-reg   [63:0] x_1_reg_358;
-wire   [63:0] x_2_fu_184_p2;
-reg   [63:0] x_2_reg_363;
-wire   [63:0] x_3_fu_210_p2;
-reg   [63:0] x_3_reg_368;
-wire   [63:0] x_4_fu_236_p2;
-reg   [63:0] x_4_reg_373;
-wire   [63:0] x_5_fu_262_p2;
-reg   [63:0] x_5_reg_378;
-wire   [63:0] x_6_fu_288_p2;
-reg   [63:0] x_6_reg_383;
-wire   [63:0] x_7_fu_314_p2;
-reg   [63:0] x_7_reg_388;
+wire   [63:0] add_ln13_1_fu_158_p2;
+reg   [63:0] add_ln13_1_reg_358;
+wire   [63:0] add_ln13_2_fu_184_p2;
+reg   [63:0] add_ln13_2_reg_363;
+wire   [63:0] add_ln13_3_fu_210_p2;
+reg   [63:0] add_ln13_3_reg_368;
+wire   [63:0] add_ln13_4_fu_236_p2;
+reg   [63:0] add_ln13_4_reg_373;
+wire   [63:0] add_ln13_5_fu_262_p2;
+reg   [63:0] add_ln13_5_reg_378;
+wire   [63:0] add_ln13_6_fu_288_p2;
+reg   [63:0] add_ln13_6_reg_383;
+wire   [63:0] add_ln13_7_fu_314_p2;
+reg   [63:0] add_ln13_7_reg_388;
 reg    ap_block_state1;
 reg    ap_block_pp0_stage0_subdone;
 reg    ap_condition_pp0_exit_iter0_state2;
@@ -198,14 +198,14 @@ end
 
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
-        x_1_reg_358 <= x_1_fu_158_p2;
-        x_2_reg_363 <= x_2_fu_184_p2;
-        x_3_reg_368 <= x_3_fu_210_p2;
-        x_4_reg_373 <= x_4_fu_236_p2;
-        x_5_reg_378 <= x_5_fu_262_p2;
-        x_6_reg_383 <= x_6_fu_288_p2;
-        x_7_reg_388 <= x_7_fu_314_p2;
-        x_reg_353 <= x_fu_132_p2;
+        add_ln13_1_reg_358 <= add_ln13_1_fu_158_p2;
+        add_ln13_2_reg_363 <= add_ln13_2_fu_184_p2;
+        add_ln13_3_reg_368 <= add_ln13_3_fu_210_p2;
+        add_ln13_4_reg_373 <= add_ln13_4_fu_236_p2;
+        add_ln13_5_reg_378 <= add_ln13_5_fu_262_p2;
+        add_ln13_6_reg_383 <= add_ln13_6_fu_288_p2;
+        add_ln13_7_reg_388 <= add_ln13_7_fu_314_p2;
+        add_ln13_reg_353 <= add_ln13_fu_132_p2;
     end
 end
 
@@ -358,7 +358,23 @@ always @ (*) begin
     endcase
 end
 
-assign C_TDATA = {{{{{{{{x_7_reg_388}, {x_6_reg_383}}, {x_5_reg_378}}, {x_4_reg_373}}, {x_3_reg_368}}, {x_2_reg_363}}, {x_1_reg_358}}, {x_reg_353}};
+assign C_TDATA = {{{{{{{{add_ln13_7_reg_388}, {add_ln13_6_reg_383}}, {add_ln13_5_reg_378}}, {add_ln13_4_reg_373}}, {add_ln13_3_reg_368}}, {add_ln13_2_reg_363}}, {add_ln13_1_reg_358}}, {add_ln13_reg_353}};
+
+assign add_ln13_1_fu_158_p2 = (temp_3_fu_148_p4 + temp_2_fu_138_p4);
+
+assign add_ln13_2_fu_184_p2 = (temp_5_fu_174_p4 + temp_4_fu_164_p4);
+
+assign add_ln13_3_fu_210_p2 = (temp_7_fu_200_p4 + temp_6_fu_190_p4);
+
+assign add_ln13_4_fu_236_p2 = (temp_9_fu_226_p4 + temp_8_fu_216_p4);
+
+assign add_ln13_5_fu_262_p2 = (temp_11_fu_252_p4 + temp_10_fu_242_p4);
+
+assign add_ln13_6_fu_288_p2 = (temp_13_fu_278_p4 + temp_12_fu_268_p4);
+
+assign add_ln13_7_fu_314_p2 = (temp_15_fu_304_p4 + temp_14_fu_294_p4);
+
+assign add_ln13_fu_132_p2 = (temp_1_fu_128_p1 + temp_fu_124_p1);
 
 assign add_ln9_fu_118_p2 = (b_fu_76 + 32'd1);
 
@@ -433,21 +449,5 @@ assign temp_8_fu_216_p4 = {{A_TDATA[319:256]}};
 assign temp_9_fu_226_p4 = {{B_TDATA[319:256]}};
 
 assign temp_fu_124_p1 = A_TDATA[63:0];
-
-assign x_1_fu_158_p2 = (temp_3_fu_148_p4 + temp_2_fu_138_p4);
-
-assign x_2_fu_184_p2 = (temp_5_fu_174_p4 + temp_4_fu_164_p4);
-
-assign x_3_fu_210_p2 = (temp_7_fu_200_p4 + temp_6_fu_190_p4);
-
-assign x_4_fu_236_p2 = (temp_9_fu_226_p4 + temp_8_fu_216_p4);
-
-assign x_5_fu_262_p2 = (temp_11_fu_252_p4 + temp_10_fu_242_p4);
-
-assign x_6_fu_288_p2 = (temp_13_fu_278_p4 + temp_12_fu_268_p4);
-
-assign x_7_fu_314_p2 = (temp_15_fu_304_p4 + temp_14_fu_294_p4);
-
-assign x_fu_132_p2 = (temp_1_fu_128_p1 + temp_fu_124_p1);
 
 endmodule //vecadd

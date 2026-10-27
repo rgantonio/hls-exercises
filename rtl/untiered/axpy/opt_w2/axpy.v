@@ -104,8 +104,8 @@ reg    ap_enable_reg_pp0_iter1;
 reg   [31:0] b_fu_56;
 wire   [31:0] add_ln10_fu_104_p2;
 reg    ap_block_pp0_stage0_01001;
-wire   [63:0] x_2_fu_155_p2;
-wire   [63:0] x_1_fu_151_p2;
+wire   [63:0] add_ln14_1_fu_155_p2;
+wire   [63:0] add_ln14_fu_151_p2;
 wire    ap_CS_fsm_state5;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -437,6 +437,10 @@ end
 
 assign add_ln10_fu_104_p2 = (b_fu_56 + 32'd1);
 
+assign add_ln14_1_fu_155_p2 = (mul_ln14_1_reg_214 + temp_2_reg_199_pp0_iter1_reg);
+
+assign add_ln14_fu_151_p2 = (mul_ln14_reg_209 + temp_reg_189_pp0_iter1_reg);
+
 assign ap_CS_fsm_pp0_stage0 = ap_CS_fsm[32'd1];
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
@@ -481,10 +485,6 @@ assign temp_1_fu_114_p1 = x_TDATA[63:0];
 
 assign temp_fu_110_p1 = y_TDATA[63:0];
 
-assign x_1_fu_151_p2 = (mul_ln14_reg_209 + temp_reg_189_pp0_iter1_reg);
-
-assign x_2_fu_155_p2 = (mul_ln14_1_reg_214 + temp_2_reg_199_pp0_iter1_reg);
-
-assign y_out_TDATA = {{x_2_fu_155_p2}, {x_1_fu_151_p2}};
+assign y_out_TDATA = {{add_ln14_1_fu_155_p2}, {add_ln14_fu_151_p2}};
 
 endmodule //axpy

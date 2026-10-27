@@ -83,10 +83,10 @@ wire   [31:0] add_ln9_fu_94_p2;
 reg    ap_block_pp0_stage0_01001;
 wire   [63:0] temp_fu_100_p1;
 wire   [63:0] temp_1_fu_114_p4;
-wire   [62:0] x_fu_145_p3;
-wire   [62:0] x_1_fu_155_p3;
-wire   [63:0] zext_ln44_fu_151_p1;
-wire   [126:0] o_fu_161_p3;
+wire   [62:0] select_ln14_fu_145_p3;
+wire   [62:0] select_ln14_1_fu_155_p3;
+wire   [63:0] zext_ln58_fu_151_p1;
+wire   [126:0] tmp_fu_161_p3;
 wire    ap_CS_fsm_state4;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -311,7 +311,7 @@ always @ (*) begin
     endcase
 end
 
-assign B_TDATA = o_fu_161_p3;
+assign B_TDATA = tmp_fu_161_p3;
 
 assign add_ln9_fu_94_p2 = (b_fu_58 + 32'd1);
 
@@ -359,18 +359,18 @@ assign icmp_ln14_fu_108_p2 = (($signed(temp_fu_100_p1) > $signed(64'd0)) ? 1'b1 
 
 assign icmp_ln9_fu_89_p2 = ((b_fu_58 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign o_fu_161_p3 = {{x_1_fu_155_p3}, {zext_ln44_fu_151_p1}};
+assign select_ln14_1_fu_155_p3 = ((icmp_ln14_1_reg_204[0:0] == 1'b1) ? temp_1_cast_reg_199 : 63'd0);
+
+assign select_ln14_fu_145_p3 = ((icmp_ln14_reg_194[0:0] == 1'b1) ? trunc_ln170_1_reg_189 : 63'd0);
 
 assign temp_1_fu_114_p4 = {{A_TDATA[127:64]}};
 
 assign temp_fu_100_p1 = A_TDATA[63:0];
 
+assign tmp_fu_161_p3 = {{select_ln14_1_fu_155_p3}, {zext_ln58_fu_151_p1}};
+
 assign trunc_ln170_1_fu_104_p1 = A_TDATA[62:0];
 
-assign x_1_fu_155_p3 = ((icmp_ln14_1_reg_204[0:0] == 1'b1) ? temp_1_cast_reg_199 : 63'd0);
-
-assign x_fu_145_p3 = ((icmp_ln14_reg_194[0:0] == 1'b1) ? trunc_ln170_1_reg_189 : 63'd0);
-
-assign zext_ln44_fu_151_p1 = x_fu_145_p3;
+assign zext_ln58_fu_151_p1 = select_ln14_fu_145_p3;
 
 endmodule //relu

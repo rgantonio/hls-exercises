@@ -73,17 +73,17 @@ reg    B_TDATA_blk_n;
 reg    C_TDATA_blk_n;
 reg    ap_enable_reg_pp0_iter1;
 reg    loop_count_blk_n;
-wire   [63:0] x_fu_116_p2;
-reg   [63:0] x_reg_229;
+wire   [63:0] add_ln13_fu_116_p2;
+reg   [63:0] add_ln13_reg_229;
 reg    ap_block_state2_pp0_stage0_iter0;
 reg    ap_block_state3_pp0_stage0_iter1;
 reg    ap_block_pp0_stage0_11001;
-wire   [63:0] x_1_fu_142_p2;
-reg   [63:0] x_1_reg_234;
-wire   [63:0] x_2_fu_168_p2;
-reg   [63:0] x_2_reg_239;
-wire   [63:0] x_3_fu_194_p2;
-reg   [63:0] x_3_reg_244;
+wire   [63:0] add_ln13_1_fu_142_p2;
+reg   [63:0] add_ln13_1_reg_234;
+wire   [63:0] add_ln13_2_fu_168_p2;
+reg   [63:0] add_ln13_2_reg_239;
+wire   [63:0] add_ln13_3_fu_194_p2;
+reg   [63:0] add_ln13_3_reg_244;
 reg    ap_block_state1;
 reg    ap_block_pp0_stage0_subdone;
 reg    ap_condition_pp0_exit_iter0_state2;
@@ -182,10 +182,10 @@ end
 
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
-        x_1_reg_234 <= x_1_fu_142_p2;
-        x_2_reg_239 <= x_2_fu_168_p2;
-        x_3_reg_244 <= x_3_fu_194_p2;
-        x_reg_229 <= x_fu_116_p2;
+        add_ln13_1_reg_234 <= add_ln13_1_fu_142_p2;
+        add_ln13_2_reg_239 <= add_ln13_2_fu_168_p2;
+        add_ln13_3_reg_244 <= add_ln13_3_fu_194_p2;
+        add_ln13_reg_229 <= add_ln13_fu_116_p2;
     end
 end
 
@@ -338,7 +338,15 @@ always @ (*) begin
     endcase
 end
 
-assign C_TDATA = {{{{x_3_reg_244}, {x_2_reg_239}}, {x_1_reg_234}}, {x_reg_229}};
+assign C_TDATA = {{{{add_ln13_3_reg_244}, {add_ln13_2_reg_239}}, {add_ln13_1_reg_234}}, {add_ln13_reg_229}};
+
+assign add_ln13_1_fu_142_p2 = (temp_3_fu_132_p4 + temp_2_fu_122_p4);
+
+assign add_ln13_2_fu_168_p2 = (temp_5_fu_158_p4 + temp_4_fu_148_p4);
+
+assign add_ln13_3_fu_194_p2 = (temp_7_fu_184_p4 + temp_6_fu_174_p4);
+
+assign add_ln13_fu_116_p2 = (temp_1_fu_112_p1 + temp_fu_108_p1);
 
 assign add_ln9_fu_102_p2 = (b_fu_60 + 32'd1);
 
@@ -397,13 +405,5 @@ assign temp_6_fu_174_p4 = {{A_TDATA[255:192]}};
 assign temp_7_fu_184_p4 = {{B_TDATA[255:192]}};
 
 assign temp_fu_108_p1 = A_TDATA[63:0];
-
-assign x_1_fu_142_p2 = (temp_3_fu_132_p4 + temp_2_fu_122_p4);
-
-assign x_2_fu_168_p2 = (temp_5_fu_158_p4 + temp_4_fu_148_p4);
-
-assign x_3_fu_194_p2 = (temp_7_fu_184_p4 + temp_6_fu_174_p4);
-
-assign x_fu_116_p2 = (temp_1_fu_112_p1 + temp_fu_108_p1);
 
 endmodule //vecadd

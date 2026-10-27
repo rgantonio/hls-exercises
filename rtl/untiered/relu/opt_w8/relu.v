@@ -107,22 +107,22 @@ wire   [63:0] temp_4_fu_228_p4;
 wire   [63:0] temp_5_fu_254_p4;
 wire   [63:0] temp_6_fu_280_p4;
 wire   [63:0] temp_7_fu_306_p4;
-wire   [62:0] x_fu_337_p3;
-wire   [62:0] x_1_fu_347_p3;
-wire   [62:0] x_2_fu_357_p3;
-wire   [62:0] x_3_fu_367_p3;
-wire   [62:0] x_4_fu_377_p3;
-wire   [62:0] x_5_fu_387_p3;
-wire   [62:0] x_6_fu_397_p3;
-wire   [62:0] x_7_fu_407_p3;
-wire   [63:0] zext_ln44_6_fu_403_p1;
-wire   [63:0] zext_ln44_5_fu_393_p1;
-wire   [63:0] zext_ln44_4_fu_383_p1;
-wire   [63:0] zext_ln44_3_fu_373_p1;
-wire   [63:0] zext_ln44_2_fu_363_p1;
-wire   [63:0] zext_ln44_1_fu_353_p1;
-wire   [63:0] zext_ln44_fu_343_p1;
-wire   [510:0] o_fu_413_p9;
+wire   [62:0] select_ln14_fu_337_p3;
+wire   [62:0] select_ln14_1_fu_347_p3;
+wire   [62:0] select_ln14_2_fu_357_p3;
+wire   [62:0] select_ln14_3_fu_367_p3;
+wire   [62:0] select_ln14_4_fu_377_p3;
+wire   [62:0] select_ln14_5_fu_387_p3;
+wire   [62:0] select_ln14_6_fu_397_p3;
+wire   [62:0] select_ln14_7_fu_407_p3;
+wire   [63:0] zext_ln58_6_fu_403_p1;
+wire   [63:0] zext_ln58_5_fu_393_p1;
+wire   [63:0] zext_ln58_4_fu_383_p1;
+wire   [63:0] zext_ln58_3_fu_373_p1;
+wire   [63:0] zext_ln58_2_fu_363_p1;
+wire   [63:0] zext_ln58_1_fu_353_p1;
+wire   [63:0] zext_ln58_fu_343_p1;
+wire   [510:0] tmp_fu_413_p9;
 wire    ap_CS_fsm_state4;
 reg   [2:0] ap_NS_fsm;
 reg    ap_ST_fsm_state1_blk;
@@ -359,7 +359,7 @@ always @ (*) begin
     endcase
 end
 
-assign B_TDATA = o_fu_413_p9;
+assign B_TDATA = tmp_fu_413_p9;
 
 assign add_ln9_fu_130_p2 = (b_fu_94 + 32'd1);
 
@@ -419,7 +419,21 @@ assign icmp_ln14_fu_144_p2 = (($signed(temp_fu_136_p1) > $signed(64'd0)) ? 1'b1 
 
 assign icmp_ln9_fu_125_p2 = ((b_fu_94 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign o_fu_413_p9 = {{{{{{{{x_7_fu_407_p3}, {zext_ln44_6_fu_403_p1}}, {zext_ln44_5_fu_393_p1}}, {zext_ln44_4_fu_383_p1}}, {zext_ln44_3_fu_373_p1}}, {zext_ln44_2_fu_363_p1}}, {zext_ln44_1_fu_353_p1}}, {zext_ln44_fu_343_p1}};
+assign select_ln14_1_fu_347_p3 = ((icmp_ln14_1_reg_468[0:0] == 1'b1) ? temp_1_cast_reg_463 : 63'd0);
+
+assign select_ln14_2_fu_357_p3 = ((icmp_ln14_2_reg_478[0:0] == 1'b1) ? temp_2_cast_reg_473 : 63'd0);
+
+assign select_ln14_3_fu_367_p3 = ((icmp_ln14_3_reg_488[0:0] == 1'b1) ? temp_3_cast_reg_483 : 63'd0);
+
+assign select_ln14_4_fu_377_p3 = ((icmp_ln14_4_reg_498[0:0] == 1'b1) ? temp_4_cast_reg_493 : 63'd0);
+
+assign select_ln14_5_fu_387_p3 = ((icmp_ln14_5_reg_508[0:0] == 1'b1) ? temp_5_cast_reg_503 : 63'd0);
+
+assign select_ln14_6_fu_397_p3 = ((icmp_ln14_6_reg_518[0:0] == 1'b1) ? temp_6_cast_reg_513 : 63'd0);
+
+assign select_ln14_7_fu_407_p3 = ((icmp_ln14_7_reg_528[0:0] == 1'b1) ? temp_7_cast_reg_523 : 63'd0);
+
+assign select_ln14_fu_337_p3 = ((icmp_ln14_reg_458[0:0] == 1'b1) ? trunc_ln170_1_reg_453 : 63'd0);
 
 assign temp_1_fu_150_p4 = {{A_TDATA[127:64]}};
 
@@ -437,36 +451,22 @@ assign temp_7_fu_306_p4 = {{A_TDATA[511:448]}};
 
 assign temp_fu_136_p1 = A_TDATA[63:0];
 
+assign tmp_fu_413_p9 = {{{{{{{{select_ln14_7_fu_407_p3}, {zext_ln58_6_fu_403_p1}}, {zext_ln58_5_fu_393_p1}}, {zext_ln58_4_fu_383_p1}}, {zext_ln58_3_fu_373_p1}}, {zext_ln58_2_fu_363_p1}}, {zext_ln58_1_fu_353_p1}}, {zext_ln58_fu_343_p1}};
+
 assign trunc_ln170_1_fu_140_p1 = A_TDATA[62:0];
 
-assign x_1_fu_347_p3 = ((icmp_ln14_1_reg_468[0:0] == 1'b1) ? temp_1_cast_reg_463 : 63'd0);
+assign zext_ln58_1_fu_353_p1 = select_ln14_1_fu_347_p3;
 
-assign x_2_fu_357_p3 = ((icmp_ln14_2_reg_478[0:0] == 1'b1) ? temp_2_cast_reg_473 : 63'd0);
+assign zext_ln58_2_fu_363_p1 = select_ln14_2_fu_357_p3;
 
-assign x_3_fu_367_p3 = ((icmp_ln14_3_reg_488[0:0] == 1'b1) ? temp_3_cast_reg_483 : 63'd0);
+assign zext_ln58_3_fu_373_p1 = select_ln14_3_fu_367_p3;
 
-assign x_4_fu_377_p3 = ((icmp_ln14_4_reg_498[0:0] == 1'b1) ? temp_4_cast_reg_493 : 63'd0);
+assign zext_ln58_4_fu_383_p1 = select_ln14_4_fu_377_p3;
 
-assign x_5_fu_387_p3 = ((icmp_ln14_5_reg_508[0:0] == 1'b1) ? temp_5_cast_reg_503 : 63'd0);
+assign zext_ln58_5_fu_393_p1 = select_ln14_5_fu_387_p3;
 
-assign x_6_fu_397_p3 = ((icmp_ln14_6_reg_518[0:0] == 1'b1) ? temp_6_cast_reg_513 : 63'd0);
+assign zext_ln58_6_fu_403_p1 = select_ln14_6_fu_397_p3;
 
-assign x_7_fu_407_p3 = ((icmp_ln14_7_reg_528[0:0] == 1'b1) ? temp_7_cast_reg_523 : 63'd0);
-
-assign x_fu_337_p3 = ((icmp_ln14_reg_458[0:0] == 1'b1) ? trunc_ln170_1_reg_453 : 63'd0);
-
-assign zext_ln44_1_fu_353_p1 = x_1_fu_347_p3;
-
-assign zext_ln44_2_fu_363_p1 = x_2_fu_357_p3;
-
-assign zext_ln44_3_fu_373_p1 = x_3_fu_367_p3;
-
-assign zext_ln44_4_fu_383_p1 = x_4_fu_377_p3;
-
-assign zext_ln44_5_fu_393_p1 = x_5_fu_387_p3;
-
-assign zext_ln44_6_fu_403_p1 = x_6_fu_397_p3;
-
-assign zext_ln44_fu_343_p1 = x_fu_337_p3;
+assign zext_ln58_fu_343_p1 = select_ln14_fu_337_p3;
 
 endmodule //relu

@@ -78,8 +78,8 @@ reg    len_blk_n;
 wire   [31:0] add_ln20_1_fu_141_p2;
 reg   [31:0] add_ln20_1_reg_283;
 reg   [255:0] a_reg_289;
-wire   [2:0] l_fu_153_p2;
-reg   [2:0] l_reg_297;
+wire   [2:0] l_1_fu_153_p2;
+reg   [2:0] l_1_reg_297;
 wire    ap_CS_fsm_state3;
 wire   [63:0] temp_fu_180_p1;
 reg   [63:0] temp_reg_302;
@@ -88,7 +88,7 @@ reg   [31:0] add_ln20_reg_307;
 wire   [0:0] or_ln20_fu_202_p2;
 wire   [63:0] s_1_fu_208_p2;
 wire    ap_CS_fsm_state4;
-reg   [2:0] l_1_reg_95;
+reg   [2:0] l_reg_95;
 reg    ap_block_state2;
 reg   [63:0] s_reg_106;
 reg   [63:0] acc_fu_58;
@@ -203,9 +203,9 @@ end
 
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state4)) begin
-        l_1_reg_95 <= l_reg_297;
+        l_reg_95 <= l_1_reg_297;
     end else if (((icmp_ln12_fu_136_p2 == 1'd0) & (1'b1 == ap_CS_fsm_state2) & (1'b0 == ap_block_state2))) begin
-        l_1_reg_95 <= 3'd0;
+        l_reg_95 <= 3'd0;
     end
 end
 
@@ -227,7 +227,7 @@ end
 always @ (posedge ap_clk) begin
     if ((1'b1 == ap_CS_fsm_state3)) begin
         add_ln20_reg_307 <= add_ln20_fu_187_p2;
-        l_reg_297 <= l_fu_153_p2;
+        l_1_reg_297 <= l_1_fu_153_p2;
         or_ln20_reg_312 <= or_ln20_fu_202_p2;
         temp_reg_302 <= temp_fu_180_p1;
     end
@@ -442,13 +442,13 @@ end
 
 assign icmp_ln12_fu_136_p2 = ((b_fu_66 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
-assign icmp_ln16_fu_147_p2 = ((l_1_reg_95 == 3'd4) ? 1'b1 : 1'b0);
+assign icmp_ln16_fu_147_p2 = ((l_reg_95 == 3'd4) ? 1'b1 : 1'b0);
 
 assign icmp_ln20_1_fu_198_p2 = ((add_ln20_1_reg_283 == loop_count_in_sig) ? 1'b1 : 1'b0);
 
 assign icmp_ln20_fu_193_p2 = ((add_ln20_fu_187_p2 == len_in_sig) ? 1'b1 : 1'b0);
 
-assign l_fu_153_p2 = (l_1_reg_95 + 3'd1);
+assign l_1_fu_153_p2 = (l_reg_95 + 3'd1);
 
 assign lshr_ln170_fu_175_p2 = a_reg_289 >> zext_ln170_fu_171_p1;
 
@@ -462,7 +462,7 @@ assign sum_fu_216_p2 = (s_reg_106 + acc_fu_58);
 
 assign temp_fu_180_p1 = lshr_ln170_fu_175_p2[63:0];
 
-assign trunc_ln170_fu_159_p1 = l_1_reg_95[1:0];
+assign trunc_ln170_fu_159_p1 = l_reg_95[1:0];
 
 assign y_TDATA = (s_reg_106 + acc_fu_58);
 

@@ -29,7 +29,7 @@ Interface: axis, register slices off.
 | opt | n64 | 4 | loop_count=16 len=16 | 3.33 | ok | 19 | 0.30 | 3 | 12.7x | 19-19 | 20 | 0 | 0 | yes | opt_w4 (ref) |
 | opt | n64 | 8 | loop_count=8 len=8 | 3.33 | ok | 12 | 0.19 | 4 | 18.1x | 12-12 | 13 | 0 | 0 | yes | opt_w8 (ref) |
 | opt | n64 | 16 | loop_count=4 len=4 | 3.33 | ok | 8 | 0.12 | 4 | 25.6x | 8-8 | 9 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | n64 | 32 | loop_count=2 len=2 | 3.33 | ok | 7 | 0.11 | 5 | 28.4x | 7-7 | 8 | 0 | 0 | yes | opt_w32 (ref) |
+| opt | n64 | 32 | loop_count=2 len=2 | 3.33 | ok | 6 | 0.09 | 4 | 33.2x | 6-6 | 7 | 0 | 0 | yes | opt_w32 (ref) |
 | dace | n64 | 1 | loop_count=64 len=64 | 3.33 | ok | 135 | 2.11 | 71 | 1.4x | 13-? | ? | 0 | 2 | yes | dace_w1 (ref) |
 | unopt | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1537 | 3.00 | 1025 | 1.0x | 1537-1537 | 1538 | 0 | 0 | yes | unopt_w1 (yes) |
 | unopt | n512 | 2 | loop_count=256 len=256 | 3.33 | ok | 2305 | 4.50 | 2049 | 1.0x | 2305-2305 | 2306 | 0 | 0 | yes | unopt_w2 (yes) |
@@ -42,7 +42,7 @@ Interface: axis, register slices off.
 | opt | n512 | 4 | loop_count=128 len=128 | 3.33 | ok | 131 | 0.26 | 3 | 14.7x | 131-131 | 132 | 0 | 0 | yes | opt_w4 (yes) |
 | opt | n512 | 8 | loop_count=64 len=64 | 3.33 | ok | 68 | 0.13 | 4 | 25.4x | 68-68 | 69 | 0 | 0 | yes | opt_w8 (yes) |
 | opt | n512 | 16 | loop_count=32 len=32 | 3.33 | ok | 36 | 0.07 | 4 | 45.4x | 36-36 | 37 | 0 | 0 | yes | opt_w16 (yes) |
-| opt | n512 | 32 | loop_count=16 len=16 | 3.33 | ok | 21 | 0.04 | 5 | 75.5x | 21-21 | 22 | 0 | 0 | yes | opt_w32 (yes) |
+| opt | n512 | 32 | loop_count=16 len=16 | 3.33 | ok | 20 | 0.04 | 4 | 79.2x | 20-20 | 21 | 0 | 0 | yes | opt_w32 (yes) |
 | dace | n512 | 1 | loop_count=512 len=512 | 3.33 | ok | 1031 | 2.01 | 519 | 1.5x | 13-? | ? | 0 | 2 | yes | dace_w1 (yes) |
 
 Loops:
@@ -65,7 +65,7 @@ Loops:
 | opt | n64 | 4 | dot | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
 | opt | n64 | 8 | dot | BEAT | 8 | 4 | 1/1 | 10-10 | yes |
 | opt | n64 | 16 | dot | BEAT | 4 | 4 | 1/1 | 6-6 | yes |
-| opt | n64 | 32 | dot | BEAT | 2 | 5 | 1/1 | 5-5 | yes |
+| opt | n64 | 32 | dot | BEAT | 2 | 4 | 1/1 | 4-4 | yes |
 | dace | n64 | 1 | dot_dace_Pipeline_VITIS_LOOP_37_1 | VITIS_LOOP_37_1 | 1 ~ 1023 | 3 | 1/1 | 2-1024 | yes |
 | dace | n64 | 1 | dot_dace_Pipeline_VITIS_LOOP_62_1 | VITIS_LOOP_62_1 | 1 ~ ? | 3 | 1/1 | 2-? | yes |
 | unopt | n512 | 1 | dot | BEAT | 512 | 3 | -/- | 1536-1536 | no |
@@ -84,7 +84,7 @@ Loops:
 | opt | n512 | 4 | dot | BEAT | 128 | 3 | 1/1 | 129-129 | yes |
 | opt | n512 | 8 | dot | BEAT | 64 | 4 | 1/1 | 66-66 | yes |
 | opt | n512 | 16 | dot | BEAT | 32 | 4 | 1/1 | 34-34 | yes |
-| opt | n512 | 32 | dot | BEAT | 16 | 5 | 1/1 | 19-19 | yes |
+| opt | n512 | 32 | dot | BEAT | 16 | 4 | 1/1 | 18-18 | yes |
 | dace | n512 | 1 | dot_dace_Pipeline_VITIS_LOOP_37_1 | VITIS_LOOP_37_1 | 1 ~ 1023 | 3 | 1/1 | 2-1024 | yes |
 | dace | n512 | 1 | dot_dace_Pipeline_VITIS_LOOP_62_1 | VITIS_LOOP_62_1 | 1 ~ ? | 3 | 1/1 | 2-? | yes |
 
@@ -105,7 +105,7 @@ Interface: axis, register slices off.
 | opt | n64 | 4 | loop_count=16 | 3.33 | ok | 18 | 0.28 | 2 | 12.5x | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
 | opt | n64 | 8 | loop_count=8 | 3.33 | ok | 10 | 0.16 | 2 | 20.9x | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
 | opt | n64 | 16 | loop_count=4 | 3.33 | ok | 6 | 0.09 | 2 | 33.5x | 6-6 | 7 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 5 | 0.08 | 3 | 39.4x | 5-5 | 6 | 0 | 0 | yes | opt_w32 (ref) |
+| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 4 | 0.06 | 2 | 49.2x | 4-4 | 5 | 0 | 0 | yes | opt_w32 (ref) |
 | dace | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (ref) |
 | dace | n64 | 2 | loop_count=32 | 3.33 | ok | 34 | 0.53 | 2 | 7.6x | ?-? | ? | 0 | 0 | yes | dace_w2 (ref) |
 | dace | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.8x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
@@ -123,7 +123,7 @@ Interface: axis, register slices off.
 | opt | n512 | 4 | loop_count=128 | 3.33 | ok | 130 | 0.25 | 2 | 13.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
 | opt | n512 | 8 | loop_count=64 | 3.33 | ok | 66 | 0.13 | 2 | 25.2x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
 | opt | n512 | 16 | loop_count=32 | 3.33 | ok | 34 | 0.07 | 2 | 47.1x | 34-34 | 35 | 0 | 0 | yes | opt_w16 (yes) |
-| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 19 | 0.04 | 3 | 82.6x | 19-19 | 20 | 0 | 0 | yes | opt_w32 (yes) |
+| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 18 | 0.04 | 2 | 87.2x | 18-18 | 19 | 0 | 0 | yes | opt_w32 (yes) |
 | dace | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 1.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (yes) |
 | dace | n512 | 2 | loop_count=256 | 3.33 | ok | 258 | 0.50 | 2 | 7.9x | ?-? | ? | 0 | 0 | yes | dace_w2 (yes) |
 | dace | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
@@ -151,7 +151,7 @@ Loops:
 | opt | n64 | 4 | vecadd | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | opt | n64 | 8 | vecadd | BEAT | 8 | 2 | 1/1 | 8-8 | yes |
 | opt | n64 | 16 | vecadd | BEAT | 4 | 2 | 1/1 | 4-4 | yes |
-| opt | n64 | 32 | vecadd | BEAT | 2 | 3 | 1/1 | 3-3 | yes |
+| opt | n64 | 32 | vecadd | BEAT | 2 | 2 | 1/1 | 2-2 | yes |
 | dace | n64 | 1 | vecadd_dace | VITIS_LOOP_19_1 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | n64 | 2 | vecadd_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
 | dace | n64 | 4 | module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
@@ -174,7 +174,7 @@ Loops:
 | opt | n512 | 4 | vecadd | BEAT | 128 | 2 | 1/1 | 128-128 | yes |
 | opt | n512 | 8 | vecadd | BEAT | 64 | 2 | 1/1 | 64-64 | yes |
 | opt | n512 | 16 | vecadd | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
-| opt | n512 | 32 | vecadd | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
+| opt | n512 | 32 | vecadd | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | dace | n512 | 1 | vecadd_dace | VITIS_LOOP_19_1 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | n512 | 2 | vecadd_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
 | dace | n512 | 4 | module_vecadd_0_0_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
@@ -205,7 +205,7 @@ Interface: axis, register slices off.
 | opt | n64 | 4 | loop_count=16 | 3.33 | ok | 18 | 0.28 | 2 | 12.5x | 18-18 | 19 | 0 | 0 | yes | opt_w4 (ref) |
 | opt | n64 | 8 | loop_count=8 | 3.33 | ok | 10 | 0.16 | 2 | 20.9x | 10-10 | 11 | 0 | 0 | yes | opt_w8 (ref) |
 | opt | n64 | 16 | loop_count=4 | 3.33 | ok | 6 | 0.09 | 2 | 33.5x | 6-6 | 7 | 0 | 0 | yes | opt_w16 (ref) |
-| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 5 | 0.08 | 3 | 39.4x | 5-5 | 6 | 0 | 0 | yes | opt_w32 (ref) |
+| opt | n64 | 32 | loop_count=2 | 3.33 | ok | 4 | 0.06 | 2 | 49.2x | 4-4 | 5 | 0 | 0 | yes | opt_w32 (ref) |
 | dace | n64 | 1 | loop_count=64 | 3.33 | ok | 66 | 1.03 | 2 | 2.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (ref) |
 | dace | n64 | 2 | loop_count=32 | 3.33 | ok | 34 | 0.53 | 2 | 7.6x | ?-? | ? | 0 | 0 | yes | dace_w2 (ref) |
 | dace | n64 | 4 | loop_count=16 | 3.33 | ok | 19 | 0.30 | 3 | 11.8x | ?-? | ? | 0 | 0 | yes | dace_w4 (ref) |
@@ -223,7 +223,7 @@ Interface: axis, register slices off.
 | opt | n512 | 4 | loop_count=128 | 3.33 | ok | 130 | 0.25 | 2 | 13.8x | 130-130 | 131 | 0 | 0 | yes | opt_w4 (yes) |
 | opt | n512 | 8 | loop_count=64 | 3.33 | ok | 66 | 0.13 | 2 | 25.2x | 66-66 | 67 | 0 | 0 | yes | opt_w8 (yes) |
 | opt | n512 | 16 | loop_count=32 | 3.33 | ok | 34 | 0.07 | 2 | 47.1x | 34-34 | 35 | 0 | 0 | yes | opt_w16 (yes) |
-| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 19 | 0.04 | 3 | 82.6x | 19-19 | 20 | 0 | 0 | yes | opt_w32 (yes) |
+| opt | n512 | 32 | loop_count=16 | 3.33 | ok | 18 | 0.04 | 2 | 87.2x | 18-18 | 19 | 0 | 0 | yes | opt_w32 (yes) |
 | dace | n512 | 1 | loop_count=512 | 3.33 | ok | 514 | 1.00 | 2 | 2.0x | 3-? | ? | 0 | 0 | yes | dace_w1 (yes) |
 | dace | n512 | 2 | loop_count=256 | 3.33 | ok | 258 | 0.50 | 2 | 7.9x | ?-? | ? | 0 | 0 | yes | dace_w2 (yes) |
 | dace | n512 | 4 | loop_count=128 | 3.33 | ok | 131 | 0.26 | 3 | 13.7x | ?-? | ? | 0 | 0 | yes | dace_w4 (yes) |
@@ -251,7 +251,7 @@ Loops:
 | opt | n64 | 4 | vecmul | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | opt | n64 | 8 | vecmul | BEAT | 8 | 2 | 1/1 | 8-8 | yes |
 | opt | n64 | 16 | vecmul | BEAT | 4 | 2 | 1/1 | 4-4 | yes |
-| opt | n64 | 32 | vecmul | BEAT | 2 | 3 | 1/1 | 3-3 | yes |
+| opt | n64 | 32 | vecmul | BEAT | 2 | 2 | 1/1 | 2-2 | yes |
 | dace | n64 | 1 | vecmul_dace | VITIS_LOOP_19_1 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | n64 | 2 | vecmul_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
 | dace | n64 | 4 | module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
@@ -274,7 +274,7 @@ Loops:
 | opt | n512 | 4 | vecmul | BEAT | 128 | 2 | 1/1 | 128-128 | yes |
 | opt | n512 | 8 | vecmul | BEAT | 64 | 2 | 1/1 | 64-64 | yes |
 | opt | n512 | 16 | vecmul | BEAT | 32 | 2 | 1/1 | 32-32 | yes |
-| opt | n512 | 32 | vecmul | BEAT | 16 | 3 | 1/1 | 17-17 | yes |
+| opt | n512 | 32 | vecmul | BEAT | 16 | 2 | 1/1 | 16-16 | yes |
 | dace | n512 | 1 | vecmul_dace | VITIS_LOOP_19_1 | 1 ~ ? | 2 | 1/1 | 1-? | yes |
 | dace | n512 | 2 | vecmul_dace_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
 | dace | n512 | 4 | module_vecmul_0_0_Pipeline_VITIS_LOOP_19_1 | VITIS_LOOP_19_1 | ? | 2 | 1/1 | ?-? | yes |
