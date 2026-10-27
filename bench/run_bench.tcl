@@ -16,9 +16,10 @@
 #   TB_CFLAGS   flags for the testbench only: the run-time pins' values
 #               (-DCFG_LOOP_COUNT=..., from params.json's "config")
 #   PINS        the run-time pins (params.json "config"), space-separated: each gets an
-#               ap_vld interface (data plus a valid bit). The C++ reads each pin once,
-#               so Vitis takes it once at the start of a run and keeps it in a register,
-#               as forge's blocks sample their config pins at start (valid = start there)
+#               ap_vld interface (data plus a valid bit). Vitis keeps it in a register
+#               loaded while ap_vld is high; the driver pulses ap_vld for one cycle with
+#               the accepted start, as forge's blocks load their config on io.start
+#               (ctrl.fire, one cycle). docs/HLS_VS_FORGE.md section 2.
 #   TRIPCOUNT   loop=trips pairs, space-separated (e.g. BEAT=16): a loop bounded by a
 #               run-time pin gets set_directive_loop_tripcount at that value, so the
 #               csynth estimate is for this size. It changes no hardware.

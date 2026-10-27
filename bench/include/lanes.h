@@ -26,9 +26,10 @@ typedef dace::vec<data_t, W> vec_t;
 
 // A run-time configuration pin, as forge's 32-bit config fields (loopCount, len): the
 // CSR manager drives them and the block samples them at start (forge D130). run_bench.tcl
-// gives each pin an ap_vld interface (data plus a valid bit): the tops read each pin once,
-// so Vitis takes it once per run and keeps it. As a plain ap_none wire, Vitis read the port
-// inside the loop; with ap_none -register, the register reloaded every cycle.
+// gives each pin an ap_vld interface (data plus a valid bit): Vitis holds it in a register
+// loaded while ap_vld is high, and the driver pulses ap_vld for one cycle with the start, as
+// forge loads its config on io.start. As a plain ap_none wire, Vitis read the port inside the
+// loop; with ap_none -register, the register reloaded every cycle.
 // Lanes (W) and the dtype stay compile-time: they decide what hardware exists.
 typedef uint32_t cfg_t;
 
