@@ -33,12 +33,29 @@ typedef dace::vec<data_t, W> vec_t;
 // Lanes (W) and the dtype stay compile-time: they decide what hardware exists.
 typedef uint32_t cfg_t;
 
+// The lane accessors are packing, not part of any kernel's algorithm, so they are always
+// inlined. Without the pragma, Vitis kept lane<long, 32> as a module at W = 32 in the opt
+// tops with two inputs, instantiated it 64 times and registered both 2048-bit beats and
+// every lane: 5.5x the area of W = 16 for the same cycles (07f5dec, results/runs/
+// 2026-10-27_wsweep.md). At W <= 16 Vitis inlined it on its own.
 template <typename T>
-inline T lane(const T &v, int) { return v; }
+inline T lane(const T &v, int) {
+#pragma HLS INLINE
+    return v;
+}
 template <typename T, int L>
-inline T lane(const hlslib::DataPack<T, L> &v, int i) { return v.Get(i); }
+inline T lane(const hlslib::DataPack<T, L> &v, int i) {
+#pragma HLS INLINE
+    return v.Get(i);
+}
 
 template <typename T>
-inline void set_lane(T &v, int, T x) { v = x; }
+inline void set_lane(T &v, int, T x) {
+#pragma HLS INLINE
+    v = x;
+}
 template <typename T, int L>
-inline void set_lane(hlslib::DataPack<T, L> &v, int i, T x) { v.Set(i, x); }
+inline void set_lane(hlslib::DataPack<T, L> &v, int i, T x) {
+#pragma HLS INLINE
+    v.Set(i, x);
+}
