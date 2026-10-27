@@ -1,0 +1,2 @@
+# Sizes whose Vitis run gave exactly this Verilog (bench/bench.py).
+n64
