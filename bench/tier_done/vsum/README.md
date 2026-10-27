@@ -28,4 +28,18 @@ Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## Results
 
-Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.
+Rerun on 27 Oct 2026 (commit d2062af): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable. Both sizes run on the same hardware point (`rtl_same`: `yes`, or `renamed` for `unopt` W = 8, the same circuit with shifted net names). `results/report_done.md` has every column.
+
+| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
+|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 129 | 1025 | 513 | 5,204 | 2,090 | 5.39 |
+| `unopt` | 4 | 177 | 1409 | 1281 | 11,226 | 5,218 | 5.43 |
+| `unopt` | 8 | 153 | 1217 | 1153 | 15,868 | 7,276 | 5.43 |
+| `opt` | 1 | 66 | 514 | 2 | 5,252 | 2,106 | 5.36 |
+| `opt` | 4 | 18 | 130 | 2 | 9,405 | 3,638 | 5.86 |
+| `opt` | 8 | 10 | 66 | 2 | 13,323 | 4,659 | 5.68 |
+| `dace` | 1 | 67 | 515 | 3 | 4,084 | 1,835 | 5.36 |
+
+- `opt` at W = 1 runs n512 in 514 cycles. Forge's `sum_acc` counts 515, and DaCe 515 too, so the three are within one cycle.
+- `opt` at W = 4 and 8 adds the lanes in a tree and keeps one beat per cycle (130 and 66 cycles at n512).
+- DaCe is the smallest design (4.08k against 5.25k µm² for `opt` W = 1): it has no `len` restart, which forge's `Accumulator` and the HLS tops carry.

@@ -29,4 +29,21 @@ Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## Results
 
-Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.
+Rerun on 27 Oct 2026 (commit d2062af): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable. Both sizes run on the same hardware point (`rtl_same`: `yes`, or `renamed` for `unopt` W = 8, the same circuit with shifted net names). `results/report_done.md` has every column.
+
+| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
+|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 65 | 513 | 1 | 1,958 | 535 | 5.24 |
+| `unopt` | 4 | 225 | 1793 | 1665 | 15,768 | 8,537 | 5.30 |
+| `unopt` | 8 | 209 | 1665 | 1601 | 28,519 | 14,688 | 5.29 |
+| `opt` | 1 | 66 | 514 | 2 | 2,845 | 1,069 | 5.25 |
+| `opt` | 4 | 18 | 130 | 2 | 7,033 | 2,601 | 5.25 |
+| `opt` | 8 | 10 | 66 | 2 | 12,617 | 4,643 | 5.25 |
+| `dace` | 1 | 66 | 514 | 2 | 3,078 | 1,300 | 5.25 |
+| `dace` | 4 | 19 | 131 | 3 | 7,964 | 3,064 | 5.25 |
+| `dace` | 8 | 11 | 67 | 3 | 13,474 | 5,074 | 5.25 |
+
+- `opt` runs N/W + 2 cycles (18 for 16 beats at n64, W = 4). Forge's `add_acc` counts 19 for the same run, one more. DaCe at W = 4 and 8 also costs 3 over the beats, the same as forge.
+- `unopt` at W = 1 is N + 1: Vitis puts the read, the add and the write in one state, so even the plain loop runs one element per cycle. At W = 4 and 8 the lanes run one after the other, 14 and 26 cycles per beat.
+- `unopt` is the largest design at W = 4 and 8 (28.5k µm² against 12.6k for `opt` at W = 8). It holds the whole input and output beats in flops while it walks the lanes: 14.7k µm² of sequential area against 4.6k. Only at W = 1 is `unopt` the smallest.
+- DaCe costs 7 to 13 % more area than `opt`, for the same cycles at W = 1 and one more at W = 4 and 8.

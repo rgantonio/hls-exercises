@@ -27,4 +27,18 @@ Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## Results
 
-Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.
+Rerun on 27 Oct 2026 (commit d2062af): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable. Both sizes run on the same hardware point (`rtl_same`: `yes`, or `renamed` for `unopt` W = 8, the same circuit with shifted net names). `results/report_done.md` has every column.
+
+| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
+|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 193 | 1537 | 1025 | 23,561 | 2,617 | 5.96 |
+| `unopt` | 4 | 241 | 1921 | 1793 | 34,087 | 8,289 | 6.21 |
+| `unopt` | 8 | 217 | 1729 | 1665 | 43,345 | 12,390 | 6.21 |
+| `opt` | 1 | 67 | 515 | 3 | 24,445 | 3,143 | 6.22 |
+| `opt` | 4 | 19 | 131 | 3 | 86,091 | 7,739 | 6.16 |
+| `opt` | 8 | 12 | 68 | 4 | 169,995 | 14,903 | 6.35 |
+| `dace` | 1 | 135 | 1031 | 519 | parked (RAM) | - | - |
+
+- `opt` runs N/W + 3 (W = 1, 4) or + 4 (W = 8): the multiply, the lane tree and the accumulator make the pipeline one stage deeper than `vsum`'s.
+- DaCe's dot is two loops one after the other through a 512-entry buffer: 1031 cycles at n512, about 2N. Its synthesis is parked until a RAM macro exists (`docs/HLS_VS_FORGE.md` section 6).
+- As in `vecmul`, the multipliers set the area: `opt` W = 8 is 170k µm², `unopt` W = 8, with one shared multiplier, 43.3k.

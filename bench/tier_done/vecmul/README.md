@@ -27,4 +27,20 @@ Sizes n64 and n512 (the pins' values), W = 1, 4 and 8 (hardware).
 
 ## Results
 
-Rerun on 27 Oct 2026 with the run-time pins; the numbers are in `results/report_done.md`. The earlier runs, with the size fixed at compile time (`ap_memory`, then axis with and without register slices), are in git history up to commit b2ddd1a.
+Rerun on 27 Oct 2026 (commit d2062af): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable. Both sizes run on the same hardware point (`rtl_same`: `yes`, or `renamed` for `unopt` W = 8, the same circuit with shifted net names). `results/report_done.md` has every column.
+
+| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
+|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 129 | 1025 | 513 | 18,918 | 543 | 5.96 |
+| `unopt` | 4 | 225 | 1793 | 1665 | 32,715 | 8,537 | 6.23 |
+| `unopt` | 8 | 209 | 1665 | 1601 | 45,469 | 14,688 | 6.25 |
+| `opt` | 1 | 66 | 514 | 2 | 20,615 | 1,580 | 6.25 |
+| `opt` | 4 | 18 | 130 | 2 | 78,107 | 4,643 | 6.22 |
+| `opt` | 8 | 10 | 66 | 2 | 154,778 | 8,728 | 6.26 |
+| `dace` | 1 | 66 | 514 | 2 | 20,845 | 1,811 | 6.25 |
+| `dace` | 4 | 19 | 131 | 3 | 79,036 | 5,106 | 6.22 |
+| `dace` | 8 | 11 | 67 | 3 | 155,614 | 9,159 | 6.32 |
+
+- `opt` and DaCe take the same cycles as `vecadd`. `unopt` at W = 1 is 2N + 1: the multiplier needs its own state.
+- A 64-bit fabric multiplier is about 19k µm², so the multipliers are the design: `opt` grows from 20.6k (W = 1) to 154.8k µm² (W = 8), about W × 19k.
+- `unopt` shares one multiplier across the lanes, so from W = 4 on it is the small design (45.5k against 154.8k µm² at W = 8), at 26 cycles per beat instead of 1.

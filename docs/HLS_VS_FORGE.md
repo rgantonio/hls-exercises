@@ -332,7 +332,7 @@ The first runs used `ap_memory` ports (commits 4b7b617 and 99e6c80, in git histo
 
 Every case runs at every W, except the reductions' `dace` case, which runs at W = 1 (section 4.3): 64 run points (two sizes each) on 32 hardware points.
 
-The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 has the run-time pins.
+The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 (d2062af) has the run-time pins as `ap_vld`; its numbers and findings are in each kernel's README and `results/runs/2026-10-27_done_r3.md`. **Status:** HLS side done (cycles and area, `dot` `dace`'s area parked); forge's columns wait for forge's runs.
 
 
 ### Tier A — `atax`, `bicg`, `mvt`, `gesummv`
