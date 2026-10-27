@@ -396,9 +396,12 @@ def write_filelist(dst: Path, top: str) -> None:
 
 
 RTL_IGNORE = re.compile(r"CORE_GENERATION_INFO")
-# Vitis numbers its nets and instances (add_ln9_fu_126_p2, add_ln9_reg_232, ..._U1); the numbers
-# shift between runs of the same circuit, so the second comparison masks them.
+# Vitis numbers its nets and instances (add_ln9_fu_126_p2, add_ln9_reg_232, ..._U1). Between
+# runs of the same circuit the numbers can shift, or the base names change at the same numbers
+# (x_1_fu_190 -> add_ln13_1_fu_190) with the assigns reordered by name. The second comparison
+# masks the numbers; the third keeps only kind and number of each such id and ignores line order.
 RTL_IDS = re.compile(r"_(fu|reg|U)_?\d+")
+RTL_ID_BASE = re.compile(r"\b[A-Za-z_]\w*?_(fu|reg|U)_(\d+)")
 # A memory Vitis built (e.g. dot_dace_p_tmp0_RAM_AUTO_1R1W.v): standard cells cannot make a fair
 # one, so filelist.f names it on a '# ram:' line and syn/syn.py parks the point.
 RTL_RAM = re.compile(r"_RAM_")
@@ -408,12 +411,17 @@ def _rtl_files(folder: Path) -> dict[str, Path]:
     return {f.name: f for f in sorted(folder.iterdir()) if f.is_file() and f.suffix in RTL_SUFFIXES}
 
 
-def _normalized(f: Path, mask_ids: bool = False) -> list[str]:
+def _normalized(f: Path, mode: int = 0) -> list[str]:
     """A Verilog file without Vitis's CORE_GENERATION_INFO line, which carries the
     latency estimate and so changes with the size even when the hardware does not.
-    With mask_ids, Vitis's numbered ids are masked too (RTL_IDS)."""
+    mode 1 also masks the numbers of Vitis's ids (RTL_IDS); mode 2 drops their base
+    names, keeping kind and number (RTL_ID_BASE), and sorts the lines."""
     lines = [ln for ln in f.read_text(errors="replace").splitlines() if not RTL_IGNORE.search(ln)]
-    return [RTL_IDS.sub(lambda m: f"_{m.group(1)}_N", ln) for ln in lines] if mask_ids else lines
+    if mode == 1:
+        return [RTL_IDS.sub(lambda m: f"_{m.group(1)}_N", ln) for ln in lines]
+    if mode == 2:
+        return sorted(RTL_ID_BASE.sub(lambda m: f"ID_{m.group(1)}_{m.group(2)}", ln) for ln in lines)
+    return lines
 
 
 def _copy_rtl(files: dict[str, Path], dst: Path, top: str, size_tag: str) -> None:
@@ -446,12 +454,12 @@ def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: st
         return str(dst.relative_to(ROOT)), "ref"
     ref = _rtl_files(dst)
 
-    def differing(mask_ids: bool) -> list[str]:
+    def differing(mode: int) -> list[str]:
         return sorted(set(files) ^ set(ref)) + sorted(
-            n for n in set(files) & set(ref) if _normalized(files[n], mask_ids) != _normalized(ref[n], mask_ids))
+            n for n in set(files) & set(ref) if _normalized(files[n], mode) != _normalized(ref[n], mode))
 
-    differs = differing(False)
-    same = "yes" if not differs else ("renamed" if not differing(True) else "")
+    differs = differing(0)
+    same = "yes" if not differs else ("renamed" if not differing(1) or not differing(2) else "")
     if same:
         sizes = (dst / "sizes.txt").read_text().splitlines() if (dst / "sizes.txt").is_file() else []
         entry = size_tag + (" (renamed ids)" if same == "renamed" else "")
@@ -740,7 +748,9 @@ def cmd_run(args) -> int:
     for pt in pts:
         groups.setdefault((pt["kdir"], pt["case"], pt["W"], pt["clock"]), []).append(pt)
     for (kdir, _, _, _), gpts in groups.items():
-        all_sizes = {size_tag(s) for s in gpts[0]["params"]["sizes"]}
+        # every size this hardware point can run (rowsum m4_n16 has no W = 32 point)
+        prm = gpts[0]["params"]
+        all_sizes = {size_tag(s) for s in prm["sizes"] if point_valid(prm, s, gpts[0]["W"])}
         if {pt["size_tag"] for pt in gpts} >= all_sizes:
             reset_rtl(kdir, gpts[0]["params"]["tier"], gpts[0]["rtl_name"], [pt["proj"] for pt in gpts])
     place_rtl(rows, {r["proj"]: point_meta(r["proj"]) for r in rows})

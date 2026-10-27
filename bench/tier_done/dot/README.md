@@ -27,18 +27,27 @@ Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 
 ## Results
 
-Rerun on 27 Oct 2026 (commit d2062af): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable. Both sizes run on the same hardware point (`rtl_same`: `yes`, or `renamed` for `unopt` W = 8, the same circuit with shifted net names). `results/report_done.md` has every column.
+Runs of 27 Oct 2026: W = 1, 4, 8 first (d2062af), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `results/report_done.md` has every column; the run notes are in `results/runs/`.
 
 | Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
 |---|---|---|---|---|---|---|---|
 | `unopt` | 1 | 193 | 1537 | 1025 | 23,561 | 2,617 | 5.96 |
+| `unopt` | 2 | 289 | 2305 | 2049 | 30,314 | 6,231 | 6.20 |
 | `unopt` | 4 | 241 | 1921 | 1793 | 34,087 | 8,289 | 6.21 |
 | `unopt` | 8 | 217 | 1729 | 1665 | 43,345 | 12,390 | 6.21 |
+| `unopt` | 16 | 205 | 1633 | 1601 | 60,316 | 20,576 | 6.39 |
+| `unopt` | 32 | 199 | 1585 | 1569 | 93,875 | 36,931 | 6.23 |
 | `opt` | 1 | 67 | 515 | 3 | 24,445 | 3,143 | 6.22 |
+| `opt` | 2 | 35 | 259 | 3 | 45,010 | 4,675 | 6.23 |
 | `opt` | 4 | 19 | 131 | 3 | 86,091 | 7,739 | 6.16 |
 | `opt` | 8 | 12 | 68 | 4 | 169,995 | 14,903 | 6.35 |
+| `opt` | 16 | 8 | 36 | 4 | 337,975 | 29,200 | 6.21 |
+| `opt` | 32 | 6 | 20 | 4 | 666,998 | 53,709 | 6.06 |
 | `dace` | 1 | 135 | 1031 | 519 | parked (RAM) | - | - |
 
 - `opt` runs N/W + 3 (W = 1, 4) or + 4 (W = 8): the multiply, the lane tree and the accumulator make the pipeline one stage deeper than `vsum`'s.
 - DaCe's dot is two loops one after the other through a 512-entry buffer: 1031 cycles at n512, about 2N. Its synthesis is parked until a RAM macro exists (`docs/HLS_VS_FORGE.md` section 6).
 - As in `vecmul`, the multipliers set the area: `opt` W = 8 is 170k µm², `unopt` W = 8, with one shared multiplier, 43.3k.
+- Lane sweep, `opt`: N/W + 3 to 4 cycles at every W from 1 to 32, so one beat per cycle holds up to 2048-bit beats.
+- Lane sweep, `unopt`: from W = 2 on each beat costs about 3W + 3 cycles (its lane loop takes 3 cycles per lane), so a run is about 3N + 3N/W: slowest at W = 2 (2305 cycles at n512) and only a little faster when wider (1585 at W = 32). W = 1 is the exception (1537).
+- Lane sweep, area: `opt` grows from 24.4k (W = 1) to 338.0k (W = 16) and 667.0k µm² (W = 32), 1.97x for the last doubling.

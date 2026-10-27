@@ -28,19 +28,28 @@ Sizes n64 and n512, W = 1, 2, 4, 8, 16 and 32 (`dace` W = 1).
 
 ## Results
 
-First run on 27 Oct 2026 (commit 1aa2298): run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. All 60 points of the tier pass csim and cosim and are portable; both sizes run on the same hardware point (`rtl_same` `yes`, or `renamed` for `unopt` W = 8). `results/report_untiered.md` has every column and `results/runs/2026-10-27_untiered.md` the run note.
+Runs of 27 Oct 2026: W = 1, 4, 8 first (1aa2298), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `results/report_untiered.md` has every column; the run notes are in `results/runs/`.
 
 | Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
 |---|---|---|---|---|---|---|---|
 | `unopt` | 1 | 193 | 1537 | 1025 | 22,365 | 2,090 | 6.60 |
-| `unopt` | 4 | 289 | 2305 | 2177 | 35,337 | 9,574 | 6.58 |
-| `unopt` | 8 | 273 | 2177 | 2113 | 48,092 | 15,725 | 6.43 |
+| `unopt` | 2 | 321 | 2561 | 2305 | 29,886 | 6,486 | 6.58 |
+| `unopt` | 4 | 289 | 2305 | 2177 | 35,337 | 9,574 | 6.43 |
+| `unopt` | 8 | 273 | 2177 | 2113 | 48,091 | 15,725 | 6.58 |
+| `unopt` | 16 | 265 | 2113 | 2081 | 71,515 | 28,003 | 6.41 |
+| `unopt` | 32 | 261 | 2081 | 2065 | 118,672 | 52,536 | 6.43 |
 | `opt` | 1 | 67 | 515 | 3 | 24,050 | 3,127 | 6.22 |
+| `opt` | 2 | 35 | 259 | 3 | 45,560 | 5,170 | 6.23 |
 | `opt` | 4 | 19 | 131 | 3 | 88,534 | 9,255 | 6.27 |
 | `opt` | 8 | 11 | 67 | 3 | 174,759 | 17,424 | 6.44 |
+| `opt` | 16 | 7 | 35 | 3 | 346,896 | 33,763 | 6.34 |
+| `opt` | 32 | 5 | 19 | 3 | 690,872 | 66,442 | 6.43 |
 | `dace` | 1 | 134 | 1030 | 518 | parked (RAM) | - | - |
 
 - `opt` runs N/W + 3 at every W, one cycle deeper than `vecmul` for the add behind the multiplier.
 - The multipliers set the area again: `opt` W = 8 is 174.8k µm² against `vecmul`'s 154.8k; the extra 20k is the eight 64-bit adders, the third axis port and the 64-bit `alpha` register (not split out by DC here).
 - `unopt` at W = 4 and 8 takes 18 and 34 cycles per beat (`vecmul`'s 14 and 26), with one shared multiplier: 48.1k µm² at W = 8.
 - DaCe takes about 2N (134, 1030): `alpha * x` into `__tmp0`, then `y + __tmp0`, one loop after the other, as DaCe's `dot`. Its synthesis is parked (`__tmp0` is a RAM).
+- Lane sweep, `opt`: N/W + 3 cycles at every W from 1 to 32, so one beat per cycle holds up to 2048-bit beats.
+- Lane sweep, `unopt`: from W = 2 on each beat costs about 4W + 2 cycles (its lane loop takes 4 cycles per lane), so a run is about 4N + 2N/W: slowest at W = 2 (2561 cycles at n512) and only a little faster when wider (2081 at W = 32). W = 1 is the exception (1537).
+- Lane sweep, area: `opt` grows from 24.0k (W = 1) to 346.9k (W = 16) and 690.9k µm² (W = 32), 1.99x for the last doubling.
