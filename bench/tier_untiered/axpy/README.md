@@ -28,28 +28,28 @@ Sizes n64 and n512, W = 1, 2, 4, 8, 16 and 32 (`dace` W = 1).
 
 ## Results
 
-Runs of 27 Oct 2026: W = 1, 4, 8 first (1aa2298), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC at 10 ns on gscl45nm (FreePDK45), since retired: the area and critical-path columns are from that run. Synthesis now runs on the Nangate 45 nm and 15 nm Open Cell Libraries, with results in `snax-forge-experiments/results/hls/<tech>/`. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `snax-forge-experiments/results/hls/report_untiered.md` has every column; the run notes are in `snax-forge-experiments/results/hls/runs/`.
+Runs of 27 Oct 2026: W = 1, 4, 8 first (1aa2298), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC at 10 ns on the Nangate 45 nm and 15 nm Open Cell Libraries, rerun of 28 Oct 2026: the columns marked 45 and 15 are area, critical path, energy per cycle at DC's default switching activity (`e_total_pj`) and leakage on each, from `snax-forge-experiments/results/hls/<tech>/` (run note `snax-forge-experiments/results/hls/runs/2026-10-28_tech_rerun.md`). Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `snax-forge-experiments/results/hls/report_untiered.md` has every column; the run notes are in `snax-forge-experiments/results/hls/runs/`.
 
-| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
-|---|---|---|---|---|---|---|---|
-| `unopt` | 1 | 193 | 1537 | 1025 | 22,365 | 2,090 | 6.60 |
-| `unopt` | 2 | 321 | 2561 | 2305 | 29,886 | 6,486 | 6.58 |
-| `unopt` | 4 | 289 | 2305 | 2177 | 35,337 | 9,574 | 6.43 |
-| `unopt` | 8 | 273 | 2177 | 2113 | 48,091 | 15,725 | 6.58 |
-| `unopt` | 16 | 265 | 2113 | 2081 | 71,515 | 28,003 | 6.41 |
-| `unopt` | 32 | 261 | 2081 | 2065 | 118,672 | 52,536 | 6.43 |
-| `opt` | 1 | 67 | 515 | 3 | 24,050 | 3,127 | 6.22 |
-| `opt` | 2 | 35 | 259 | 3 | 45,560 | 5,170 | 6.23 |
-| `opt` | 4 | 19 | 131 | 3 | 88,534 | 9,255 | 6.27 |
-| `opt` | 8 | 11 | 67 | 3 | 174,759 | 17,424 | 6.44 |
-| `opt` | 16 | 7 | 35 | 3 | 346,896 | 33,763 | 6.34 |
-| `opt` | 32 | 5 | 19 | 3 | 690,872 | 66,442 | 6.43 |
-| `dace` | 1 | 134 | 1030 | 518 | parked (RAM) | - | - |
+| Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² 45 | crit ns 45 | E pJ 45 | leak µW 45 | area µm² 15 | crit ns 15 | E pJ 15 | leak µW 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `unopt` | 1 | 193 | 1537 | 1025 | 9,162 | 5.44 | 7.60 | 178 | 2,836 | 0.76 | 2.73 | 95.4 |
+| `unopt` | 2 | 321 | 2561 | 2305 | 12,712 | 5.52 | 7.02 | 248 | 3,868 | 0.75 | 2.45 | 134 |
+| `unopt` | 4 | 289 | 2305 | 2177 | 15,328 | 5.52 | 8.53 | 300 | 4,613 | 0.75 | 3.20 | 161 |
+| `unopt` | 8 | 273 | 2177 | 2113 | 20,717 | 5.52 | 12.0 | 403 | 6,162 | 0.75 | 4.76 | 217 |
+| `unopt` | 16 | 265 | 2113 | 2081 | 31,426 | 5.52 | 19.5 | 617 | 9,163 | 0.75 | 7.77 | 327 |
+| `unopt` | 32 | 261 | 2081 | 2065 | 52,568 | 5.52 | 33.6 | 1,033 | 15,303 | 0.75 | 13.8 | 544 |
+| `opt` | 1 | 67 | 515 | 3 | 9,997 | 5.52 | 5.14 | 194 | 3,069 | 0.76 | 1.65 | 105 |
+| `opt` | 2 | 35 | 259 | 3 | 18,865 | 5.55 | 9.42 | 366 | 5,814 | 0.77 | 2.97 | 197 |
+| `opt` | 4 | 19 | 131 | 3 | 36,611 | 5.55 | 17.8 | 712 | 11,307 | 0.77 | 5.51 | 383 |
+| `opt` | 8 | 11 | 67 | 3 | 72,127 | 5.59 | 35.5 | 1,404 | 22,296 | 0.80 | 10.8 | 754 |
+| `opt` | 16 | 7 | 35 | 3 | 143,109 | 5.63 | 66.3 | 2,781 | 44,280 | 0.81 | 21.4 | 1,498 |
+| `opt` | 32 | 5 | 19 | 3 | 285,106 | 5.86 | 135 | 5,545 | 88,227 | 0.79 | 43.4 | 2,979 |
+| `dace` | 1 | 134 | 1030 | 518 | parked (RAM) | - | - | - | - | - | - | - |
 
 - `opt` runs N/W + 3 at every W, one cycle deeper than `vecmul` for the add behind the multiplier.
-- The multipliers set the area again: `opt` W = 8 is 174.8k µm² against `vecmul`'s 154.8k; the extra 20k is the eight 64-bit adders, the third axis port and the 64-bit `alpha` register (not split out by DC here).
-- `unopt` at W = 4 and 8 takes 18 and 34 cycles per beat (`vecmul`'s 14 and 26), with one shared multiplier: 48.1k µm² at W = 8.
+- The multipliers set the area again: `opt` W = 8 is 72.1k µm² against `vecmul`'s 62.6k on nangate45 (22.3k against 19.6k on nangate15); the extra 9.5k (2.7k) is the eight 64-bit adders, the third axis port and the 64-bit `alpha` register, all in the top module (only the multipliers are modules of their own).
+- `unopt` at W = 4 and 8 takes 18 and 34 cycles per beat (`vecmul`'s 14 and 26), with one shared multiplier: 20.7k µm² at W = 8 on nangate45, 6.2k on nangate15.
 - DaCe takes about 2N (134, 1030): `alpha * x` into `__tmp0`, then `y + __tmp0`, one loop after the other, as DaCe's `dot`. Its synthesis is parked (`__tmp0` is a RAM).
 - Lane sweep, `opt`: N/W + 3 cycles at every W from 1 to 32, so one beat per cycle holds up to 2048-bit beats.
 - Lane sweep, `unopt`: from W = 2 on each beat costs about 4W + 2 cycles (its lane loop takes 4 cycles per lane), so a run is about 4N + 2N/W: slowest at W = 2 (2561 cycles at n512) and only a little faster when wider (2081 at W = 32). W = 1 is the exception (1537).
-- Lane sweep, area: `opt` grows from 24.0k (W = 1) to 346.9k (W = 16) and 690.9k µm² (W = 32), 1.99x for the last doubling.
+- Lane sweep, area: `opt` grows from 10.0k (W = 1) to 143.1k (W = 16) and 285.1k µm² (W = 32) on nangate45, 1.99x for the last doubling; on nangate15 from 3.1k to 44.3k and 88.2k µm², 1.99x.
