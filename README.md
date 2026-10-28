@@ -71,7 +71,7 @@ A run writes three files in `snax-forge-experiments/results/hls/` and puts the g
 | `hls_loops.csv` | One row per loop per point: trips, iteration latency, II achieved and target |
 | `report_<tier>.md` | Per kernel, the points side by side with cycles per element, overhead beyond one beat per cycle, timing and the ratio to `unopt`, then the loops |
 | `rtl/.../*.v` | Vitis's Verilog per hardware point, with `filelist.f` and `sizes.txt`, the input to synthesis |
-| `synth_dc.csv` | Written by snax-forge-experiments' `syn/syn.py`: area, timing and power per hardware point |
+| `<tech>/synth_dc.csv` | Written by snax-forge-experiments' `syn/syn.py`, one per technology (`nangate45`, `nangate15`): area, timing and power per hardware point; `<tech>/synth_dc_modules.csv` and `<tech>/reports/` next to it |
 | `runs/<date>_<tier>.md` | Claude Code's note of a bench run: commands, versions, failures with their log lines |
 
 ```bash
@@ -100,12 +100,12 @@ ASIC synthesis of the hardware points in `rtl/` moved to snax-forge-experiments,
 
 ```bash
 cd ../snax-forge-experiments
-python3 syn/syn.py run done/vecadd/opt_w8            # one hardware point, 10 ns
-python3 syn/syn.py run 'done/*/*' -j 2               # a whole tier, 2 DC runs at once
-python3 syn/syn.py summary                           # area, slack, power of every run
+python3.11 syn/syn.py run done/vecadd/opt_w8 --tech nangate45     # one hardware point, 10 ns
+python3.11 syn/syn.py run 'done/*/*' --tech nangate15 -j 2         # a whole tier, 2 DC runs at once
+python3.11 syn/syn.py summary                                      # area, slack, power of every run
 ```
 
-More in its `syn/README.md`.
+It runs on the Nangate 45 nm and 15 nm Open Cell Libraries, `--tech nangate45` or `--tech nangate15`, and writes the results to its `results/hls/<tech>/`. More in its `syn/README.md`.
 
 ## Layout
 
