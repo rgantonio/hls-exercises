@@ -24,7 +24,7 @@ All three cases have the same ports: **axis**, the valid-ready interface of SNAX
 
 **Hardware points and sizes.** A hardware point is a case and a W (and the HLS clock). The size is not part of it: it reaches the block on run-time pins, as in forge (section 2), so every size runs on the same Verilog, and synthesis runs once per hardware point.
 
-**The forge side.** Forge's number is its accelerator window, the `forge counter`, on SNAX-GVSoC and on snax_cluster's RTL (forge `docs/ARCHITECTURE.md` §7, `docs/RUN.md` §8). It goes into `results/forge_cycles.csv`, copied from forge's runs until forge has an export command.
+**The forge side.** Forge's number is its accelerator window, the `forge counter`, on SNAX-GVSoC and on snax_cluster's RTL (forge `docs/ARCHITECTURE.md` §7, `docs/RUN.md` §8). It goes into `snax-forge-experiments/results/hls/forge_cycles.csv`, copied from forge's runs until forge has an export command.
 
 ---
 
@@ -169,18 +169,8 @@ hls-exercises/
     collect_latency.sh           unchanged, also works on bench projects
     collect_resources.sh         unchanged
   notes/                         env.md, directive reference, exercise results.csv
-  results/                       the bench summaries that are kept (5.2)
-    hls_cycles.csv               one row per run point
-    hls_loops.csv                one row per loop per run point
-    report_<tier>.md             tables from the CSVs, rewritten by bench.py
-    forge_cycles.csv             forge's counters, same keys (kernel, size, W)
-    synth_dc.csv                 section 6: a copy of syn/runs/summary.csv
-    runs/<date>_<tier>.md        Claude Code's note of each bench run (section 8)
   rtl/                           Vitis's generated Verilog per hardware point, kept for synthesis (5.2)
     done/vecadd/opt_w4/*.v, filelist.f, sizes.txt
-  syn/                           ASIC synthesis with DC on FreePDK45 (section 6, syn/README.md)
-    syn.py, scripts/             the driver, dc_syn.tcl and constraints.sdc
-    runs/                        every DC run, local only (git ignores it)
   bench/
     bench.py                     the driver: list, run, collect, check, report
     run_bench.tcl                one Vitis run, everything from the environment
@@ -260,9 +250,9 @@ The testbench gets `-DDUT=<top>`, so one testbench serves every case.
 - Optional keys: `acc_dtype` (tier P, gives `ACC_T`), `clock_ns` (default 3.33), and per case `tb` or `directives` to override the defaults.
 - The top-level `dace` key is read by `gen_dace.py` only. `vectorize` allows `Vectorization` at W > 1, `passes` names functions of `dace.transformation.auto.fpga` to apply, `expansions` maps a library node type to its implementation (for example `{"Gemv": "FPGA_Accumulate"}`), `symbols` maps each DaCe symbol to a C++ expression over the top's pins, `split_inout` renames the written side of an in-place array (`{"y": "y_out"}`), and `buffer_outputs` names outputs DaCe writes more than once, with their element count (`{"y": "M"}`): the generated top gives DaCe a local buffer and streams it out afterwards.
 
-### 5.2 What is kept: `results/`
+### 5.2 What is kept: `snax-forge-experiments/results/hls/`
 
-The Vitis projects and logs are scratch: git ignores them and `make clean` removes them. What is committed is the summaries in `results/`, and the generated Verilog in `rtl/`. `bench.py collect` can rebuild both from projects that still exist.
+The Vitis projects and logs are scratch: git ignores them and `make clean` removes them. What is committed is the summaries in `snax-forge-experiments/results/hls/`, and the generated Verilog in `rtl/`. `bench.py collect` can rebuild both from projects that still exist.
 
 - `rtl/<tier>/<kernel>/<case>_w<W>/`: the `.v` files of `<proj>/sol/syn/verilog/` for one hardware point, a `filelist.f` (the top module on a `# top:` line, then the files) and `sizes.txt` (the sizes whose Verilog is exactly this). `run` and `collect` place them after all Vitis runs, smallest size first: that size is the reference, and every other size is compared with it, ignoring Vitis's `CORE_GENERATION_INFO` line (it carries the latency estimate). If that differs, it is compared again with Vitis's numbered ids masked (`add_ln9_fu_126_p2`, `add_ln9_reg_232`, `..._U1`): equal then is `renamed`, the same circuit with shifted net names, as `unopt` n512 W = 8 was on 27 Oct (DC gave the same area). A size whose Verilog still differs gets its own folder, `<case>_<size>_w<W>/`, and `rtl_same` says which files differ. A memory Vitis built (a `*_RAM_*.v` file) is named on a `# ram:` line of `filelist.f`. That is enough for a synthesis run (section 6) on a machine without Vitis. It is plain text with no timestamps, so it diffs cleanly.
 
@@ -290,13 +280,13 @@ Both CSVs are keyed by `tier, kernel, case, size, W, clock_ns`; a rerun replaces
 
 ## 6. Synthesis (ASIC)
 
-The comparison is made on ASIC synthesis only; the FPGA's timing is not a concern. The flow is in `syn/` (`syn/README.md`): Design Compiler on FreePDK45 (OSU `gscl45nm`), with FreePDK45 next to hls-exercises.
+The comparison is made on ASIC synthesis only; the FPGA's timing is not a concern. The flow is in [snax-forge-experiments](https://github.com/KULeuven-MICAS/snax-forge-experiments)' `syn/` (its `syn/README.md`): Design Compiler on FreePDK45 (OSU `gscl45nm`). That repo, this one and FreePDK45 sit next to each other, and the same flow synthesizes forge's accelerators, so both sides are measured alike.
 
-- **Input:** a point's `rtl/<tier>/<kernel>/<point>/filelist.f`, so only Vitis's Verilog, no Vitis.
-- **Run:** `python3 syn/syn.py run 'done/*/*' [--clock NS]`, once per hardware point. `compile_ultra -no_autoungroup` keeps the hierarchy, so control, CSR and datapath can be read apart. The clock is `ap_clk`, 10 ns by default.
+- **Input:** a point's `rtl/<tier>/<kernel>/<point>/filelist.f` in this repo, so only Vitis's Verilog, no Vitis.
+- **Run:** from snax-forge-experiments' root, `python3 syn/syn.py run 'done/*/*' [--clock NS]`, once per hardware point. `compile_ultra -no_autoungroup` keeps the hierarchy, so control, CSR and datapath can be read apart. The clock is `ap_clk`, 10 ns by default.
 - **Memories are parked.** `gscl45nm` has no RAM cells, so DC would build a memory out of flops: DaCe's `dot` buffer (64 × 512) became 32,832 flops, took 14 minutes to elaborate and gives no fair area. `syn.py` skips every point whose `filelist.f` has a `# ram:` line and writes a `skipped: needs a RAM macro` row for it; `--with-ram` runs it anyway. Later, an OpenRAM macro for FreePDK45 (`.lib` converted to `.db`, with its Verilog model left out of the filelist) gives the memory's area, and the logic is synthesized around it. Forge's dot through L1 does not count the TCDM in the accelerator either, so the logic alone is the like-for-like number.
-- **Output:** the runs stay in `syn/runs/`, which git ignores, with one row per point and clock in `syn/runs/summary.csv` (area, cells, critical path, slack, dynamic and leakage power). `syn.py` copies that summary to `results/synth_dc.csv`, which is committed.
-- **Forge's side** goes through the same `dc_syn.tcl` once forge's `gen-rtl` output (`out/rtl/<kernel>/sv/*.sv`) gets a `filelist.f` of its own. That will need `-format sverilog`. TSMC 16 nm is the same flow with another library.
+- **Output:** the runs stay in snax-forge-experiments' `syn/runs/hls/`, which git ignores, with one row per point and clock in its `summary.csv` (area, cells, critical path, slack, dynamic and leakage power). `syn.py` copies that summary to `snax-forge-experiments/results/hls/synth_dc.csv`, which is committed.
+- **Forge's side** goes through the same `dc_syn.tcl` from a snax-forge bundle's `rtl/files.f`. That will need `-format sverilog`. The open 15 nm library is the same flow with another library.
 
 This extends forge PAPER E7 (one unit in Chisel against Vitis HLS at equal II and clock) to the kernel set.
 
@@ -310,7 +300,7 @@ Each tier runs the same steps, and each step ends with what changed and the rows
 2. **`unopt`.** Run, check, fill the kernel README's table.
 3. **`opt`.** Run per W, check II = 1 on the loops that should have it.
 4. **`dace`.** Generate, wrap, run.
-5. **Compare.** Add forge's counters to `results/forge_cycles.csv` and write the tier's table: cycles per case against forge's, with the known differences.
+5. **Compare.** Add forge's counters to `snax-forge-experiments/results/hls/forge_cycles.csv` and write the tier's table: cycles per case against forge's, with the known differences.
 6. **Synthesis.** Section 6, both sides.
 
 ### H0 — setup and the first run (`vecadd`)
@@ -334,7 +324,7 @@ The first runs used `ap_memory` ports (commits 4b7b617 and 99e6c80, in git histo
 
 Every case runs at every W, except the reductions' `dace` case, which runs at W = 1 (section 4.3). The first runs had W = 1, 4, 8: 64 run points (two sizes each) on 32 hardware points. From 27 Oct 2026 the sweep is W = 1, 2, 4, 8, 16, 32 (`notes/w_sweep.md`: 64 to 2048 bits per stream per cycle, one product class per step): 124 run points on 62 hardware points.
 
-The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 (d2062af) has the run-time pins as `ap_vld`; its numbers and findings are in each kernel's README and `results/runs/2026-10-27_done_r3.md`. **Status:** HLS side done (cycles and area, `dot` `dace`'s area parked); forge's columns wait for forge's runs.
+The first runs had the size fixed at compile time, so every size was its own hardware. They are in git history up to commit b2ddd1a. The rerun of 27 Oct 2026 (d2062af) has the run-time pins as `ap_vld`; its numbers and findings are in each kernel's README and `snax-forge-experiments/results/hls/runs/2026-10-27_done_r3.md`. **Status:** HLS side done (cycles and area, `dot` `dace`'s area parked); forge's columns wait for forge's runs.
 
 
 ### Tier A — `atax`, `bicg`, `mvt`, `gesummv`
@@ -371,12 +361,12 @@ The loop is the same as in the snax-forge work:
 
 1. The plan and the code are made in the chat and pushed here (sources, `params.json`, generated vectors and DaCe files).
 2. The chat gives a prompt for Claude Code on the machine with Vitis.
-3. Claude Code runs the bench, commits `results/` and kernel README updates, and pushes.
-4. The report (`results/report_<tier>.md`) and any failures go back to the chat, which plans the next step.
+3. Claude Code runs the bench, commits `snax-forge-experiments/results/hls/` there and the kernel README updates here, and pushes both.
+4. The report (`snax-forge-experiments/results/hls/report_<tier>.md`) and any failures go back to the chat, which plans the next step.
 
 Claude Code runs and reports; it does not redesign kernels or directives on its own. When a run fails, it reports the error lines from the log and stops, unless the prompt says what to fix.
 
-**Reports go in the repo.** Whatever the chat needs to read is committed, so nothing has to be pasted back: `results/` (the CSVs, `report_<tier>.md`, `synth_dc.csv`) and a run note `results/runs/<date>_<tier>.md` with the commands run, the tool versions, the counts of ok and failed points, the `rtl_same` outcome, and for every failure the log's error lines (at most 30 per failure). Vitis projects, logs and `syn/runs/` stay local.
+**Reports go in a repo.** Whatever the chat needs to read is committed, so nothing has to be pasted back: `snax-forge-experiments/results/hls/` (the CSVs, `report_<tier>.md`, `synth_dc.csv`) and a run note `snax-forge-experiments/results/hls/runs/<date>_<tier>.md` with the commands run, the tool versions, the counts of ok and failed points, the `rtl_same` outcome, and for every failure the log's error lines (at most 30 per failure). Vitis projects, logs and snax-forge-experiments' `syn/runs/` stay local.
 
 - **Start.** Every prompt starts with `git pull` in hls-exercises (and in snax-forge when vectors or DaCe sources are generated).
 - **Environments.** The Vitis side needs `vitis_hls` on the path (Vitis's `settings64.sh`) and Python 3.7 or newer, standard library only (the ESAT host's `python3` is 3.6; use `python3.11`). The generators need snax-forge's pixi environment:

@@ -27,7 +27,7 @@ Sizes m4_n16 and m8_n64 (the two recipes), W = 1, 2, 4, 8, 16 and 32 (`dace` W =
 
 ## Results
 
-Runs of 27 Oct 2026: W = 1, 4, 8 first (1aa2298), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `results/report_untiered.md` has every column; the run notes are in `results/runs/`.
+Runs of 27 Oct 2026: W = 1, 4, 8 first (1aa2298), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `snax-forge-experiments/results/hls/report_untiered.md` has every column; the run notes are in `snax-forge-experiments/results/hls/runs/`.
 
 | Case | W | cycles m4_n16 | cycles m8_n64 | over the beats (m8_n64) | area µm² | of which flops | critical path ns |
 |---|---|---|---|---|---|---|---|

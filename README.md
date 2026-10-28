@@ -3,7 +3,7 @@
 Two things live here:
 
 - **Exercises** (`exercises/`): self-learning steps on how Vitis HLS works and what its optimizations do. [`exercises/README.md`](exercises/README.md) lists them and says how to run them.
-- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS, all with axis (valid-ready) ports as SNAX's units have. Their cycle counts are summarised in `results/`, and the generated Verilog is kept in `rtl/` for synthesis. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md), the sizes in [`docs/SIZES.md`](docs/SIZES.md) and the lane sweep in [`notes/w_sweep.md`](notes/w_sweep.md).
+- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS, all with axis (valid-ready) ports as SNAX's units have. Their cycle counts are summarised in `snax-forge-experiments/results/hls/`, and the generated Verilog is kept in `rtl/` for synthesis. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md), the sizes in [`docs/SIZES.md`](docs/SIZES.md) and the lane sweep in [`notes/w_sweep.md`](notes/w_sweep.md).
 
 Tool: Vitis HLS 2023.2.2 on `xcku5p-ffvb676-2-e` (`notes/env.md`). Run everything from the repo root unless a section says otherwise.
 
@@ -14,7 +14,15 @@ source /path/to/Vitis/2023.2/settings64.sh   # puts vitis_hls on the path
 vitis_hls -version                           # expect v2023.2.2
 ```
 
-The bench driver and `syn/syn.py` need Python 3.7 or newer, standard library only. Where `python3` is older (3.6 on the ESAT servers), run them with `python3.11`. The bench generators need a snax-forge checkout and its pixi environment.
+The bench driver needs Python 3.7 or newer, standard library only. Where `python3` is older (3.6 on the ESAT servers), run it with `python3.11`. The bench generators need a snax-forge checkout and its pixi environment.
+
+The bench's summaries and the synthesis flow live in [snax-forge-experiments](https://github.com/KULeuven-MICAS/snax-forge-experiments), checked out next to this repo. `bench.py` writes into its `results/hls/` (`HLS_RESULTS` points elsewhere):
+
+```
+<parent>/
+  hls-exercises/            this repo: bench/ and rtl/
+  snax-forge-experiments/   results/hls/ (the summaries) and syn/ (synthesis of rtl/)
+```
 
 ## Exercises
 
@@ -55,7 +63,7 @@ python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower 
 
 ### 3. Read the results
 
-A run writes three files in `results/` and puts the generated Verilog in `rtl/<tier>/<kernel>/<case>_w<W>/`, one folder per hardware point: the size is a run-time pin (`loop_count`, and `len` for reductions), so every size runs on the same Verilog, and `bench.py` checks that it is the same. These are what gets committed:
+A run writes three files in `snax-forge-experiments/results/hls/` and puts the generated Verilog in this repo's `rtl/<tier>/<kernel>/<case>_w<W>/`, one folder per hardware point: the size is a run-time pin (`loop_count`, and `len` for reductions), so every size runs on the same Verilog, and `bench.py` checks that it is the same. These are what gets committed, the Verilog here and the rest in snax-forge-experiments:
 
 | File | What it holds |
 |---|---|
@@ -63,7 +71,7 @@ A run writes three files in `results/` and puts the generated Verilog in `rtl/<t
 | `hls_loops.csv` | One row per loop per point: trips, iteration latency, II achieved and target |
 | `report_<tier>.md` | Per kernel, the points side by side with cycles per element, overhead beyond one beat per cycle, timing and the ratio to `unopt`, then the loops |
 | `rtl/.../*.v` | Vitis's Verilog per hardware point, with `filelist.f` and `sizes.txt`, the input to synthesis |
-| `synth_dc.csv` | A copy of `syn/runs/summary.csv`: area, timing and power per hardware point |
+| `synth_dc.csv` | Written by snax-forge-experiments' `syn/syn.py`: area, timing and power per hardware point |
 | `runs/<date>_<tier>.md` | Claude Code's note of a bench run: commands, versions, failures with their log lines |
 
 ```bash
@@ -88,15 +96,16 @@ vitis_hls -f ../../run_bench.tcl 2>&1 | tee run_manual.log
 
 ## Synthesis
 
-ASIC synthesis of the hardware points in `rtl/` with Design Compiler on FreePDK45, which sits next to hls-exercises. The runs stay local in `syn/runs/`; the summary is copied to `results/synth_dc.csv`:
+ASIC synthesis of the hardware points in `rtl/` moved to snax-forge-experiments, which reads this repo's `rtl/<point>/filelist.f` from the checkout next to it. Run it from that repo's root:
 
 ```bash
+cd ../snax-forge-experiments
 python3 syn/syn.py run done/vecadd/opt_w8            # one hardware point, 10 ns
 python3 syn/syn.py run 'done/*/*' -j 2               # a whole tier, 2 DC runs at once
 python3 syn/syn.py summary                           # area, slack, power of every run
 ```
 
-More in [`syn/README.md`](syn/README.md).
+More in its `syn/README.md`.
 
 ## Layout
 
@@ -106,7 +115,6 @@ exercises/   the self-learning steps (s0_flow, s1_model, s2_pipelining)
 common/      part.tcl (exercises), asic.tcl (bench), report scripts
 notes/       env.md, directive reference, exercise results.csv
 bench/       bench.py, run_bench.tcl, gen/, tier_<T>/<kernel>/
-results/     bench summaries: hls_cycles.csv, hls_loops.csv, report_<tier>.md, synth_dc.csv, runs/
 rtl/         Vitis's generated Verilog per hardware point, with a filelist.f and sizes.txt each
-syn/         ASIC synthesis: syn.py, scripts/ (DC on FreePDK45); runs/ stays local
+             (the summaries and synthesis are in snax-forge-experiments)
 ```

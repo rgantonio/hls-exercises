@@ -25,11 +25,11 @@ Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 - `unopt`: about $N$ lane steps plus the beat's read and write per beat.
 - `opt`: about $N/W$ plus the pipeline depth.
 - `dace`: about $N/W$ plus the depth at every W, since DaCe vectorizes elementwise maps.
-- forge, W = 4: `add_acc` counts 19 cycles for 16 beats at N = 64 (overhead 3), on SNAX-GVSoC and on snax_cluster's RTL (`results/forge_cycles.csv`).
+- forge, W = 4: `add_acc` counts 19 cycles for 16 beats at N = 64 (overhead 3), on SNAX-GVSoC and on snax_cluster's RTL (`snax-forge-experiments/results/hls/forge_cycles.csv`).
 
 ## Results
 
-Runs of 27 Oct 2026: W = 1, 4, 8 first (d2062af), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `results/report_done.md` has every column; the run notes are in `results/runs/`.
+Runs of 27 Oct 2026: W = 1, 4, 8 first (d2062af), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC on FreePDK45 at 10 ns. Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `snax-forge-experiments/results/hls/report_done.md` has every column; the run notes are in `snax-forge-experiments/results/hls/runs/`.
 
 | Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² | of which flops | critical path ns |
 |---|---|---|---|---|---|---|---|

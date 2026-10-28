@@ -92,16 +92,10 @@ notes/figures/
 !**/params.json
 # --- Bench (docs/HLS_VS_FORGE.md) ----------------------------------------
 .dacecache/
-# Projects (*_proj/) and logs are ignored above; generated sources and
-# results are tracked.
-!results/
-!results/*.csv
+# Projects (*_proj/) and logs are ignored above; generated sources are
+# tracked. The results live in snax-forge-experiments.
 !bench/**/params.json
 !bench/**/*.tcl
 !bench/**/data.h
 !rtl/
 !rtl/**
-
-# --- Synthesis (syn/README.md) ------------------------------------------
-# Every DC run stays local: work library, logs, reports, netlists, summary.
-syn/runs/
