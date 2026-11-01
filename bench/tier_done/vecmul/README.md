@@ -29,6 +29,8 @@ Sizes n64 and n512 (the pins' values), W = 1, 2, 4, 8, 16 and 32 (hardware).
 
 Runs of 27 Oct 2026: W = 1, 4, 8 first (d2062af), then the lane sweep W = 1 to 32 (07f5dec, lane accessors inlined in e1427cc; `notes/w_sweep.md`). Run-time pins as `ap_vld`, axis without register slices, HLS clock 3.33 ns, DC at 10 ns on the Nangate 45 nm and 15 nm Open Cell Libraries, rerun of 28 Oct 2026: the columns marked 45 and 15 are area, critical path, energy per cycle at DC's default switching activity (`e_total_pj`) and leakage on each, from `snax-forge-experiments/results/hls/<tech>/` (run note `snax-forge-experiments/results/hls/runs/2026-10-28_tech_rerun.md`). Every point passes csim and cosim and is portable, and both sizes run on the same hardware point. `snax-forge-experiments/results/hls/report_done.md` has every column; the run notes are in `snax-forge-experiments/results/hls/runs/`.
 
+SYN1's comparison with snax-forge's accelerators at one task of N = 2048 elements (cycles, area, energy per task and per element, forge's CSR, control and datapath apart, both technologies) is in `snax-forge-experiments/results/forge_vs_hls.md`.
+
 | Case | W | cycles n64 | cycles n512 | over the beats (n512) | area µm² 45 | crit ns 45 | E pJ 45 | leak µW 45 | area µm² 15 | crit ns 15 | E pJ 15 | leak µW 15 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `unopt` | 1 | 129 | 1025 | 513 | 7,526 | 5.49 | 9.83 | 156 | 2,387 | 0.73 | 2.74 | 80.0 |

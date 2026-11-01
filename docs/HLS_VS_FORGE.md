@@ -24,7 +24,7 @@ All three cases have the same ports: **axis**, the valid-ready interface of SNAX
 
 **Hardware points and sizes.** A hardware point is a case and a W (and the HLS clock). The size is not part of it: it reaches the block on run-time pins, as in forge (section 2), so every size runs on the same Verilog, and synthesis runs once per hardware point.
 
-**The forge side.** Forge's number is its accelerator window, the `forge counter`, on SNAX-GVSoC and on snax_cluster's RTL (forge `docs/ARCHITECTURE.md` §7, `docs/RUN.md` §8). It goes into `snax-forge-experiments/results/hls/forge_cycles.csv`, copied from forge's runs until forge has an export command.
+**The forge side.** Forge's accelerators are bundled from snax-forge, synthesized and simulated in snax-forge-experiments by the same flow as these points (section 6). The numbers, both sides at one task of N = 2048 elements (cycles, area, energy per task and per element, forge's CSR, control and datapath apart), are in snax-forge-experiments' `results/forge_vs_hls.md` (`pixi run table`, SYN1, its X21 to X25); there is no hand copy here. `results/hls/forge_cycles.csv`, the earlier hand copy of forge's counters, is superseded by it.
 
 ---
 
@@ -287,7 +287,7 @@ The comparison is made on ASIC synthesis only; the FPGA's timing is not a concer
 - **Memories are parked.** Neither library has RAM cells, so DC would build a memory out of flops: DaCe's `dot` buffer (64 × 512) became 32,832 flops, took 14 minutes to elaborate and gives no fair area. `syn.py` skips every point whose `filelist.f` has a `# ram:` line and writes a `skipped: needs a RAM macro` row for it; `--with-ram` runs it anyway. Later, an OpenRAM macro per technology (`.lib` converted to `.db`, with its Verilog model left out of the filelist) gives the memory's area, and the logic is synthesized around it. Forge's dot through L1 does not count the TCDM in the accelerator either, so the logic alone is the like-for-like number.
 - **Output:** the runs stay in snax-forge-experiments' `syn/runs/hls/<tech>/`, which git ignores, with one row per point and clock in its `summary.csv`. What is committed is in `snax-forge-experiments/results/hls/<tech>/`: `synth_dc.csv` (area, cells, critical path, slack and fmax, dynamic and leakage power, energy per cycle per power group), `synth_dc_modules.csv` (area and power per hierarchical cell) and, per point, the reports the area and energy model reads (area, power and reference reports, QoR, the tech file and library details; the rest stays in `syn/runs/`).
 - **Energy:** dynamic energy per cycle and per firing, from a gate-level simulation of the mapped netlist and PrimePower, is in snax-forge-experiments' [`docs/power.md`](https://github.com/KULeuven-MICAS/snax-forge-experiments/blob/main/docs/power.md).
-- **Forge's side** goes through the same `dc_syn.tcl` from a snax-forge bundle's `rtl/files.f`. That will need `-format sverilog`.
+- **Forge's side** goes through the same flow from a snax-forge bundle (`pixi run forge-rtl`, then `syn run --source forge` and `pwr run --source forge`): the same `dc_syn.tcl` on the bundle's `rtl/files.f` with `-format sverilog` (`SYN_FORMAT`), the clock `clk_i` and the hierarchy kept, then the same gate-level simulation and PrimePower, at n2048 on both sides (snax-forge-experiments X21 to X24). The joined table is its `results/forge_vs_hls.md`.
 
 This extends forge PAPER E7 (one unit in Chisel against Vitis HLS at equal II and clock) to the kernel set.
 
