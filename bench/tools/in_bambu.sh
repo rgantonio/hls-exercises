@@ -25,11 +25,15 @@ esac
 
 TTY=()
 [ -t 0 ] && [ -t 1 ] && TTY=(-t)
+# BAMBU_CONTAINER_NAME: optional container name, so a caller can `podman rm -f` it
+# (bench/probe/bambu/probe.py does on a timeout).
+NAME=()
+[ -n "${BAMBU_CONTAINER_NAME:-}" ] && NAME=(--name "$BAMBU_CONTAINER_NAME")
 
 # The workdir is the repo root and the cd to $CWD happens inside, as this user: the repo
 # is mode 700 on NFS, and runc resolves -w as the container's root before switching
 # to the user, so -w on a subdirectory fails with "mkdir ...: permission denied".
-exec podman run --rm -i "${TTY[@]}" --userns=keep-id \
+exec podman run --rm -i "${TTY[@]}" "${NAME[@]}" --userns=keep-id \
     -v "$REPO:$REPO" -w "$REPO" \
     -e HOME=/tmp \
     -e "PATH=$REPO/tools/bin:/usr/bin:/bin" \
