@@ -1,0 +1,11 @@
+# container/bambu/Containerfile: the environment Bambu 2024.10 runs in (BAM1).
+# Bambu builds its front end and its co-simulation driver with -m32, so the image has
+# 32-bit glibc and libstdc++ (multilib). Bambu itself is not copied in: tools/bambu/ is
+# bind-mounted with the repo, and Questa read-only at its host path
+# (bench/tools/in_bambu.sh). Build: podman build -t hls-exercises-bambu:<tag> container/bambu
+FROM docker.io/library/ubuntu:24.04
+
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      gcc-multilib g++-multilib libc6-dev-i386 make python3 verilator ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
