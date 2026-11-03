@@ -26,7 +26,7 @@ esac
 TTY=()
 [ -t 0 ] && [ -t 1 ] && TTY=(-t)
 # BAMBU_CONTAINER_NAME: optional container name, so a caller can `podman rm -f` it
-# (bench/probe/bambu/probe.py does on a timeout).
+# (bench/bench.py does on a timeout).
 NAME=()
 [ -n "${BAMBU_CONTAINER_NAME:-}" ] && NAME=(--name "$BAMBU_CONTAINER_NAME")
 

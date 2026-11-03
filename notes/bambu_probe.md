@@ -1,5 +1,7 @@
 # Bambu probe: vecadd at n64 (BAM1 R0)
 
+The probe code (`bench/probe/bambu/probe.py`), the probe headers (`bench/probe/bambu/include*/`) and the kept RTL (`notes/bambu_rtl/`) are at commit a440e60 and were removed in R1; the Bambu header now lives in `bench/include/bambu/lanes.h` (R0c's `include_wide/lanes.h`).
+
 What Bambu 2024.10 generates for `bench/tier_done/vecadd` under its settings, measured before the Bambu cases are chosen. This note measures and reports; it decides nothing. Data: `notes/bambu_probe.csv` (one row per run), written by `bench/probe/bambu/probe.py` (`pixi run probe-bambu`). The run folders are in `bench/probe/bambu/runs/<id>/` (not tracked).
 
 ## What was run

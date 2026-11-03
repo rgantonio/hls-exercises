@@ -78,11 +78,10 @@ Bambu (PandA, Politecnico di Milano) is the second HLS tool, with an ASIC target
 Setup:
 
 ```bash
-pixi install                                   # Python 3.11 on the host (probe.py)
+pixi install                                   # Python 3.11 on the host
 pixi run get-bambu                             # download, check sha256, extract into tools/bambu/, write tools/bin/bambu
 podman build -t hls-exercises-bambu:4 container/bambu
 bench/tools/in_bambu.sh bambu --version        # every Bambu call goes through the container
-pixi run probe-bambu                           # bench/probe/bambu/probe.py -> notes/bambu_probe.csv
 ```
 
 - `get_bambu.sh` extracts the AppImage with `--appimage-extract` (no FUSE). The wrapper `tools/bin/bambu` sets `APPDIR`, `ARGV0=bambu` and `OWD`, which the AppImage runtime would normally set and which the extracted `AppRun` (`usr/bin/tool_select.sh`) needs.

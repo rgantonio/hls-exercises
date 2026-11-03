@@ -99,7 +99,6 @@ notes/figures/
 !bench/**/data.h
 !rtl/
 !rtl/**
-# --- Pixi env, Bambu install and probe runs (BAM1) ---------------------
+# --- Pixi env and Bambu install (BAM1) --------------------------------
 .pixi/
 /tools/
-bench/probe/bambu/runs/
