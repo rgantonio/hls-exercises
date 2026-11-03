@@ -1,0 +1,12 @@
+[workspace]
+name = "hls-exercises"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+verilator = "*"
+
+[tasks]
+get-bambu = "bash bench/tools/get_bambu.sh"
+probe-bambu = "python bench/probe/bambu/probe.py"
