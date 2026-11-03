@@ -76,3 +76,63 @@ Every passing run has the same top ports (Bambu's MINIMAL interface): `clock res
 - loop_count is read inside the loop, not sampled once. Checked on A_w1_def_none and A_w8_def_none. A_w1_def_unroll_pipeline and A_w8_def_unroll_pipeline produced no Verilog (front-end error), so A_w1_def_unroll and A_w8_def_unroll were checked in their place. In all four, the datapath input `in_port_loop_count` goes straight into the loop's comparison units, with no register between the port and them. At W = 8: `ui_eq_expr_FU` x2, the exit test `b + 1 == loop_count` taken in every iteration and `loop_count == 0` at entry. At W = 1: `ui_eq_expr_FU`, `ui_lt_expr_FU`, `ui_rshift_expr_FU`, `ui_bit_and_expr_FU`. No `register_*` instance takes `in_port_loop_count` as an input, in these four or in any other passing run (`loop_count_sinks` in the CSV, from the connections in the Verilog; the W = 8 datapath was also read by hand, `vecadd.v` lines 1203–1212 of step 2's run). The value on the port is used from start to done.
 - Questa against Verilator: not done (group X dropped). Questa does not run in the container (`notes/env.md`).
 - Warnings: the only `Warning:` line in the passing runs is `This function uses unknown addresses: <top>`, one per run. Bambu's memory allocation also notes `Spec may not exploit DATA bus width`, `Spec accesses data having an address unknown at compile time` and `Code has LOADs or STOREs with unaligned accesses` (log lines without `Warning:`).
+
+## Round 2: streams (R0b)
+
+R0's default interface puts a memory controller inside the block (`BMEMORY_CTRLN`, `M*_ram` master ports). R0b measures the stream form: A, B and C as fifo or AXI4-Stream ports, as at the Vitis axis points. It decides nothing.
+
+### What was run
+
+- Group D, 24 runs, n64: W in {1, 8, 32} x setup in {default (BAMBU-BALANCED-MP), BAMBU-AREA} x port mode in {fifo, axis} x loop_count in {no pragma, `#pragma HLS interface port=loop_count mode=ap_vld`}. No unroll or pipeline pragmas.
+- Same base options, testbench, `--tb-param-size=A:512,B:512,C:512` and pass/fail rule as R0, plus `--generate-interface=INFER`. The pragmas are added before `void vecadd(` in the run's copy of vecadd.cpp: `#pragma HLS interface port=A mode=<fifo|axis>`, the same for B and C, and the loop_count line in the ap_vld runs.
+- Header: `bench/probe/bambu/include_stream/lanes.h`, the R0 probe header without its four `#pragma HLS INLINE` lines (plain `inline`). With them, the interface pragmas fail with `Unassociated HLS pragma` (R0, group C). R0's header and rows are unchanged.
+- probe.py: `pixi run probe-bambu --only D` (all 24 at once, J = 32). Its rows are merged into `notes/bambu_probe.csv`, which gains a column `loop_count_registered`: yes when a register takes the datapath's `in_port_loop_count` as an input, no when only combinational units do (the same one-level connection check as `loop_count_sinks`).
+- RTL kept for review in `notes/bambu_rtl/<id>/` (`pixi run probe-bambu --keep-rtl <id> ...`): Bambu's `vecadd.v` (every module in one file; no simulation files), `filelist.f` in the form of rtl/ (`# top:` line, then the file) and `cmd.txt` with the exact Bambu command. Kept: `A_w8_def_none` (R0, memory ports), `D_w1_def_fifo_lcnone`, `D_w8_def_fifo_lcnone` and `D_w8_def_axis_lcnone`. The runs named for review had loop_count with ap_vld (default setup, fifo at W = 1 and 8, axis at W = 8), and all of them failed in the front end (below). So the same runs without the ap_vld pragma are kept in their place. For axis that is the axis run, not the fifo one named as the fallback, since axis itself passed.
+
+### Results
+
+Counts: D: pass 12, fail: compile 12 (every ap_vld run), timeout 0.
+
+| id | W | setup | -O | ports | loop_count pragma | status | cycles | cycles/beat | adders (64-bit) | FSM states | memory modules | loop_count registered | Bambu's message |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| D_w1_def_fifo_lcnone | 1 | default | -O2 | fifo | none | pass | 99 | 1.547 | 8 (5) | 21 | none | no |  |
+| D_w1_def_fifo_lcvld | 1 | default |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w1_def_axis_lcnone | 1 | default | -O2 | axis | none | pass | 99 | 1.547 | 8 (5) | 21 | none | no |  |
+| D_w1_def_axis_lcvld | 1 | default |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w1_area_fifo_lcnone | 1 | BAMBU-AREA | -Os | fifo | none | pass | 194 | 3.031 | 2 (1) | 8 | none | no |  |
+| D_w1_area_fifo_lcvld | 1 | BAMBU-AREA |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w1_area_axis_lcnone | 1 | BAMBU-AREA | -Os | axis | none | pass | 194 | 3.031 | 2 (1) | 8 | none | no |  |
+| D_w1_area_axis_lcvld | 1 | BAMBU-AREA |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w8_def_fifo_lcnone | 8 | default | -O2 | fifo | none | pass | 138 | 17.25 | 9 (8) | 36 | none | no |  |
+| D_w8_def_fifo_lcvld | 8 | default |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w8_def_axis_lcnone | 8 | default | -O2 | axis | none | pass | 138 | 17.25 | 9 (8) | 36 | none | no |  |
+| D_w8_def_axis_lcvld | 8 | default |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w8_area_fifo_lcnone | 8 | BAMBU-AREA | -Os | fifo | none | pass | 3730 | 466.25 | 6 (1) | 17 | ARRAY_1D_STD_BRAM x3, ARRAY_1D_STD_BRAM_SP x1, BRAM_MEMORY_CORE x1, BRAM_MEMORY_CORE_SMALL x1, TRUE_DUAL_PORT_BYTE_ENABLING_RAM x1 | no |  |
+| D_w8_area_fifo_lcvld | 8 | BAMBU-AREA |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w8_area_axis_lcnone | 8 | BAMBU-AREA | -Os | axis | none | pass | 3730 | 466.25 | 6 (1) | 17 | ARRAY_1D_STD_BRAM x3, ARRAY_1D_STD_BRAM_SP x1, BRAM_MEMORY_CORE x1, BRAM_MEMORY_CORE_SMALL x1, TRUE_DUAL_PORT_BYTE_ENABLING_RAM x1 | no |  |
+| D_w8_area_axis_lcvld | 8 | BAMBU-AREA |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w32_def_fifo_lcnone | 32 | default | -O2 | fifo | none | pass | 3654 | 1827.0 | 9 (4) | 19 | ARRAY_1D_STD_BRAM_NN x3, ARRAY_1D_STD_BRAM_NN_SP x1, BRAM_MEMORY_NN_CORE x1 | no |  |
+| D_w32_def_fifo_lcvld | 32 | default |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w32_def_axis_lcnone | 32 | default | -O2 | axis | none | pass | 3654 | 1827.0 | 9 (4) | 19 | ARRAY_1D_STD_BRAM_NN x3, ARRAY_1D_STD_BRAM_NN_SP x1, BRAM_MEMORY_NN_CORE x1 | no |  |
+| D_w32_def_axis_lcvld | 32 | default |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w32_area_fifo_lcnone | 32 | BAMBU-AREA | -Os | fifo | none | pass | 3718 | 1859.0 | 6 (1) | 17 | ARRAY_1D_STD_BRAM x3, ARRAY_1D_STD_BRAM_SP x1, BRAM_MEMORY_CORE x1, BRAM_MEMORY_CORE_SMALL x1, TRUE_DUAL_PORT_BYTE_ENABLING_RAM x1 | no |  |
+| D_w32_area_fifo_lcvld | 32 | BAMBU-AREA |  | fifo | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+| D_w32_area_axis_lcnone | 32 | BAMBU-AREA | -Os | axis | none | pass | 3718 | 1859.0 | 6 (1) | 17 | ARRAY_1D_STD_BRAM x3, ARRAY_1D_STD_BRAM_SP x1, BRAM_MEMORY_CORE x1, BRAM_MEMORY_CORE_SMALL x1, TRUE_DUAL_PORT_BYTE_ENABLING_RAM x1 | no |  |
+| D_w32_area_axis_lcvld | 32 | BAMBU-AREA |  | axis | ap_vld | fail: compile |  |  |  |  |  |  | Interface type 'valid' for parameter 'loop_count' is not supported |
+
+Top ports of the passing runs (widths from the top module's declarations):
+
+| ports | W = 1 and W = 8 | W = 32 |
+|---|---|---|
+| fifo | `clock reset start_port A_dout[63:0] B_dout[63:0] loop_count[31:0] A_empty_n B_empty_n C_full_n done_port A_read B_read C_din[63:0] C_write` | the same with `A_dout`, `B_dout`, `C_din` 8 bits wide |
+| axis | `clock reset start_port A_TDATA[63:0] B_TDATA[63:0] loop_count[31:0] A_TVALID B_TVALID C_TREADY done_port A_TREADY B_TREADY C_TDATA[63:0] C_TVALID` | the same with `A_TDATA`, `B_TDATA`, `C_TDATA` 8 bits wide |
+
+### Findings
+
+- Both port modes passed, with the kernel's array arguments: Bambu asked for no `hls::stream` or `ac_channel` argument. Every combination without the loop_count pragma passed (12 of 12). fifo and axis give the same cycles, adders, FSM states and memories in each of the six W x setup pairs. They differ only in the port protocol: fifo uses `_dout/_empty_n/_read` and `_din/_full_n/_write`, axis uses `_TDATA/_TVALID/_TREADY`. With these interfaces the block has no memory controller and no `M*_ram` ports.
+- The stream ports are not a beat wide. `A`, `B` and `C` are 64 bits at W = 1 and W = 8 and 8 bits at W = 32. So a W = 8 beat (512 bits) does not cross the boundary in one transfer. At W = 32 the data crosses as single bytes. Every passing D log also has the memory-allocation notes `Spec may not exploit DATA bus width` and `Code has LOADs or STOREs with unaligned accesses`.
+- Cycles against W, default setup: W = 1 99 cycles (1.547 per beat), W = 8 138 (17.25 per beat), W = 32 3654 (1827 per beat). BAMBU-AREA: W = 1 194 (3.031), W = 8 3730 (466.25), W = 32 3718 (1859). For comparison, R0's memory interface at the default setup gave 195 at W = 1 and 106 at W = 8.
+- Datapath under the default setup: at W = 1, five 64-bit adders, and loop_count feeds `ui_eq_expr_FU`, `ui_lt_expr_FU`, `ui_rshift_expr_FU` and `ui_bit_and_expr_FU`, the same signature of BEAT's runtime unrolling by four as in R0. At W = 8, eight 64-bit adders (LANE unrolled) and no local memory. At W = 32, four 64-bit adders, and the beats are kept in local memories (`ARRAY_1D_STD_BRAM_NN` x3, `ARRAY_1D_STD_BRAM_NN_SP`, `BRAM_MEMORY_NN_CORE`).
+- ap_vld on loop_count: every one of the 12 runs stops with `Interface type 'valid' for parameter 'loop_count' is not supported` (Bambu maps `ap_vld` to its `valid` type and does not accept it on this by-value scalar). So whether ap_vld registers loop_count could not be measured. In all 12 passing runs loop_count is not registered: the port goes straight into the loop's comparators (`ui_eq_expr_FU` x2 at W = 8 and 32, and at W = 1 under AREA; the four units above at W = 1 under the default setup).
+- What AREA (-Os) changes: one 64-bit adder at every W (against 5, 8 and 4). Local memories at W = 8 and 32 (`ARRAY_1D_STD_BRAM` x3, `ARRAY_1D_STD_BRAM_SP`, `BRAM_MEMORY_CORE`, `BRAM_MEMORY_CORE_SMALL`, `TRUE_DUAL_PORT_BYTE_ENABLING_RAM`); none at W = 1. Fewer FSM states at W = 1 and 8 (8 and 17 against 21 and 36), 17 against 19 at W = 32. Cycles: 194 against 99 at W = 1, 3730 against 138 at W = 8, 3718 against 3654 at W = 32.
+- Warnings: the passing D runs print no `Warning:` line; R0's `This function uses unknown addresses` does not appear. The only other notes are the two memory-allocation lines above.
