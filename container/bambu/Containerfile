@@ -1,11 +1,27 @@
 # container/bambu/Containerfile: the environment Bambu 2024.10 runs in (BAM1).
 # Bambu builds its front end and its co-simulation driver with -m32, so the image has
-# 32-bit glibc and libstdc++ (multilib). Bambu itself is not copied in: tools/bambu/ is
-# bind-mounted with the repo, and Questa read-only at its host path
+# 32-bit glibc and libstdc++ (multilib). Bambu's own simulation uses the image's Verilator.
+# Bambu itself is not copied in: tools/bambu/ is bind-mounted with the repo
 # (bench/tools/in_bambu.sh). Build: podman build -t hls-exercises-bambu:<tag> container/bambu
+#
+# Questa is not used here: Questa 2022.4's bundled gcc 7.4 cannot link its DPI code against
+# Ubuntu 24.04's glibc 2.39 (unknown section .relr.dyn). Questa runs on the host, in
+# snax-forge-experiments, for gate-level and power runs.
+#
+# libtinfo.so.5 is for Bambu's own clang-16, opt-16, llvm-link-16 and ld.lld-16: Bambu's
+# generated simulate script clears LD_LIBRARY_PATH, so they do not get the copy in the
+# AppImage, and Ubuntu 24.04 packages only libtinfo6. The .deb is 22.04's (jammy-updates),
+# its sha256 from that release's Packages index.
 FROM docker.io/library/ubuntu:24.04
+
+ARG TINFO5_DEB=libtinfo5_6.3-2ubuntu0.3_amd64.deb
+ARG TINFO5_SHA256=4df4288404108f1a156d014e8764a064e977e34e6d44931ab60451694c03c90d
+ADD http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/${TINFO5_DEB} /tmp/${TINFO5_DEB}
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       gcc-multilib g++-multilib libc6-dev-i386 make python3 verilator ca-certificates \
+ && echo "${TINFO5_SHA256}  /tmp/${TINFO5_DEB}" | sha256sum -c - \
+ && dpkg -i /tmp/${TINFO5_DEB} \
+ && rm -f /tmp/${TINFO5_DEB} \
  && rm -rf /var/lib/apt/lists/*
