@@ -7,6 +7,7 @@ Verilator, testbench bench/tier_done/vecadd/src/tb_vecadd.cpp (every output chec
 against EXP_C). Writes notes/bambu_probe.csv.
 
     pixi run probe-bambu [--only <id-prefix>] [-j N]
+    pixi run probe-bambu --keep-rtl <id> [<id> ...]   # copy runs' Verilog to notes/bambu_rtl/
 
 Groups (n64 only):
   A  W {1, 8} x setup {default, BAMBU-AREA, BAMBU-PERFORMANCE} x pragmas {none, unroll,
@@ -14,6 +15,11 @@ Groups (n64 only):
   B  W {1, 8} x -O {-O0, -O3}; default setup, no pragmas, default ports.
   C  W {1, 8} x pragmas {none, unroll+pipeline} x port mode {fifo, axis};
      --generate-interface=INFER and an interface pragma on A, B and C.
+  D  (R0b, streams) W {1, 8, 32} x setup {default, BAMBU-AREA} x port mode {fifo, axis} x
+     loop_count {no pragma, mode=ap_vld}; --generate-interface=INFER, an interface pragma on
+     A, B and C, no unroll or pipeline pragmas, header include_stream/lanes.h.
+A, B and C use include/lanes.h (R0). A run with --only replaces its rows in the CSV and keeps
+the others.
 """
 
 from __future__ import annotations
@@ -37,6 +43,7 @@ KDIR = BENCH / "tier_done" / "vecadd"
 RUNS = PROBE / "runs"
 IN_BAMBU = BENCH / "tools" / "in_bambu.sh"
 CSV_OUT = REPO / "notes" / "bambu_probe.csv"
+RTL_OUT = REPO / "notes" / "bambu_rtl"
 
 N = 64
 TIMEOUT_S = 600
@@ -47,7 +54,7 @@ COLUMNS = [
     "id", "group", "W", "setup", "opt_level", "pragmas", "ports", "simulator", "lanes_header",
     "status", "cycles", "cycles_per_beat", "adders", "adder_widths", "beat_pipelined", "II",
     "fsm_states", "top_ports", "memory_modules", "loop_count_sinks", "runtime_s", "warnings",
-    "message", "bambu_cmd",
+    "message", "bambu_cmd", "loop_count_registered",
 ]
 
 # --------------------------------------------------------------- pragma variants
@@ -64,8 +71,11 @@ UNROLL = (LANE_FOR, "    LANE:\n#pragma HLS unroll\n        for (int l = 0; l < 
 PIPELINE = (BEAT_FOR, BEAT_FOR + "#pragma HLS pipeline II=1\n")
 
 
-def interface(mode: str) -> tuple[str, str]:
-    return (TOP_DEF, "".join(f"#pragma HLS interface port={p} mode={mode}\n" for p in "ABC") + TOP_DEF)
+def interface(mode: str, lc: str = "none") -> tuple[str, str]:
+    lines = [f"#pragma HLS interface port={p} mode={mode}\n" for p in "ABC"]
+    if lc != "none":
+        lines.append(f"#pragma HLS interface port=loop_count mode={lc}\n")
+    return (TOP_DEF, "".join(lines) + TOP_DEF)
 
 
 PRAGMAS = {"none": [], "unroll": [UNROLL], "unroll+pipeline": [UNROLL, PIPELINE]}
@@ -99,6 +109,14 @@ def runs() -> list[dict]:
             for mode in ("fifo", "axis"):
                 out.append(dict(id=f"C_w{w}_{mode}_{prag.replace('+', '_')}", group="C", W=w,
                                 setup="default", opt=None, pragmas=prag, ports=mode))
+    for w in (1, 8, 32):
+        for setup in ("default", "BAMBU-AREA"):
+            for mode in ("fifo", "axis"):
+                for lc in ("none", "ap_vld"):
+                    tag = {"default": "def", "BAMBU-AREA": "area"}[setup]
+                    out.append(dict(id=f"D_w{w}_{tag}_{mode}_lc{'vld' if lc == 'ap_vld' else 'none'}",
+                                    group="D", W=w, setup=setup, opt=None, pragmas="none", ports=mode,
+                                    lc=lc, header="include_stream"))
     return out
 
 
@@ -123,7 +141,7 @@ def bambu_args(r: dict, src: Path) -> list[str]:
     # Bambu spells -std as --std. The probe header comes first on the include path.
     args += [
         "-DDATA_T=int64_t", f"-DSIZE_N={N}", f"-DW={w}",
-        f"-I{PROBE / 'include'}", f"-I{KDIR / 'src'}", f"-I{KDIR / 'vectors' / 'n64'}",
+        f"-I{PROBE / r.get('header', 'include')}", f"-I{KDIR / 'src'}", f"-I{KDIR / 'vectors' / 'n64'}",
         "--std=c++14", "-DHLSLIB_SYNTHESIS", "-DAP_INT_MAX_W=4096",
         f"-I{BENCH / 'include'}", f"-I{BENCH / 'gen' / 'dace_include'}",
     ]
@@ -163,7 +181,9 @@ def analyse_verilog(path: Path) -> dict:
             mw = re.search(r"BITSIZE_out1\((\d+)\)", params)
             key = f"{n}:{mw.group(1) if mw else '?'}"
             widths[key] = widths.get(key, 0) + 1
-    mem = {n: len(inst[n]) for n in mods if re.search(r"(?i)(bram|memory|ram|rom|fifo|array)", n) and inst[n]}
+    # Memories only: the interface managers of fifo ports (*_ParmMgr_*_fifo_modgen) are not.
+    mem = {n: len(inst[n]) for n in mods
+           if re.search(r"(?i)(bram|memory|ram|rom|fifo|array)", n) and "ParmMgr" not in n and inst[n]}
     # What the top's loop_count port feeds inside the datapath (one level).
     sinks: dict[str, int] = {}
     for body in mods.values():
@@ -176,6 +196,10 @@ def analyse_verilog(path: Path) -> dict:
         "top_ports": " ".join(ports),
         "memory_modules": "; ".join(f"{k} x{v}" for k, v in sorted(mem.items())) or "none",
         "loop_count_sinks": "; ".join(f"{k} x{v}" for k, v in sorted(sinks.items())),
+        # yes when a register takes the datapath's loop_count port as an input (one level, as
+        # loop_count_sinks); no when only combinational units do.
+        "loop_count_registered": ("yes" if any(re.match(r"(?i)(register|flipflop)", k) for k in sinks) else "no")
+                                 if sinks else "",
     }
 
 
@@ -236,6 +260,37 @@ def parse(r: dict, rdir: Path, rc: int | None, timed_out: bool) -> dict:
     return out
 
 
+def cmd_text(rdir: Path, cmd: list[str]) -> str:
+    return (f"# Run from {rdir}; its vecadd.cpp is written by bench/probe/bambu/probe.py\n"
+            f"# (pixi run probe-bambu --only {rdir.name}).\ncd {shlex.quote(str(rdir))}\n{shlex.join(cmd)}\n")
+
+
+def keep_rtl(run_id: str) -> None:
+    """Copy one run's Verilog (no simulation files) to notes/bambu_rtl/<id>/ with a filelist.f
+    in the form of rtl/ and cmd.txt holding the exact Bambu command."""
+    r = next(x for x in runs() if x["id"] == run_id)
+    rdir = RUNS / run_id
+    vfiles = sorted(f for f in rdir.glob("*.v"))  # Bambu writes every module into <src>.v here
+    if not vfiles:
+        raise SystemExit(f"{run_id}: no Verilog in {rdir} (run it first)")
+    mods = verilog_modules(vfiles[0].read_text(errors="replace"))
+    inst = {n for owner, body in mods.items() for n in mods if n != owner and instances(body, n)}
+    top = [n for n in mods if n not in inst][-1]
+    out = RTL_OUT / run_id
+    if out.exists():
+        subprocess.run(["rm", "-rf", str(out)], check=True)
+    out.mkdir(parents=True)
+    for f in vfiles:
+        (out / f.name).write_bytes(f.read_bytes())
+    (out / "filelist.f").write_text(
+        "# Generated by bench/probe/bambu/probe.py --keep-rtl: one Bambu probe run's Verilog\n"
+        f"# (bench/probe/bambu/runs/{run_id}/, BAM1). Paths are relative to this folder.\n"
+        f"# top: {top}\n" + "".join(f"{f.name}\n" for f in vfiles))
+    cmd = [str(IN_BAMBU)] + bambu_args(r, rdir / "vecadd.cpp")
+    (out / "cmd.txt").write_text(cmd_text(rdir, cmd))
+    print(f"kept {run_id}: {', '.join(f.name for f in vfiles)}, top {top}")
+
+
 # --------------------------------------------------------------- one run
 def run_one(r: dict) -> dict:
     rdir = RUNS / r["id"]
@@ -244,7 +299,7 @@ def run_one(r: dict) -> dict:
     rdir.mkdir(parents=True)
     edits = list(PRAGMAS[r["pragmas"]])
     if r["ports"] != "default":
-        edits.append(interface(r["ports"]))
+        edits.append(interface(r["ports"], r.get("lc", "none")))
     src_text = variant(edits)
     src = rdir / "vecadd.cpp"
     src.write_text(src_text)
@@ -253,6 +308,7 @@ def run_one(r: dict) -> dict:
     (rdir / "vecadd.cpp.diff").write_text(diff)
     args = bambu_args(r, src)
     cmd = [str(IN_BAMBU)] + args
+    (rdir / "cmd.txt").write_text(cmd_text(rdir, cmd))
     name = f"bam1-probe-{r['id'].lower().replace('_', '-')}-{os.getpid()}"
     env = dict(os.environ, BAMBU_CONTAINER_NAME=name)
     t0 = time.monotonic()
@@ -270,8 +326,9 @@ def run_one(r: dict) -> dict:
     row = parse(r, rdir, rc, timed_out)
     row.update(id=r["id"], group=r["group"], W=r["W"],
                setup=r["setup"] if r["setup"] != "default" else f"default ({DEFAULT_SETUP})",
-               pragmas=r["pragmas"], ports=r["ports"], simulator="VERILATOR",
-               lanes_header="bench/probe/bambu/include/lanes.h", runtime_s=runtime,
+               pragmas=r["pragmas"] + (f"; loop_count {r['lc']}" if r.get("lc", "none") != "none" else ""),
+               ports=r["ports"], simulator="VERILATOR",
+               lanes_header=f"bench/probe/bambu/{r.get('header', 'include')}/lanes.h", runtime_s=runtime,
                bambu_cmd="bench/tools/in_bambu.sh " + shlex.join(a.replace(str(REPO) + "/", "") for a in args))
     print(f"{r['id']:28s} {row['status']:14s} cycles={row['cycles']!s:5s} adders={row['adders']!s:3s} {runtime:6.1f} s",
           flush=True)
@@ -283,15 +340,24 @@ def main() -> int:
     ap.add_argument("-j", type=int, default=os.cpu_count(), help="runs at once (default: nproc)")
     ap.add_argument("--only", default="", help="only runs whose id starts with this")
     ap.add_argument("--csv", default=str(CSV_OUT))
+    ap.add_argument("--keep-rtl", nargs="+", metavar="ID", help="copy these runs' Verilog to notes/bambu_rtl/ and exit")
     a = ap.parse_args()
+    if a.keep_rtl:
+        for run_id in a.keep_rtl:
+            keep_rtl(run_id)
+        return 0
     todo = [r for r in runs() if r["id"].startswith(a.only)]
     print(f"{len(todo)} runs, {a.j} at once, timeout {TIMEOUT_S} s", flush=True)
     with ThreadPoolExecutor(max_workers=a.j) as ex:
         rows = list(ex.map(run_one, todo))
+    # Merge: rows of this call replace those with the same id; the others are kept.
+    old = list(csv.DictReader(open(a.csv))) if Path(a.csv).is_file() else []
+    new = {row["id"]: row for row in rows}
+    merged = [new.pop(o["id"], o) for o in old] + list(new.values())
     with open(a.csv, "w", newline="") as f:
-        wr = csv.DictWriter(f, fieldnames=COLUMNS)
+        wr = csv.DictWriter(f, fieldnames=COLUMNS, restval="")
         wr.writeheader()
-        wr.writerows(rows)
+        wr.writerows(merged)
     counts: dict[str, dict[str, int]] = {}
     for row in rows:
         counts.setdefault(row["group"], {}).setdefault(row["status"], 0)
