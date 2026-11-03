@@ -136,3 +136,82 @@ Top ports of the passing runs (widths from the top module's declarations):
 - ap_vld on loop_count: every one of the 12 runs stops with `Interface type 'valid' for parameter 'loop_count' is not supported` (Bambu maps `ap_vld` to its `valid` type and does not accept it on this by-value scalar). So whether ap_vld registers loop_count could not be measured. In all 12 passing runs loop_count is not registered: the port goes straight into the loop's comparators (`ui_eq_expr_FU` x2 at W = 8 and 32, and at W = 1 under AREA; the four units above at W = 1 under the default setup).
 - What AREA (-Os) changes: one 64-bit adder at every W (against 5, 8 and 4). Local memories at W = 8 and 32 (`ARRAY_1D_STD_BRAM` x3, `ARRAY_1D_STD_BRAM_SP`, `BRAM_MEMORY_CORE`, `BRAM_MEMORY_CORE_SMALL`, `TRUE_DUAL_PORT_BYTE_ENABLING_RAM`); none at W = 1. Fewer FSM states at W = 1 and 8 (8 and 17 against 21 and 36), 17 against 19 at W = 32. Cycles: 194 against 99 at W = 1, 3730 against 138 at W = 8, 3718 against 3654 at W = 32.
 - Warnings: the passing D runs print no `Warning:` line; R0's `This function uses unknown addresses` does not appear. The only other notes are the two memory-allocation lines above.
+
+## Round 3: beat-wide ports (R0c)
+
+R0b's stream ports were 64 bits wide: its vec_t is a struct of W int64 lanes, and Bambu splits a struct into its fields, so every lane is a separate transfer. R0c gives Bambu what Vitis gets, one value per beat: vec_t as one `ac_int<64*W, false>`. It also tries the remaining handshake modes on loop_count. It decides nothing.
+
+### What was run
+
+- Header: `bench/probe/bambu/include_wide/lanes.h`. vec_t is data_t at W = 1 and `ac_int<64*W, false>` above. `lane(v, i)` and `set_lane(v, i, x)` go through `slc<64>(64*i)` and `set_slc(64*i, ...)`, lane 0 in the low bits as hlslib's DataPack. cfg_t is as before, and there are no `#pragma HLS INLINE` lines.
+- The E runs pass the lane count as `-DBAMBU_LANES=<W>`, not `-DW=<W>`, and include_wide/lanes.h defines `W` from it after including Bambu's `ac_int.h`. Why: `ac_int.h` stops with `One or more of the following is defined: W, I, S, W2, I2, S2` when W is a macro. Bambu's generated co-simulation files (`HLS_output/simulation/mdpi_wrapper.cpp`, `generated_tb.c`) include `ac_int.h` directly, because the top's argument type is an ac_int, and they are compiled with the command's -D flags. With `-DW=8` on the command line they failed whatever the header did (tried first, with W saved in an enum, `#undef`'d around the include and defined again: the kernel compiled, the co-simulation build stopped on that error). The kernel source is unchanged: vecadd.h and tb_vecadd.cpp use W only after including lanes.h. Every other flag is as in R0.
+- Group E, 38 runs, n64, `--generate-interface=INFER`, no pipeline pragmas:
+  - 36: W in {1, 8, 32} x setup in {default (BAMBU-BALANCED-MP), BAMBU-AREA} x ports in {fifo, axis} on A, B and C x loop_count in {no pragma, `#pragma HLS interface port=loop_count mode=ap_hs`, the same with `mode=ap_ack`}; no unroll pragma.
+  - 2 more: W = 32, default setup, no loop_count pragma, `#pragma HLS unroll` on LANE (as in R0), fifo and axis. With LANE unrolled, lane i is a constant, which is meant to remove the variable shift on which the W = 32 runs stop (below).
+- The CSV gains a column `port_width`: the bit width of A's data port on the top (`A_dout` for fifo, `A_TDATA` for axis).
+- RTL kept in `notes/bambu_rtl/`: `E_w1_def_fifo_lcnone` and `E_w8_def_fifo_lcnone`. The W = 32 run of the same kind (`E_w32_def_fifo_lcnone`) produced no Verilog. No passing E run registers loop_count. The W = 32 fifo run with unroll did not pass (timeout), so it is not kept.
+
+### Results
+
+Counts: E: pass 6, fail: compile 30, timeout 2.
+
+| id | W | setup | -O | ports | loop_count pragma | LANE pragma | status | cycles | cycles/beat | port width | adders (64-bit) | FSM states | memory modules | loop_count registered | Bambu's message |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| E_w1_def_fifo_lcnone | 1 | default | -O2 | fifo | none | none | pass | 99 | 1.547 | 64 | 8 (5) | 21 | none | no |  |
+| E_w1_def_fifo_lchs | 1 | default |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w1_def_fifo_lcack | 1 | default |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w1_def_axis_lcnone | 1 | default | -O2 | axis | none | none | pass | 99 | 1.547 | 64 | 8 (5) | 21 | none | no |  |
+| E_w1_def_axis_lchs | 1 | default |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w1_def_axis_lcack | 1 | default |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w1_area_fifo_lcnone | 1 | BAMBU-AREA | -Os | fifo | none | none | pass | 194 | 3.031 | 64 | 2 (1) | 8 | none | no |  |
+| E_w1_area_fifo_lchs | 1 | BAMBU-AREA |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w1_area_fifo_lcack | 1 | BAMBU-AREA |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w1_area_axis_lcnone | 1 | BAMBU-AREA | -Os | axis | none | none | pass | 194 | 3.031 | 64 | 2 (1) | 8 | none | no |  |
+| E_w1_area_axis_lchs | 1 | BAMBU-AREA |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w1_area_axis_lcack | 1 | BAMBU-AREA |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w8_def_fifo_lcnone | 8 | default | -O2 | fifo | none | none | pass | 26 | 3.25 | 512 | 17 (8) | 8 | none | no |  |
+| E_w8_def_fifo_lchs | 8 | default |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w8_def_fifo_lcack | 8 | default |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w8_def_axis_lcnone | 8 | default | -O2 | axis | none | none | pass | 26 | 3.25 | 512 | 17 (8) | 8 | none | no |  |
+| E_w8_def_axis_lchs | 8 | default |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w8_def_axis_lcack | 8 | default |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w8_area_fifo_lcnone | 8 | BAMBU-AREA |  | fifo | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w8_area_fifo_lchs | 8 | BAMBU-AREA |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w8_area_fifo_lcack | 8 | BAMBU-AREA |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w8_area_axis_lcnone | 8 | BAMBU-AREA |  | axis | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w8_area_axis_lchs | 8 | BAMBU-AREA |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w8_area_axis_lcack | 8 | BAMBU-AREA |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w32_def_fifo_lcnone | 32 | default |  | fifo | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w32_def_fifo_lchs | 32 | default |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w32_def_fifo_lcack | 32 | default |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w32_def_axis_lcnone | 32 | default |  | axis | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w32_def_axis_lchs | 32 | default |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w32_def_axis_lcack | 32 | default |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w32_area_fifo_lcnone | 32 | BAMBU-AREA |  | fifo | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w32_area_fifo_lchs | 32 | BAMBU-AREA |  | fifo | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w32_area_fifo_lcack | 32 | BAMBU-AREA |  | fifo | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w32_area_axis_lcnone | 32 | BAMBU-AREA |  | axis | none | none | fail: compile |  |  |  |  |  |  |  | Vertices not completely allocated |
+| E_w32_area_axis_lchs | 32 | BAMBU-AREA |  | axis | ap_hs | none | fail: compile |  |  |  |  |  |  |  | Interface type 'handshake' for parameter 'loop_count' is not supported |
+| E_w32_area_axis_lcack | 32 | BAMBU-AREA |  | axis | ap_ack | none | fail: compile |  |  |  |  |  |  |  | Interface type 'acknowledge' for parameter 'loop_count' is not supported |
+| E_w32_def_fifo_lcnone_unroll | 32 | default | -O2 | fifo | none | unroll | timeout |  |  | 2048 | 65 (32) | 8 | none | no | killed after 600 s |
+| E_w32_def_axis_lcnone_unroll | 32 | default | -O2 | axis | none | unroll | timeout |  |  | 2048 | 65 (32) | 8 | none | no | killed after 600 s |
+
+Registers and flip-flops of the passing and timed-out runs, from Bambu's log (`Register allocation ... N registers`, `Total number of flip-flops`). fifo and axis give the same numbers.
+
+| run (fifo and axis) | registers | flip-flops |
+|---|---|---|
+| E_w1_def | 31 | 1091 |
+| E_w1_area | 8 | 321 |
+| E_w8_def | 8 | 1665 |
+| E_w32_def, unroll (timeout) | 8 | 6273 |
+| for comparison: D_w8_def_fifo_lcnone (R0b, struct) | 36 | 1441 |
+| for comparison: A_w8_def_none (R0, memory ports) | 38 | 1633 |
+
+### Findings
+
+- Port widths: A's data port is 64 bits at W = 1, 512 bits at W = 8 and 2048 bits at W = 32 with unroll, in both fifo (`A_dout`, `B_dout`, `C_din`) and axis (`A_TDATA`, `B_TDATA`, `C_TDATA`). So one beat is one transfer. The port names are those of R0b. fifo and axis give the same cycles, adders, states and registers in every pair.
+- Cycles against W, default setup: W = 1 99 cycles (1.547 per beat; at W = 1 vec_t is int64, as in R0b), W = 8 26 cycles (3.25 per beat). R0b's struct gave 17.25 per beat at W = 8 and R0's memory interface 13.25. W = 32 gave no cycle count. Without unroll, the runs without a loop_count pragma stop in synthesis under both setups (the ap_hs and ap_ack runs stop earlier, on the interface error below) with `Vertices not completely allocated`, preceded by `Operation for which does not exist a functional unit in the resource library: lshift_expr ... vertex prec: 2048 2048 2048` (two such vertices). With `#pragma HLS unroll` on LANE, synthesis completes: the variable shift is gone, with 32 64-bit adders, 8 FSM states and 2048-bit ports. But the co-simulation of both runs (fifo and axis) did not end within the 10-minute timeout. Verilator built its model 13 s after Bambu wrote the Verilog. Then no testbench output came. A separate rerun of the fifo run with `--max-sim-cycles=20000` (64 lanes in two beats) also did not end within 19 minutes, and its Verilator process had used 0 s of CPU after 18 minutes: it was waiting, not simulating. The cause was not found.
+- Adders and registers: W = 1 default has five 64-bit adders (the BEAT runtime-unrolling signature of R0 and R0b), 31 registers and 1091 flip-flops. W = 8 default has eight 64-bit adders plus nine 32-bit ones, 8 registers and 1665 flip-flops, against R0b's 36 registers and 1441 flip-flops at the same W. W = 32 with unroll has 32 64-bit and 33 32-bit adders, 8 registers and 6273 flip-flops. No passing E run instantiates a memory module.
+- loop_count: no mode registers the pin. `mode=ap_hs` stops all 12 of its runs with `Interface type 'handshake' for parameter 'loop_count' is not supported`, and `mode=ap_ack` all 12 with `Interface type 'acknowledge' for parameter 'loop_count' is not supported`. With R0b's `ap_vld` (`'valid'`), all three handshake modes tried are rejected for this by-value scalar. In every passing and timed-out E run, `loop_count_registered` is no: the port goes straight into the loop's comparators (`ui_eq_expr_FU` x2; at W = 1 under the default setup `ui_eq_expr_FU`, `ui_lt_expr_FU`, `ui_rshift_expr_FU`, `ui_bit_and_expr_FU`).
+- What AREA (-Os) changes: W = 1 passes with one 64-bit adder, 8 registers, 321 flip-flops and 8 states, at 194 cycles against 99. W = 8 fails under AREA: LANE is not unrolled, and synthesis stops on the same missing unit for a 512-bit variable shift (`lshift_expr ... prec: 512 512 512`, `Vertices not completely allocated`). The default setup unrolls LANE at W = 8 and passes. W = 32 fails under both setups without the unroll pragma.
+- Warnings: the passing E runs print no `Warning:` line. Every run that stops on the variable shift prints `Warning: A bad estimation of the timing of the rshift_expr operator will happen. This may occur when a non-constant bit reference of a long ac_type is used. Unrolling such a part may fix the issue.` 240 times. The passing and timed-out runs' logs also have R0b's memory-allocation notes (`Spec may not exploit DATA bus width`, `Code has LOADs or STOREs with unaligned accesses`).
