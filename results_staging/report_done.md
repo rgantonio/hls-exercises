@@ -43,6 +43,13 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n512 | 16 | loop_count=32 len=32 | 10 | ok | 131 | 0.26 | 99 | - | - |  |  |  | yes | bambu_opt_w16 (yes) |
 | bambu_opt | n512 | 32 | loop_count=16 len=16 | 10 | **failed: sim** | - | - | - | - | - |  |  |  | yes | bambu_opt_n512_w32 (**no: dot.v**) |
 
+Failed points:
+
+- bambu_unopt n64 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_opt n64 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_unopt n512 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_opt n512 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+
 ## vecadd
 
 Interface: axis (Bambu, --generate-interface=INFER).
@@ -60,7 +67,7 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n64 | 4 | loop_count=16 | 10 | ok | 50 | 0.78 | 34 | - | - |  |  |  | yes | bambu_opt_w4 (ref) |
 | bambu_opt | n64 | 8 | loop_count=8 | 10 | ok | 26 | 0.41 | 18 | - | - |  |  |  | yes | bambu_opt_w8 (ref) |
 | bambu_opt | n64 | 16 | loop_count=4 | 10 | ok | 14 | 0.22 | 10 | - | - |  |  |  | yes | bambu_opt_w16 (ref) |
-| bambu_opt | n64 | 32 | loop_count=2 | 10 | **timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (ref) |
+| bambu_opt | n64 | 32 | loop_count=2 | 10 | **failed: timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (ref) |
 | bambu_unopt | n512 | 1 | loop_count=512 | 10 | ok | 771 | 1.51 | 259 | - | - |  |  |  | yes | bambu_unopt_n512_w1 (**no: vecadd.v**) |
 | bambu_unopt | n512 | 2 | loop_count=256 | 10 | ok | 770 | 1.50 | 514 | - | - |  |  |  | yes | bambu_unopt_n512_w2 (**no: vecadd.v**) |
 | bambu_unopt | n512 | 4 | loop_count=128 | 10 | ok | 386 | 0.75 | 258 | - | - |  |  |  | yes | bambu_unopt_w4 (yes) |
@@ -72,7 +79,16 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n512 | 4 | loop_count=128 | 10 | ok | 386 | 0.75 | 258 | - | - |  |  |  | yes | bambu_opt_w4 (yes) |
 | bambu_opt | n512 | 8 | loop_count=64 | 10 | ok | 194 | 0.38 | 130 | - | - |  |  |  | yes | bambu_opt_w8 (yes) |
 | bambu_opt | n512 | 16 | loop_count=32 | 10 | ok | 98 | 0.19 | 66 | - | - |  |  |  | yes | bambu_opt_n512_w16 (**no: vecadd.v**) |
-| bambu_opt | n512 | 32 | loop_count=16 | 10 | **timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_n512_w32 (**no: vecadd.v**) |
+| bambu_opt | n512 | 32 | loop_count=16 | 10 | **failed: timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_n512_w32 (**no: vecadd.v**) |
+
+Failed points:
+
+- bambu_unopt n64 W = 16: failed: compile, no unit for 1024-bit variable shift (LANE not unrolled)
+- bambu_unopt n64 W = 32: failed: compile, no unit for 2048-bit variable shift (LANE not unrolled)
+- bambu_opt n64 W = 32: failed: timeout, Bambu co-simulation hangs on 2048-bit ports
+- bambu_unopt n512 W = 16: failed: compile, no unit for 1024-bit variable shift (LANE not unrolled)
+- bambu_unopt n512 W = 32: failed: compile, no unit for 2048-bit variable shift (LANE not unrolled)
+- bambu_opt n512 W = 32: failed: timeout, Bambu co-simulation hangs on 2048-bit ports
 
 ## vecmul
 
@@ -91,7 +107,7 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n64 | 4 | loop_count=16 | 10 | ok | 50 | 0.78 | 34 | - | - |  |  |  | yes | bambu_opt_w4 (ref) |
 | bambu_opt | n64 | 8 | loop_count=8 | 10 | ok | 26 | 0.41 | 18 | - | - |  |  |  | yes | bambu_opt_w8 (ref) |
 | bambu_opt | n64 | 16 | loop_count=4 | 10 | ok | 14 | 0.22 | 10 | - | - |  |  |  | yes | bambu_opt_w16 (ref) |
-| bambu_opt | n64 | 32 | loop_count=2 | 10 | **timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (ref) |
+| bambu_opt | n64 | 32 | loop_count=2 | 10 | **failed: timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (ref) |
 | bambu_unopt | n512 | 1 | loop_count=512 | 10 | ok | 771 | 1.51 | 259 | - | - |  |  |  | yes | bambu_unopt_n512_w1 (**no: vecmul.v**) |
 | bambu_unopt | n512 | 2 | loop_count=256 | 10 | ok | 770 | 1.50 | 514 | - | - |  |  |  | yes | bambu_unopt_n512_w2 (**no: vecmul.v**) |
 | bambu_unopt | n512 | 4 | loop_count=128 | 10 | ok | 386 | 0.75 | 258 | - | - |  |  |  | yes | bambu_unopt_w4 (yes) |
@@ -103,7 +119,16 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n512 | 4 | loop_count=128 | 10 | ok | 386 | 0.75 | 258 | - | - |  |  |  | yes | bambu_opt_n512_w4 (**no: vecmul.v**) |
 | bambu_opt | n512 | 8 | loop_count=64 | 10 | ok | 194 | 0.38 | 130 | - | - |  |  |  | yes | bambu_opt_n512_w8 (**no: vecmul.v**) |
 | bambu_opt | n512 | 16 | loop_count=32 | 10 | ok | 98 | 0.19 | 66 | - | - |  |  |  | yes | bambu_opt_w16 (yes) |
-| bambu_opt | n512 | 32 | loop_count=16 | 10 | **timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (yes) |
+| bambu_opt | n512 | 32 | loop_count=16 | 10 | **failed: timeout** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (yes) |
+
+Failed points:
+
+- bambu_unopt n64 W = 16: failed: compile, no unit for 1024-bit variable shift (LANE not unrolled)
+- bambu_unopt n64 W = 32: failed: compile, no unit for 2048-bit variable shift (LANE not unrolled)
+- bambu_opt n64 W = 32: failed: timeout, Bambu co-simulation hangs on 2048-bit ports
+- bambu_unopt n512 W = 16: failed: compile, no unit for 1024-bit variable shift (LANE not unrolled)
+- bambu_unopt n512 W = 32: failed: compile, no unit for 2048-bit variable shift (LANE not unrolled)
+- bambu_opt n512 W = 32: failed: timeout, Bambu co-simulation hangs on 2048-bit ports
 
 ## vsum
 
@@ -135,3 +160,10 @@ Interface: axis (Bambu, --generate-interface=INFER).
 | bambu_opt | n512 | 8 | loop_count=64 len=64 | 10 | ok | 195 | 0.38 | 131 | - | - |  |  |  | yes | bambu_opt_w8 (yes) |
 | bambu_opt | n512 | 16 | loop_count=32 len=32 | 10 | ok | 131 | 0.26 | 99 | - | - |  |  |  | yes | bambu_opt_w16 (yes) |
 | bambu_opt | n512 | 32 | loop_count=16 len=16 | 10 | **failed: sim** | - | - | - | - | - |  |  |  | yes | bambu_opt_w32 (yes) |
+
+Failed points:
+
+- bambu_unopt n64 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_opt n64 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_unopt n512 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports
+- bambu_opt n512 W = 32: failed: sim, co-simulation hits the cycle limit on 2048-bit ports

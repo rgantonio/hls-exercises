@@ -81,7 +81,7 @@ DEFAULT_CLOCK = "3.33"
 
 # Bambu (cases with "tool": "bambu"): the container wrapper, the Bambu side's lanes.h folder
 # (put on the include path instead of bench/include), the default clock and the time a point
-# may take before its container is removed and the point recorded as "timeout".
+# may take before its container is removed and the point recorded as "failed: timeout".
 IN_BAMBU = BENCH / "tools" / "in_bambu.sh"
 BAMBU_INCLUDE = BENCH / "include" / "bambu"
 BAMBU_DEFAULT_CLOCK = "10"
@@ -95,7 +95,7 @@ COLUMNS = [
     "lat_min", "lat_max", "ii_min", "ii_max", "pipeline",
     "cosim_status", "cosim_lat_min", "cosim_lat_avg", "cosim_lat_max",
     "LUT", "FF", "DSP", "BRAM_18K", "portable", "rtl", "rtl_same",
-    "vitis", "git", "date", "proj", "tool", "fsm_states",
+    "vitis", "git", "date", "proj", "tool", "fsm_states", "fail_reason",
 ]
 KEY = ("tier", "kernel", "case", "size", "W", "clock_ns")
 LOOP_COLUMNS = list(KEY) + ["module", "loop", "lat_min", "lat_max", "iter_lat",
@@ -438,6 +438,30 @@ def check_files(files: list[Path]) -> str:
     return "yes" if not hits else "no: " + "; ".join(sorted(hits))
 
 
+def bambu_fail_reason(status: str, log: str, tb: str, meta: dict, sim_started: bool) -> str:
+    """One short reason for a Bambu point that did not pass, from its log and testbench log
+    (notes/bambu.md, Limitations)."""
+    ports = f"{64 * int(meta['W'])}-bit ports" if str(meta.get("W", "")).isdigit() else "its ports"
+    if status == "failed: compile":
+        m = re.search(r"does not exist a functional unit in the resource library: (\w+).*?prec: (\d+)", log)
+        if m and m.group(1) in ("lshift_expr", "rshift_expr"):
+            return f"no unit for {m.group(2)}-bit variable shift (LANE not unrolled)"
+        if m:
+            return f"no unit for {m.group(2)}-bit {m.group(1)}"
+        errs = [ln.strip() for ln in log.splitlines() if "error" in ln.lower()]
+        return errs[0][:120] if errs else "Bambu stopped before simulation"
+    if status == "failed: timeout":
+        return (f"Bambu co-simulation hangs on {ports}" if sim_started
+                else f"no result within {BAMBU_TIMEOUT_S // 60} min, before co-simulation")
+    if re.search(r"Simulation exceeds \d+ cycles", tb + log):
+        return f"co-simulation hits the cycle limit on {ports}"
+    m = re.search(r"^FAIL .*$", tb, re.M)
+    if m:
+        return f"testbench: {m.group(0)[:100]}"
+    errs = [ln.strip() for ln in log.splitlines() if ln.strip().startswith("error ->")]
+    return errs[0][:120] if errs else "co-simulation did not end with the testbench's PASS line"
+
+
 def read_bambu_point(kdir: Path, proj: str, meta: dict) -> dict:
     pdir = kdir / proj
     log = kdir / f"run_{proj}.log"
@@ -460,13 +484,15 @@ def read_bambu_point(kdir: Path, proj: str, meta: dict) -> dict:
     if sim_started:
         row["cosim_status"] = "pass" if verdict and verdict.group(1) == "PASS" else "fail"
     if meta.get("timed_out"):
-        row["status"] = "timeout"
+        row["status"] = "failed: timeout"
     elif verdict and verdict.group(1) == "PASS":
         row["status"] = "ok"
     elif not sim_started:
         row["status"] = "failed: compile"
     else:
         row["status"] = "failed: sim"
+    if row["status"] != "ok":
+        row["fail_reason"] = bambu_fail_reason(row["status"], text, tb, meta, sim_started)
     files = list(bambu_verilog(pdir).values())
     row["portable"] = check_files(files) if files else ""
     row["_loops"] = []  # no Bambu rows in hls_loops.csv
@@ -921,6 +947,11 @@ def write_reports(tiers: set[str]) -> None:
             out += [f"## {kernel}", "", f"Interface: {', '.join(ifaces)}.", ""]
             out += md_table(["case", "size", "W", "config", "HLS clock ns", "status", "cycles", "cyc/elem",
                              "overhead", "vs unopt", "est. latency", "II", "DSP", "BRAM", "portable", "RTL"], table)
+            failed = [r for r in krows if r.get("fail_reason")]
+            if failed:
+                out += ["Failed points:", ""]
+                out += [f"- {r['case']} {r['size']} W = {r['W'] or '-'}: {r['status']}, {r['fail_reason']}" for r in failed]
+                out += [""]
             klo = [lp for lp in loops if lp["tier"] == tier and lp["kernel"] == kernel]
             if klo:
                 klo.sort(key=lambda lp: (size_count(lp["size"]), order.get(lp["case"], 9), str(lp["W"]).zfill(4)))
