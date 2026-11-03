@@ -61,6 +61,27 @@ python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower 
 
 `make bench ARGS="run --kernel vecadd"` does the same through make.
 
+### 2b. Run the Bambu cases (podman, no licences)
+
+The cases `bambu_unopt` and `bambu_opt` (tier done) run Bambu 2024.10 with an ASIC target (nangate45, 10 ns) instead of Vitis; docs/HLS_VS_FORGE.md section 3B has the settings and why. Bambu runs in a rootless podman container, so nothing is installed on the host. Once per checkout:
+
+```bash
+pixi install                                              # Python 3.11 for the host side
+pixi run get-bambu                                        # Bambu 2024.10 AppImage, sha256-checked, into tools/
+podman build -t hls-exercises-bambu:4 container/bambu     # Ubuntu 24.04, multilib, Verilator
+bench/tools/in_bambu.sh bambu --version                   # check
+```
+
+Then, with the summaries written into this repo's `results_staging/` instead of snax-forge-experiments:
+
+```bash
+python3 bench/bench.py run --tier done --case bambu_unopt bambu_opt --dry-run
+HLS_RESULTS=$PWD/results_staging python3 bench/bench.py run --tier done --case bambu_unopt bambu_opt -j$(nproc)
+HLS_RESULTS=$PWD/results_staging python3 bench/bench.py run --tier done --kernel vecadd --case bambu_unopt --size n64 --w 8
+```
+
+A point's Verilog goes to `rtl/<tier>/<kernel>/<case>_w<W>/` (e.g. `rtl/done/vecadd/bambu_unopt_w8/`), like Vitis's. A point that has not finished after 15 minutes is stopped and recorded as `timeout`.
+
 ### 3. Read the results
 
 A run writes three files in `snax-forge-experiments/results/hls/` and puts the generated Verilog in this repo's `rtl/<tier>/<kernel>/<case>_w<W>/`, one folder per hardware point: the size is a run-time pin (`loop_count`, and `len` for reductions), so every size runs on the same Verilog, and `bench.py` checks that it is the same. These are what gets committed, the Verilog here and the rest in snax-forge-experiments:

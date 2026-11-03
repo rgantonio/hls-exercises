@@ -111,6 +111,56 @@ so it is reported per target, not per HLS run.
 
 ---
 
+## 3B. Bambu settings
+
+Bambu 2024.10 (PandA, Politecnico di Milano) is the second HLS tool, with an ASIC target. Its cases sit next to Vitis's in the same `params.json`, `bench.py` and `rtl/`. How it has to be driven was found in BAM1's probe rounds; `notes/bambu_probe.md` holds the evidence (R0 to R0c).
+
+### 3B.1 The container
+
+Bambu builds its front end and its co-simulation driver with `-m32`. The EL8 servers have no 32-bit glibc-devel, and nothing is installed on them, so Bambu runs in a podman image: `localhost/hls-exercises-bambu:4` from `container/bambu/Containerfile` (Ubuntu 24.04 with multilib, Verilator 5.020, and Ubuntu 22.04's `libtinfo5` for Bambu's own Clang). Bambu itself is not in the image. `pixi run get-bambu` extracts the release AppImage into `tools/bambu/` and writes `tools/bin/bambu`, and `bench/tools/in_bambu.sh` runs a command in the container with the repo mounted at its own path, as the user, with a clean PATH. Questa is not used in the container: its bundled gcc 7.4 cannot link against Ubuntu 24.04's glibc 2.39. Bambu's own simulation uses Verilator. Versions and setup: `notes/env.md`, section Bambu.
+
+### 3B.2 Settings
+
+| Setting | Why |
+|---|---|
+| `--device-name=nangate45` | Bambu's ASIC target, the Nangate 45 nm open cell library. |
+| `--clock-period=10` | Default 10 ns (params.json `bambu.clock_ns` or `--clock` change it). A knob, as in 3.3. The clock tag in the point names is relative to 10 ns, so the default Bambu points are `bambu_<case>_w<W>`. |
+| `--compiler=I386_CLANG16` | Bambu's Clang 16 front end. |
+| No `--experimental-setup` | Bambu's default, BAMBU-BALANCED-MP (`-O2`). |
+| `--generate-interface=INFER` plus `#pragma HLS interface port=<p> mode=axis` | Every port in params.json's `axis` list becomes an AXI4-Stream port (`<p>_TDATA`, `<p>_TVALID`, `<p>_TREADY`). The pragmas go on the lines just above `void <top>(` in a generated copy of the source, in the point's folder. `bench.py` asserts that the copy differs from `src/<kernel>.cpp` only by added `#pragma` lines. |
+| `-I bench/include/bambu`, `-DBAMBU_LANES=<W>` | The Bambu side's `lanes.h`: `vec_t` is one `ac_int<64W, false>`, so a beat is one transfer of W × 64 bits, lane 0 in the low bits. A struct of lanes gives 64-bit ports, one lane per transfer (R0b). The lane count is `BAMBU_LANES`, never `-DW`: Bambu's `ac_int.h` rejects a macro named W, and its generated co-simulation files include `ac_int.h` directly with the command's -D flags (R0c). The header carries no HLS pragmas; with one in an included header, Bambu rejects the interface pragmas (`Unassociated HLS pragma`, R0). `bench/include` and the DaCe include are not on Bambu's path, and `-DHLSLIB_SYNTHESIS`, `-DAP_INT_MAX_W` are not passed. |
+| `--top-fname=<top> --top-rtldesign-name=<top>` | The top. For these C++ tops, Bambu 2024.10 keeps the mangled module name (e.g. `_Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j`) despite `--top-rtldesign-name`. `filelist.f`'s `# top:` line takes the name from the Verilog: the module no other one instantiates. |
+
+`params.json` gives a Bambu case `"tool": "bambu"`, with the same top, source, testbench and `per_w` as `unopt`. Cases without a `tool` are Vitis's. Its `bambu` section has `param_size` (bytes per array argument for `--tb-param-size`, as expressions of the size, W, the config values and the header's integer constants such as `NOUT`) and `pragmas` (loop pragmas per case, by loop label).
+
+### 3B.3 The cases
+
+| Case | Pragmas added | Mirrors |
+|---|---|---|
+| `bambu_unopt` | the axis interface pragmas only | `unopt` |
+| `bambu_opt` | the same, plus `#pragma HLS unroll` on the line after the `LANE:` label, right before LANE's `for` | `opt`'s LANE unroll |
+
+`bambu_opt` has no pipelining. Vitis's `opt` also pipelines BEAT at II = 1, but Bambu cannot pipeline a loop. `#pragma HLS pipeline` inside a loop stops its front end (`Loop pipelining pragma not supported.`), and `--pipelining` applies to functions only. So both Bambu cases take about three cycles per beat or more (R1: `results_staging/runs/2026-11-03_bambu_done.md`). Under the default setup Bambu unrolls LANE by itself up to W = 8, so the two cases give the same cycles there. At W = 16 and 32 `bambu_unopt` keeps LANE as a loop. Where the loop writes lanes (`set_lane`, vecadd and vecmul), it stops in synthesis: `Vertices not completely allocated`, because no functional unit exists for the variable shift of the 64W-bit `ac_int` (`lshift_expr` at 1024 or 2048 bits). Where it only reads them (vsum, dot), it synthesizes and runs a loop of W iterations per beat.
+
+### 3B.4 Co-simulation and status
+
+- Bambu generates its own testbench around the kernel's `tb_<kernel>.cpp` (`--generate-tb`, `--tb-extra-gcc-options="-DDUT=<top> -DCFG_..."`) and simulates with Verilator (`--simulate --simulator=VERILATOR`). The testbench checks every output against `data.h`, as for Vitis.
+- `--tb-param-size=<p>:<bytes>,...` is needed for every array argument. Bambu cannot size statically allocated arrays, and without it its co-simulation driver maps 4 bytes per array and segfaults.
+- Bambu exits 0 and logs `Testbench returned: 0` even when the testbench prints `FAIL`. So a Bambu point is `ok` only when `HLS_output/simulation/testbench.log` has the testbench's `PASS` line. Otherwise it is `failed: compile` (no simulation was set up), `failed: sim`, or `timeout`. A point gets 15 minutes; then `bench.py` removes its container by name (`BAMBU_CONTAINER_NAME`) and records `timeout`.
+- The cycle count (`cosim_lat_min/avg/max`) is Bambu's `Total cycles` of the simulation, from start to done. `fsm_states` is Bambu's `Number of states`. The Vitis-only columns (csynth estimate, II, LUT, DSP, BRAM) stay empty, and Bambu points have no rows in `hls_loops.csv`.
+- W = 32 does not pass in R1. `bambu_opt` of vecadd and vecmul synthesizes (LANE unrolled), but its co-simulation hangs: the Verilator model waits without using CPU until the timeout (as in R0c). Both cases of vsum and dot run their simulation to Bambu's limit of 200,000,000 cycles without `done` (`Simulation not terminated!`), and the testbench then reads 0. The Verilog of these points is kept in `rtl/` with status `timeout` or `failed: sim`.
+- `rtl_same` compares sizes as for Vitis, without Bambu's header comment lines (date, and the command with its paths and size flags). Between n64 and n512, Bambu sometimes lists the same done signals of a `SIMPLEJOIN_FU` (the unit that waits for several operations) in another order. That counts as `no`, so the n512 point gets its own folder. In R1 that order is the only difference in every `no` row, and the same command gives the same Verilog when rerun.
+- `portable` is `yes` when Bambu's Verilog has no vendor primitive (the same patterns as 3.2).
+
+### 3B.5 Known differences from the Vitis points
+
+- `loop_count` and `len` are plain input wires, read in every iteration. Bambu accepts no handshake mode on a scalar passed by value: `ap_vld`, `ap_hs` and `ap_ack` all stop it with `Interface type '<valid|handshake|acknowledge>' for parameter '<pin>' is not supported`. So, unlike Vitis's `ap_vld` register (section 2), the driver must hold the pins for the whole run.
+- No loop pipelining (3B.3).
+- Control is Bambu's `start_port` and `done_port`, not `ap_ctrl_hs`.
+- The default HLS clock is 10 ns, against Vitis's 3.33 ns. Bambu schedules with nangate45's delays, not an FPGA's.
+
+---
+
 ## 4. The cases in detail
 
 ### 4.1 `unopt`
