@@ -18,6 +18,10 @@ Groups (n64 only):
   D  (R0b, streams) W {1, 8, 32} x setup {default, BAMBU-AREA} x port mode {fifo, axis} x
      loop_count {no pragma, mode=ap_vld}; --generate-interface=INFER, an interface pragma on
      A, B and C, no unroll or pipeline pragmas, header include_stream/lanes.h.
+  E  (R0c, beat-wide ports) as D with header include_wide/lanes.h (vec_t one ac_int<64W>)
+     and loop_count {no pragma, mode=ap_hs, mode=ap_ack}; the lane count is passed as
+     -DBAMBU_LANES=<W>, not -DW (include_wide/lanes.h says why). Plus two runs at W = 32,
+     default setup, no loop_count pragma, `#pragma HLS unroll` on LANE, fifo and axis.
 A, B and C use include/lanes.h (R0). A run with --only replaces its rows in the CSV and keeps
 the others.
 """
@@ -54,7 +58,7 @@ COLUMNS = [
     "id", "group", "W", "setup", "opt_level", "pragmas", "ports", "simulator", "lanes_header",
     "status", "cycles", "cycles_per_beat", "adders", "adder_widths", "beat_pipelined", "II",
     "fsm_states", "top_ports", "memory_modules", "loop_count_sinks", "runtime_s", "warnings",
-    "message", "bambu_cmd", "loop_count_registered",
+    "message", "bambu_cmd", "loop_count_registered", "port_width",
 ]
 
 # --------------------------------------------------------------- pragma variants
@@ -117,6 +121,17 @@ def runs() -> list[dict]:
                     out.append(dict(id=f"D_w{w}_{tag}_{mode}_lc{'vld' if lc == 'ap_vld' else 'none'}",
                                     group="D", W=w, setup=setup, opt=None, pragmas="none", ports=mode,
                                     lc=lc, header="include_stream"))
+    for w in (1, 8, 32):
+        for setup in ("default", "BAMBU-AREA"):
+            for mode in ("fifo", "axis"):
+                for lc in ("none", "ap_hs", "ap_ack"):
+                    tag = {"default": "def", "BAMBU-AREA": "area"}[setup]
+                    out.append(dict(id=f"E_w{w}_{tag}_{mode}_lc{lc.replace('ap_', '')}", group="E", W=w,
+                                    setup=setup, opt=None, pragmas="none", ports=mode, lc=lc,
+                                    header="include_wide"))
+    for mode in ("fifo", "axis"):
+        out.append(dict(id=f"E_w32_def_{mode}_lcnone_unroll", group="E", W=32, setup="default", opt=None,
+                        pragmas="unroll", ports=mode, lc="none", header="include_wide"))
     return out
 
 
@@ -140,7 +155,10 @@ def bambu_args(r: dict, src: Path) -> list[str]:
     # bench.py's flags for vecadd at n64 (point_env, params.json), DaCe-only flags dropped;
     # Bambu spells -std as --std. The probe header comes first on the include path.
     args += [
-        "-DDATA_T=int64_t", f"-DSIZE_N={N}", f"-DW={w}",
+        "-DDATA_T=int64_t", f"-DSIZE_N={N}",
+        # include_wide/lanes.h takes the lanes as BAMBU_LANES and defines W itself: Bambu's
+        # co-simulation files include ac_int.h directly with these -D flags (R0c).
+        f"-DBAMBU_LANES={w}" if r.get("header") == "include_wide" else f"-DW={w}",
         f"-I{PROBE / r.get('header', 'include')}", f"-I{KDIR / 'src'}", f"-I{KDIR / 'vectors' / 'n64'}",
         "--std=c++14", "-DHLSLIB_SYNTHESIS", "-DAP_INT_MAX_W=4096",
         f"-I{BENCH / 'include'}", f"-I{BENCH / 'gen' / 'dace_include'}",
@@ -194,6 +212,9 @@ def analyse_verilog(path: Path) -> dict:
         "adders": sum(widths.values()),
         "adder_widths": "; ".join(f"{k} x{v}" for k, v in sorted(widths.items())),
         "top_ports": " ".join(ports),
+        # Bit width of A's data port on the top (A_dout for fifo, A_TDATA for axis).
+        "port_width": next((str(int(m.group(1)) + 1) for m in re.finditer(
+            r"^\s*input\s*\[(\d+):0\]\s*A_(?:dout|TDATA)\s*;", mods.get(top, ""), re.M)), ""),
         "memory_modules": "; ".join(f"{k} x{v}" for k, v in sorted(mem.items())) or "none",
         "loop_count_sinks": "; ".join(f"{k} x{v}" for k, v in sorted(sinks.items())),
         # yes when a register takes the datapath's loop_count port as an input (one level, as
