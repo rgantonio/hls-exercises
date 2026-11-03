@@ -1,0 +1,3 @@
+# Sizes whose Bambu run gave this Verilog (bench/bench.py), Bambu's header comment
+# (date, command) aside.
+n512
