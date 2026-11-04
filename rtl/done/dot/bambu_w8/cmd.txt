@@ -1,0 +1,7 @@
+# Bambu PandA 2024.10 rev c2ba6936; FSM states: 10
+# built at n512; dot.cpp is bench/tier_done/dot/src/dot.cpp with:
+#   #pragma HLS interface port=A mode=axis
+#   #pragma HLS interface port=B mode=axis
+#   #pragma HLS interface port=out mode=axis
+#   #pragma HLS unroll
+bench/tools/in_bambu.sh bambu dot.cpp --top-fname=dot --device-name=nangate45 --clock-period=10 --compiler=I386_CLANG16 --generate-interface=INFER -DDATA_T=int64_t -DSIZE_N=512 -DBAMBU_LANES=8 --std=c++14 -Ibench/include/bambu -Ibench/tier_done/dot/src -Ibench/tier_done/dot/vectors/n512

@@ -1,3 +1,49 @@
 tier,kernel,case,size,W,clock_ns,tool,config,status,fail_reason,cycles,cycles_done,beats,overhead,latency,stall_run,portable,fsm_states,device,bambu_version,rtl,git,date
-done,vecadd,bambu,n64,8,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,932b56e,2026-11-04
-done,vecadd,bambu,n512,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,932b56e,2026-11-04
+done,dot,bambu,n64,1,10,bambu,loop_count=64 len=64,ok,,192,194,64,128,191,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w1,c8231e0,2026-11-04
+done,dot,bambu,n64,2,10,bambu,loop_count=32 len=32,ok,,96,98,32,64,95,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w2,c8231e0,2026-11-04
+done,dot,bambu,n64,4,10,bambu,loop_count=16 len=16,ok,,48,50,16,32,47,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w4,c8231e0,2026-11-04
+done,dot,bambu,n64,8,10,bambu,loop_count=8 len=8,ok,,32,34,8,24,31,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w8,c8231e0,2026-11-04
+done,dot,bambu,n64,16,10,bambu,loop_count=4 len=4,ok,,16,18,4,12,15,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w16,c8231e0,2026-11-04
+done,dot,bambu,n64,32,10,bambu,loop_count=2 len=2,ok,,8,10,2,6,7,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w32,c8231e0,2026-11-04
+done,dot,bambu,n512,1,10,bambu,loop_count=512 len=512,ok,,1536,1538,512,1024,1535,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w1,c8231e0,2026-11-04
+done,dot,bambu,n512,2,10,bambu,loop_count=256 len=256,ok,,768,770,256,512,767,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w2,c8231e0,2026-11-04
+done,dot,bambu,n512,4,10,bambu,loop_count=128 len=128,ok,,384,386,128,256,383,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w4,c8231e0,2026-11-04
+done,dot,bambu,n512,8,10,bambu,loop_count=64 len=64,ok,,256,258,64,192,255,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w8,c8231e0,2026-11-04
+done,dot,bambu,n512,16,10,bambu,loop_count=32 len=32,ok,,128,130,32,96,127,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w16,c8231e0,2026-11-04
+done,dot,bambu,n512,32,10,bambu,loop_count=16 len=16,ok,,64,66,16,48,63,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/dot/bambu_w32,c8231e0,2026-11-04
+done,vecadd,bambu,n64,1,10,bambu,loop_count=64,ok,,95,98,64,31,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w1,c8231e0,2026-11-04
+done,vecadd,bambu,n64,2,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w2,c8231e0,2026-11-04
+done,vecadd,bambu,n64,4,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w4,c8231e0,2026-11-04
+done,vecadd,bambu,n64,8,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,c8231e0,2026-11-04
+done,vecadd,bambu,n64,16,10,bambu,loop_count=4,ok,,11,13,4,7,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w16,c8231e0,2026-11-04
+done,vecadd,bambu,n64,32,10,bambu,loop_count=2,ok,,5,7,2,3,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w32,c8231e0,2026-11-04
+done,vecadd,bambu,n512,1,10,bambu,loop_count=512,ok,,767,770,512,255,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w1,c8231e0,2026-11-04
+done,vecadd,bambu,n512,2,10,bambu,loop_count=256,ok,,767,769,256,511,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w2,c8231e0,2026-11-04
+done,vecadd,bambu,n512,4,10,bambu,loop_count=128,ok,,383,385,128,255,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w4,c8231e0,2026-11-04
+done,vecadd,bambu,n512,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,c8231e0,2026-11-04
+done,vecadd,bambu,n512,16,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w16,c8231e0,2026-11-04
+done,vecadd,bambu,n512,32,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w32,c8231e0,2026-11-04
+done,vecmul,bambu,n64,1,10,bambu,loop_count=64,ok,,95,98,64,31,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w1,c8231e0,2026-11-04
+done,vecmul,bambu,n64,2,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w2,c8231e0,2026-11-04
+done,vecmul,bambu,n64,4,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w4,c8231e0,2026-11-04
+done,vecmul,bambu,n64,8,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w8,c8231e0,2026-11-04
+done,vecmul,bambu,n64,16,10,bambu,loop_count=4,ok,,11,13,4,7,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w16,c8231e0,2026-11-04
+done,vecmul,bambu,n64,32,10,bambu,loop_count=2,ok,,5,7,2,3,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w32,c8231e0,2026-11-04
+done,vecmul,bambu,n512,1,10,bambu,loop_count=512,ok,,767,770,512,255,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w1,c8231e0,2026-11-04
+done,vecmul,bambu,n512,2,10,bambu,loop_count=256,ok,,767,769,256,511,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w2,c8231e0,2026-11-04
+done,vecmul,bambu,n512,4,10,bambu,loop_count=128,ok,,383,385,128,255,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w4,c8231e0,2026-11-04
+done,vecmul,bambu,n512,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w8,c8231e0,2026-11-04
+done,vecmul,bambu,n512,16,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w16,c8231e0,2026-11-04
+done,vecmul,bambu,n512,32,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecmul/bambu_w32,c8231e0,2026-11-04
+done,vsum,bambu,n64,1,10,bambu,loop_count=64 len=64,ok,,160,162,64,96,159,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w1,c8231e0,2026-11-04
+done,vsum,bambu,n64,2,10,bambu,loop_count=32 len=32,ok,,96,98,32,64,95,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w2,c8231e0,2026-11-04
+done,vsum,bambu,n64,4,10,bambu,loop_count=16 len=16,ok,,48,50,16,32,47,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w4,c8231e0,2026-11-04
+done,vsum,bambu,n64,8,10,bambu,loop_count=8 len=8,ok,,24,26,8,16,23,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w8,c8231e0,2026-11-04
+done,vsum,bambu,n64,16,10,bambu,loop_count=4 len=4,ok,,16,18,4,12,15,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w16,c8231e0,2026-11-04
+done,vsum,bambu,n64,32,10,bambu,loop_count=2 len=2,ok,,8,10,2,6,7,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w32,c8231e0,2026-11-04
+done,vsum,bambu,n512,1,10,bambu,loop_count=512 len=512,ok,,1280,1282,512,768,1279,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w1,c8231e0,2026-11-04
+done,vsum,bambu,n512,2,10,bambu,loop_count=256 len=256,ok,,768,770,256,512,767,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w2,c8231e0,2026-11-04
+done,vsum,bambu,n512,4,10,bambu,loop_count=128 len=128,ok,,384,386,128,256,383,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w4,c8231e0,2026-11-04
+done,vsum,bambu,n512,8,10,bambu,loop_count=64 len=64,ok,,192,194,64,128,191,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w8,c8231e0,2026-11-04
+done,vsum,bambu,n512,16,10,bambu,loop_count=32 len=32,ok,,128,130,32,96,127,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w16,c8231e0,2026-11-04
+done,vsum,bambu,n512,32,10,bambu,loop_count=16 len=16,ok,,64,66,16,48,63,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w32,c8231e0,2026-11-04
