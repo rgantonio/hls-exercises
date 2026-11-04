@@ -127,6 +127,16 @@ Known differences from the Vitis points, kept as in section 2 (details in `notes
 - The HLS clock is 10 ns, scheduled with nangate45's delays.
 - W = 32 does not pass Bambu's co-simulation, and `bambu_unopt` of vecadd and vecmul does not build at W >= 16. The CSV's `fail_reason` says why per point.
 
+## 3C. XLS settings
+
+Google XLS (DSLX) is the third HLS tool. It lives in its own repo, github.com/rgantonio/dslx-exercises, because DSLX cannot reuse this repo's C++ tops: each kernel is a hand-written proc with the same boundary (one W-lane beat per ready/valid stream, int64, `loop_count`/`len`/`alpha` loaded once per task on a `cfg` channel) and the same vectors (made from this repo's `data.h` files). **`notes/xls.md` there is the reference**: setup (release binaries on the server, no container), settings (10 ns, delay model `unit`, no port flops, `rst` active high), results, and the differences from Vitis and Bambu.
+
+| Case | What | Mirrors |
+|---|---|---|
+| `xls` | XLS's default flow at 10 ns | `opt`'s shape (all lanes, II = 1), as XLS's default; there is no `unopt` counterpart |
+
+Known differences, kept as in section 2: every point is one combinational stage (no pipeline registers; timing is left to DC); no `ap_start`/`ap_done`, cycles run from the `cfg` transfer to the last output; ports `_<ch>_TDATA`/`_TVALID`/`_TREADY`, top named after the kernel. All 95 tier done and untiered points pass, including W = 32, at one beat per cycle.
+
 ---
 
 ## 4. The cases in detail
