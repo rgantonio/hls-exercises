@@ -1,0 +1,4 @@
+common.svh: dslx-exercises 05d938d5c27464940ca9aef30818ccdcab6b48e8, tb/common.svh, unchanged.
+<kernel>_tb.sv: from dslx-exercises' tb/<kernel>_tb.sv at the same commit, with bambu_ctl (bambu.svh)
+in place of the cfg channel, Bambu's port names, the top module as `DUT, and cycles_done added.
+bambu.svh: written for hls-exercises (BAM2).
