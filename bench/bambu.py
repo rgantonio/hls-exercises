@@ -342,7 +342,7 @@ def sim_defines(kdir: Path, params: dict, w: int, size: dict, stall: int) -> dic
 
 def sim_cmd(params: dict, w: int, defines: dict, sim: str) -> str:
     dst = rtl_dir(params, w)
-    files = [str(f) for f in verilog_files(dst)] or [f"{dst.relative_to(ROOT)}/*.v"]  # placeholder before a build
+    files = [str(f) for f in verilog_files(dst)] or [f"{dst}/*.v"]  # placeholder before a build
     top = top_module(verilog_files(dst)) or "<top from filelist.f>"
     tbfile = TB / f"{params['kernel']}_tb.sv"
     defs = {"DUT": top, **defines}
