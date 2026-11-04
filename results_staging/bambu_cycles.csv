@@ -1,0 +1,3 @@
+tier,kernel,case,size,W,clock_ns,tool,config,status,fail_reason,cycles,cycles_done,beats,overhead,latency,stall_run,portable,fsm_states,device,bambu_version,rtl,git,date
+done,vecadd,bambu,n64,8,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,932b56e,2026-11-04
+done,vecadd,bambu,n512,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vecadd/bambu_w8,932b56e,2026-11-04
