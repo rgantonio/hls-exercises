@@ -102,3 +102,6 @@ notes/figures/
 # --- Pixi env and Bambu install (BAM1) --------------------------------
 .pixi/
 /tools/
+
+# --- Bambu builds and simulations (BAM2, bench/bambu.py) --------------
+/build/
