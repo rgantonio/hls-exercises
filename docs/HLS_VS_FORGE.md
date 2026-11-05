@@ -113,19 +113,20 @@ so it is reported per target, not per HLS run.
 
 ## 3B. Bambu settings
 
-Bambu 2024.10 (PandA, Politecnico di Milano) is the second HLS tool, with an ASIC target: nangate45 at 10 ns. It has its own runner, `bench/bambu.py` (plan: `docs/BAMBU_PLAN.md`), set up like the XLS one in dslx-exercises: it reads the kernels' `params.json`, sources and vectors, builds RTL only in a podman container (`bench/tools/in_bambu.sh`), and measures the Verilog with our own SystemVerilog testbenches (`tb/`) in Questa on the host, a no-stall run for the cycles and a random-stall, two-task run for correctness. Results go to `results_staging/bambu_cycles.csv` and `report_bambu_<tier>.md`, the Verilog to `rtl/<tier>/<kernel>/bambu_w<W>/`. **`notes/bambu.md` is the reference**: setup, how to run it, the settings that make the block comparable (axis ports through `--generate-interface=INFER`, one `ac_int<64W>` per beat from `bench/include/bambu/lanes.h` with `-DBAMBU_LANES`), the results of tier done and untiered (95 of 95 points pass), and every difference with its evidence. `notes/bambu_probe.md` holds BAM1's probe rounds.
+Bambu (PandA, Politecnico di Milano) is the second HLS tool, with an ASIC target: nangate45 at 10 ns. Since BAM3 it is Bambu 2026.11, built from its git tag by `bench/tools/build_bambu_2611.sh` (2024.10 cannot pipeline loops; 2026.11 pipelines the BEAT loop by itself). It has its own runner, `bench/bambu.py` (plan: `docs/BAMBU_PLAN.md`), set up like the XLS one in dslx-exercises: it reads the kernels' `params.json`, sources and vectors, builds RTL only in a podman container (`bench/tools/in_bambu.sh`), and measures the Verilog with our own SystemVerilog testbenches (`tb/`) in Questa on the host, a no-stall run for the cycles and a random-stall, two-task run for correctness. Results go to `results_staging/bambu_cycles.csv` and `report_bambu_<tier>.md`, the Verilog to `rtl/<tier>/<kernel>/bambu_w<W>/`. **`notes/bambu.md` is the reference**: setup, how to run it, the settings that make the block comparable (axis ports through `--generate-interface=INFER`, one `ac_int<64W>` per beat from `bench/include/bambu/lanes.h` with `-DBAMBU_LANES`), the results of tier done and untiered (85 of 95 points pass; the elementwise kernels at W = 32 hit a Bambu 2026.11 bug), and every difference with its evidence. `notes/bambu_probe.md` holds the probe rounds (BAM1 R0 to R0c, BAM3 A and B).
 
 | Case | Pragmas added to a copy of the source | Mirrors |
 |---|---|---|
-| `bambu` | `#pragma HLS interface port=<p> mode=axis` above the top for every axis port, plus `#pragma HLS unroll` right before LANE's `for` | `opt`'s LANE unroll; Bambu cannot pipeline loops, so there is no II = 1 BEAT |
+| `bambu` | `#pragma HLS interface port=<p> mode=axis` above the top for every axis port, plus `#pragma HLS unroll` right before LANE's `for` | `opt`: LANE unrolled, and BEAT pipelined at II = 1 by Bambu itself (II = 2 for dot at W = 4 and 8) |
 
-BAM1 also had a `bambu_unopt` case (no unroll pragma). BAM2 dropped it: it gave the same cycles up to W = 8 and failed to build above (no unit for the wide variable shift of an un-unrolled LANE), and XLS has one case too.
+BAM1 also had a `bambu_unopt` case (no unroll pragma). BAM2 dropped it: it gave the same cycles up to W = 8 and failed to build above, and XLS has one case too.
 
 Known differences from the Vitis points, kept as in section 2 (details in `notes/bambu.md`):
-- No loop pipelining: 3 to 4 cycles per beat (1.5 to 3 at W = 1, where Bambu unrolls BEAT by itself).
+- About 1 cycle per beat plus a fill of 1 or 2 cycles; the input and output beats are registered inside the block.
 - `loop_count`, `len` and `alpha` are plain wires read in every iteration. Bambu accepts no handshake mode on them, so the driver must hold them for the run.
-- Control is Bambu's `start_port`/`done_port` and an active-low `reset`, not `ap_ctrl_hs`; the top module keeps its mangled C++ name.
+- Control is Bambu's `start_port`/`done_port` (plus an `idle_port`) and an active-low `reset`, not `ap_ctrl_hs`; the top module keeps a mangled C++ name.
 - The HLS clock is 10 ns, scheduled with nangate45's delays.
+- The five elementwise sources declare their output beat `= 0` since BAM3 (an uninitialized beat read by `set_lane` gave wrong words in Bambu 2026.11); Vitis uses the same sources.
 
 ## 3C. XLS settings
 

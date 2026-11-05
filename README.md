@@ -63,10 +63,11 @@ python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower 
 
 ### 2b. Run Bambu (podman for Bambu, Questa for the testbenches)
 
-`bench/bambu.py` builds every kernel with Bambu 2024.10 (ASIC target, nangate45, 10 ns, case `bambu`) in a podman container, and simulates the Verilog with the testbenches in `tb/` in Questa on the host. Setup, commands, results and differences: `notes/bambu.md`; plan: `docs/BAMBU_PLAN.md`. In short:
+`bench/bambu.py` builds every kernel with Bambu 2026.11 (ASIC target, nangate45, 10 ns, case `bambu`) in a podman container, and simulates the Verilog with the testbenches in `tb/` in Questa on the host. Setup, commands, results and differences: `notes/bambu.md`; plan: `docs/BAMBU_PLAN.md`. In short:
 
 ```bash
-pixi install && pixi run get-bambu && podman build -t hls-exercises-bambu:4 container/bambu   # once
+pixi install && podman build -t hls-exercises-bambu:4 container/bambu   # once
+pixi run bash bench/tools/build_bambu_2611.sh                           # once: Bambu 2026.11 from its tag (about 12 min)
 pixi run python bench/bambu.py run -j$(nproc) --sim questa --sim-jobs <free Questa licences>
 ```
 

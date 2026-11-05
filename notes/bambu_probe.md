@@ -1,6 +1,6 @@
-# Bambu probe: vecadd at n64 (BAM1 R0)
+# Bambu probes (BAM1 R0 to R0c, BAM3 A and B)
 
-Summary of BAM1, what Bambu can and cannot do: `notes/bambu.md`. This note is the probe evidence behind it.
+Summary of what Bambu can and cannot do: `notes/bambu.md`. This note is the probe evidence behind it: BAM1's rounds on Bambu 2024.10 (vecadd at n64, below) and BAM3's rounds A and B (at the end).
 
 The probe code (`bench/probe/bambu/probe.py`), the probe headers (`bench/probe/bambu/include*/`) and the kept RTL (`notes/bambu_rtl/`) are at commit a440e60 and were removed in R1; the Bambu header now lives in `bench/include/bambu/lanes.h` (R0c's `include_wide/lanes.h`).
 
@@ -219,3 +219,53 @@ Registers and flip-flops of the passing and timed-out runs, from Bambu's log (`R
 - loop_count: no mode registers the pin. `mode=ap_hs` stops all 12 of its runs with `Interface type 'handshake' for parameter 'loop_count' is not supported`, and `mode=ap_ack` all 12 with `Interface type 'acknowledge' for parameter 'loop_count' is not supported`. With R0b's `ap_vld` (`'valid'`), all three handshake modes tried are rejected for this by-value scalar. In every passing and timed-out E run, `loop_count_registered` is no: the port goes straight into the loop's comparators (`ui_eq_expr_FU` x2; at W = 1 under the default setup `ui_eq_expr_FU`, `ui_lt_expr_FU`, `ui_rshift_expr_FU`, `ui_bit_and_expr_FU`).
 - What AREA (-Os) changes: W = 1 passes with one 64-bit adder, 8 registers, 321 flip-flops and 8 states, at 194 cycles against 99. W = 8 fails under AREA: LANE is not unrolled, and synthesis stops on the same missing unit for a 512-bit variable shift (`lshift_expr ... prec: 512 512 512`, `Vertices not completely allocated`). The default setup unrolls LANE at W = 8 and passes. W = 32 fails under both setups without the unroll pragma.
 - Warnings: the passing E runs print no `Warning:` line. Every run that stops on the variable shift prints `Warning: A bad estimation of the timing of the rshift_expr operator will happen. This may occur when a non-constant bit reference of a long ac_type is used. Unrolling such a part may fix the issue.` 240 times. The passing and timed-out runs' logs also have R0b's memory-allocation notes (`Spec may not exploit DATA bus width`, `Code has LOADs or STOREs with unaligned accesses`).
+
+## BAM3 round A: Bambu 2024.10 beyond the `bambu` case
+
+Run 2026-11-05 with `bench/bambu_probe.py --probe a` (commit 4235e07, fixed in 44913cf; removed after BAM3, last at commit 45d2dc1); data in `results_staging/probe_bam3a.csv` and `.md`, run note `results_staging/runs/2026-11-05_bambu_probe_a.md`. Each config is the `bambu` case (2024.10, axis ports, LANE unrolled) plus one change, on vecadd and dot at W = 1, 8, 32, n64 and n512, measured with our testbenches in Questa (no-stall and stall runs). 44 of 48 builds ok; every simulation that ran passes.
+
+| Config | Change |
+|---|---|
+| a0 | none (the `bambu` case) |
+| a1_u2, a1_u4, a1_u8 | `#pragma HLS unroll factor=U` on BEAT |
+| a2_sdc | `--speculative-sdc-scheduling` |
+| a3_perf | `--experimental-setup=BAMBU-PERFORMANCE-MP` |
+| a4_u4_sdc, a4_u4_perf | a1_u4 plus a2 or a3 |
+
+Cycles per beat / register bits at n512 (`crash`: Bambu segfaults after the SDC scheduler's LP solve):
+
+| kernel | W | a0 | a1_u2 | a1_u4 | a1_u8 | a2_sdc | a3_perf | a4_u4_sdc | a4_u4_perf |
+|---|---|---|---|---|---|---|---|---|---|
+| vecadd | 1 | 1.50 / 1091 | 2.00 / 703 | 1.50 / 1091 | 1.25 / 1731 | 1.50 / 1091 | 1.50 / 1091 | 1.50 / 1091 | 1.50 / 1091 |
+| vecadd | 8 | 2.98 / 1665 | 1.98 / 2940 | 1.48 / 4227 | 1.23 / 6659 | crash | 2.98 / 1665 | crash | 1.48 / 4227 |
+| vecadd | 32 | 2.94 / 6273 | 1.94 / 10618 | 1.44 / 14979 | 1.19 / 23555 | crash | 2.94 / 6273 | crash | 1.44 / 14979 |
+| dot | 1 | 3.00 / 514 | 2.50 / 1216 | 2.25 / 2056 | 2.12 / 3343 | 3.00 / 514 | 3.00 / 514 | 2.25 / 1931 | 2.25 / 2056 |
+| dot | 8 | 4.00 / 1538 | 3.50 / 2368 | 3.25 / 3336 | 3.12 / 4879 | 4.00 / 1538 | 4.00 / 1538 | 3.25 / 3211 | 3.25 / 3336 |
+| dot | 32 | 4.00 / 4930 | 3.50 / 11905 | 3.25 / 8008 | 3.12 / 10831 | 4.00 / 4930 | 4.00 / 4930 | 3.25 / 7883 | 3.25 / 8008 |
+
+Findings:
+- Only the BEAT unroll factor changes cycles; it takes effect everywhere (Bambu's log says nothing; in the RTL each stream is started from U + 1 states). At vecadd W = 1 Bambu already unrolls BEAT 4 times by itself, so factor 4 is a0 and factor 2 is slower.
+- vecadd: one pass is U + 2 states for U beats, each beat's write overlapping the next beat's read, so cycles per beat $\approx (U + 2) / U$. dot: the beats do not overlap (each unrolled copy keeps its own branch for the conditional result write), so unrolling only saves the back edge once per pass: 3 states per beat at W = 8 and 32, 2 at W = 1. These reproduce every measured a1 count.
+- The cost: 1.6 to 6.5 times a0's register bits; and at W = 32 n64 (2 beats) u4 and u8 are slower than a0, because the beats go through the remainder loop.
+- `--speculative-sdc-scheduling` and BAMBU-PERFORMANCE-MP never change cycles, FSM states or register bits where they build; SDC segfaults on vecadd W = 8 and 32 (with and without the unroll), 2024.10's `fail_reason` then said only "Bambu wrote no Verilog" (`bench/bambu.py` reports crashes since fce1fac).
+- The SIMPLEJOIN_FU operand order can differ between two builds of the same command.
+
+Conclusion: 2024.10 cannot reach one beat per cycle without loop pipelining; unrolling BEAT approaches it for vecadd only, at several times the registers.
+
+## BAM3 round B: Bambu 2026.11
+
+Bambu 2026.11 (tag `2026.11`, built from source by `bench/tools/build_bambu_2611.sh`, `notes/env.md`) pipelines innermost single-basic-block loops by itself (`isPipelinable()`: innermost and one block; log `II=<n> solution found for loop (BB<k>)`). Run 2026-11-05 with `bench/bambu_probe.py --probe b`; data in `results_staging/probe_bam3b.csv` and `.md`, run notes `results_staging/runs/2026-11-05_bambu_probe_b.md` (b0) and `_probe_b2.md` (b1_init, b2_nolp, reproducer).
+
+| Config | What |
+|---|---|
+| b0 | the `bambu` case unchanged on 2026.11 (vecadd, dot, relu, rowsum at W = 1, 8, 32) |
+| b1_init | b0 with the output beat declared `= 0` in the probe's source copy (the five elementwise kernels at W = 1, 8, 32) |
+| b2_nolp | b0 with loop pipelining off, `--bambu-parameter=LP-BB-list=0` (the CSV rows are compile failures from the first spelling, `--panda-parameter`; the 15 points were rerun by hand with the right option) |
+
+Findings:
+- b0: every kernel's BEAT loop (BB2) is pipelined, reductions included (the `if` that writes their result is folded into the loop block); II = 1 except dot at W = 8 (II = 2); iteration latency 2, or 3 for dot W = 8 and 32 and rowsum W = 32. 1.00 to 1.12 cycles per beat (dot W = 8: 2.00), fewer register bits than 2024.10, all stalls handled (the pipeline stops on any stream and resumes). `panda_libtech.v` holds library modules the design uses; none is defined twice.
+- b0 fails vecadd and relu at W = 8 and 32: fixed 32-bit words of every output beat wrong, mostly 0, independent of the data and of stalls. dot and rowsum (one 64-bit result) pass.
+- Two faults. Fault 1, lane 0's high word and lane 1's low word: the output beat was uninitialized and ac_int's `set_slc` computes a slice's end words from the old value; b1_init removes it at every W, b2_nolp does not. It was our source's bug (fixed in 542fa32). Fault 2, low words of lanes 26 to 30 (relu 27 to 31): only at W = 32, with b1_init and with b2_nolp; a 2026.11 bug, reproduced in one beat of vecadd at 28 lanes or more with a well-defined source, needing a computed lane (a copy passes); 2024.10 builds it correctly (`notes/repro_bam3/`).
+- b2_nolp: no loop pipelined, 6 FSM states, 2.00 cycles per beat at every W.
+
+Conclusion and decision (`docs/BAMBU_PLAN.md` section 8): the `bambu` case moves to 2026.11 with the output beats initialized; BAM3 R1 reran both tiers on it (85 of 95 ok, the 10 failures fault 2). The probe script was removed after BAM3; this section and the two CSVs are what is kept.
