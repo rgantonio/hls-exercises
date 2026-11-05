@@ -21,7 +21,7 @@ Probe B configs (Bambu 2026.11, `bambu-2026.11` from bench/tools/build_bambu_261
   b1_init    b0 with the output beat declared with an initial value (`vec_t ..., c = 0;`): the source
              otherwise leaves it uninitialized, and ac_int's set_slc reads the old value of a slice's
              end words, so the result depends on an indeterminate value
-  b2_nolp    b0 with loop pipelining turned off (--panda-parameter=LP-BB-list=0: no loop is eligible)
+  b2_nolp    b0 with loop pipelining turned off (--bambu-parameter=LP-BB-list=0: no loop is eligible)
 
   python3 bench/bambu_probe.py run [--probe a|b] [--config ...] [--kernel ...] [--w 1 8 32]
                                    [-j N] [--sim-jobs M] [--sim questa|icarus] [--sim-only] [--dry-run]
@@ -57,7 +57,7 @@ CONFIGS_A = {
     "a4_u4_sdc": (["unroll factor=4"], ["--speculative-sdc-scheduling"]),
     "a4_u4_perf": (["unroll factor=4"], ["--experimental-setup=BAMBU-PERFORMANCE-MP"]),
 }
-CONFIGS_B = {"b0": ([], []), "b1_init": ([], []), "b2_nolp": ([], ["--panda-parameter=LP-BB-list=0"])}
+CONFIGS_B = {"b0": ([], []), "b1_init": ([], []), "b2_nolp": ([], ["--bambu-parameter=LP-BB-list=0"])}
 BINARY = {"b0": "bambu-2026.11", "b1_init": "bambu-2026.11", "b2_nolp": "bambu-2026.11"}
 # Source changes beyond pragmas, per config: b1_init gives the output beat an initial value.
 INIT_OUT = re.compile(r"^(\s*vec_t\s.*,\s*)([A-Za-z_]\w*)\s*;\s*$", re.M)
