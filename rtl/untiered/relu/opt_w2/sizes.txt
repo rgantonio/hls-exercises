@@ -1,0 +1,4 @@
+# Sizes whose Vitis run gave this Verilog (bench/bench.py); '(renamed ids)': the same
+# once Vitis's numbered net names are masked.
+n64
+n512
