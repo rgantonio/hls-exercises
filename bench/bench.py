@@ -40,11 +40,7 @@ Verilog differs keeps its own folder, rtl/<tier>/<kernel>/<case>_<size>_w<W>/.
 
 run and collect replace the rows with the same key and write the report again.
 
-A case with "tool": "bambu" in params.json (bambu_unopt, bambu_opt) runs Bambu 2024.10 instead
-of Vitis, in its container (bench/tools/in_bambu.sh; docs/HLS_VS_FORGE.md, Bambu settings).
-Its point folder holds a copy of the kernel's source with only #pragma lines added, Bambu's
-output and point.json; its Verilog goes to rtl/ as Vitis's does. Cases without a tool are
-Vitis's.
+Vitis only. Bambu's points are built and measured by bench/bambu.py (docs/BAMBU_PLAN.md).
 """
 
 from __future__ import annotations
@@ -52,12 +48,10 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
-import difflib
 import itertools
 import json
 import os
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -74,20 +68,10 @@ CSV_PATH = RESULTS / "hls_cycles.csv"
 LOOPS_PATH = RESULTS / "hls_loops.csv"
 FORGE_PATH = RESULTS / "forge_cycles.csv"
 
-CASES = ("unopt", "opt", "dace", "bambu_unopt", "bambu_opt")
+CASES = ("unopt", "opt", "dace")
 CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "int8_t",
           "float32": "float", "float64": "double"}
 DEFAULT_CLOCK = "3.33"
-
-# Bambu (cases with "tool": "bambu"): the container wrapper, the Bambu side's lanes.h folder
-# (put on the include path instead of bench/include), the default clock and the time a point
-# may take before its container is removed and the point recorded as "failed: timeout".
-IN_BAMBU = BENCH / "tools" / "in_bambu.sh"
-BAMBU_INCLUDE = BENCH / "include" / "bambu"
-BAMBU_DEFAULT_CLOCK = "10"
-BAMBU_TIMEOUT_S = 15 * 60
-# A memory module Bambu instantiated: filelist.f names it on a '# ram:' line, as for Vitis.
-BAMBU_RAM = re.compile(r"^(ARRAY_1D_STD_BRAM\w*|BRAM_MEMORY\w*|TRUE_DUAL_PORT\w*)$")
 
 COLUMNS = [
     "tier", "kernel", "case", "iface", "dtype", "size", "W", "config", "clock_ns",
@@ -131,9 +115,8 @@ def size_tag(size: dict) -> str:
 
 
 def clock_tag(clock: str, default: str = DEFAULT_CLOCK) -> str:
-    """'' for the tool's default clock, else '_c<clock>' (3.33 -> _c3p33). The clock sets the
-    tool's schedule, so a different one is a different point; the default one stays out of the
-    names (Vitis 3.33 ns, Bambu 10 ns)."""
+    """'' for the default clock, else '_c<clock>' (3.33 -> _c3p33). The clock sets Vitis's
+    schedule, so a different one is a different point; the default one stays out of the names."""
     return "" if clock == default else "_c" + clock.replace(".", "p")
 
 
@@ -190,13 +173,7 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
             sys.exit(f"{kdir}: unknown case '{case}' (cases are {', '.join(CASES)})")
         if args.case and case not in args.case:
             continue
-        tool = cfg.get("tool", "vitis")
-        if tool == "bambu":
-            default = BAMBU_DEFAULT_CLOCK
-            clocks = args.clock or [str(params.get("bambu", {}).get("clock_ns", BAMBU_DEFAULT_CLOCK))]
-        else:
-            default = DEFAULT_CLOCK
-            clocks = args.clock or [str(params.get("clock_ns", DEFAULT_CLOCK))]
+        clocks = args.clock or [str(params.get("clock_ns", DEFAULT_CLOCK))]
         ws = cfg.get("W", params.get("W", [1])) if cfg.get("per_w", False) else [None]
         for size, w, clock in itertools.product(params["sizes"], ws, clocks):
             tag = size_tag(size)
@@ -204,14 +181,14 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
                 continue
             if args.w and w is not None and w not in args.w:
                 continue
-            name = f"{case}_{tag}" + (f"_w{w}" if w is not None else "") + f"{clock_tag(clock, default)}_proj"
+            name = f"{case}_{tag}" + (f"_w{w}" if w is not None else "") + f"{clock_tag(clock)}_proj"
             if not point_valid(params, size, w):
                 continue
             config, trips = config_values(params, cfg, size, w)
             out.append({
-                "kdir": kdir, "params": params, "case": case, "cfg": cfg, "tool": tool,
+                "kdir": kdir, "params": params, "case": case, "cfg": cfg,
                 "size": size, "size_tag": tag, "W": w, "clock": clock, "proj": name,
-                "config": config, "trips": trips, "rtl_name": rtl_name(case, w, clock, default),
+                "config": config, "trips": trips, "rtl_name": rtl_name(case, w, clock),
             })
     return out
 
@@ -274,229 +251,6 @@ def missing_inputs(pt: dict, env: dict) -> list[str]:
     if not data.is_file():
         missing.append(f"{data} (run bench/gen/gen_data.py in snax-forge's env)")
     return missing
-
-
-# ---------------------------------------------------------------- bambu
-def header_constants(kdir: Path) -> dict:
-    """Integer constants the kernel's headers define as `const int NAME = <literal>;` (NOUT),
-    for params.json's bambu param_size expressions."""
-    names: dict = {}
-    for h in sorted((kdir / "src").glob("*.h")):
-        for m in re.finditer(r"^\s*const\s+int\s+([A-Za-z_]\w*)\s*=\s*(\d+)\s*;", h.read_text(), re.M):
-            names[m.group(1)] = int(m.group(2))
-    return names
-
-
-def bambu_param_size(pt: dict) -> dict:
-    """Bytes per array argument for --tb-param-size, from params.json's bambu param_size,
-    evaluated as config is (the size, W, the config values and the header's constants)."""
-    names = {k.lower(): int(v) for k, v in pt["size"].items()}
-    names["W"] = int(pt["W"]) if pt["W"] is not None else 1
-    names.update(header_constants(pt["kdir"]))
-    names.update(pt["config"])
-    return evaluate(pt["params"]["bambu"]["param_size"], names)
-
-
-def bambu_source(pt: dict) -> tuple[str, str, list[str]]:
-    """The kernel's source for one Bambu point: a copy with only #pragma lines added.
-    `#pragma HLS interface port=<p> mode=axis` for every axis port on the lines just above
-    `void <top>(`, and the case's loop pragmas (params bambu.pragmas, e.g. {"LANE": "unroll"})
-    on the line after the loop's label, right before its `for`. No pragma on the run-time pins.
-    Returns (file name, text, the added lines)."""
-    params, cfg = pt["params"], pt["cfg"]
-    if len(cfg["src"]) != 1:
-        sys.exit(f"{pt['kdir']}: a Bambu case takes one source file, not {cfg['src']}")
-    src = pt["kdir"] / cfg["src"][0]
-    text = src.read_text()
-    axis = params.get("axis", []) if params.get("iface") == "axis" else []
-    loops = params.get("bambu", {}).get("pragmas", {}).get(pt["case"], {})
-    lines, out, added, placed = text.splitlines(keepends=True), [], [], set()
-    top_re = re.compile(rf"^void\s+{re.escape(cfg['top'])}\s*\(")
-    for i, ln in enumerate(lines):
-        if top_re.match(ln) and "top" not in placed:
-            new = [f"#pragma HLS interface port={p} mode=axis\n" for p in axis]
-            out += new
-            added += new
-            placed.add("top")
-        out.append(ln)
-        m = re.match(r"^\s*([A-Za-z_]\w*):\s*$", ln)
-        if m and m.group(1) in loops:
-            if i + 1 >= len(lines) or not re.match(r"^\s*for\s*\(", lines[i + 1]):
-                sys.exit(f"{src}: label {m.group(1)} is not followed by its for loop")
-            new = [f"#pragma HLS {loops[m.group(1)]}\n"]
-            out += new
-            added += new
-            placed.add(m.group(1))
-    missing = ({"top"} | set(loops)) - placed
-    if missing:
-        sys.exit(f"{src}: no place for the Bambu pragmas of {sorted(missing)}")
-    new_text = "".join(out)
-    changed = [d for d in difflib.ndiff(text.splitlines(), new_text.splitlines()) if d[:2] in ("+ ", "- ")]
-    assert all(d.startswith("+ #pragma ") for d in changed), changed  # only #pragma lines added
-    return src.name, new_text, [a.rstrip("\n") for a in added]
-
-
-def bambu_args(pt: dict, copy: Path) -> list[str]:
-    """The Bambu command of one point, run from its folder (docs/HLS_VS_FORGE.md, Bambu settings)."""
-    kdir, params, cfg, tag, w = pt["kdir"], pt["params"], pt["cfg"], pt["size_tag"], pt["W"]
-    top = cfg["top"]
-    fmt = {"size": tag, "W": w if w is not None else "", "bench": str(BENCH)}
-    tb = (kdir / cfg.get("tb", params["tb"]).format(**fmt)).resolve()
-    tb_flags = " ".join([f"-DDUT={top}"] + [f"-DCFG_{k.upper()}={v}" for k, v in pt["config"].items()])
-    psize = ",".join(f"{k}:{v}" for k, v in bambu_param_size(pt).items())
-    dtype = params.get("dtype", "int64")
-    flags = [f"-DDATA_T={CTYPES.get(dtype, dtype)}"]
-    if "acc_dtype" in params:
-        flags.append(f"-DACC_T={CTYPES.get(params['acc_dtype'], params['acc_dtype'])}")
-    flags += [f"-DSIZE_{k.upper()}={v}" for k, v in pt["size"].items()]
-    # The lanes as BAMBU_LANES, never W: bench/include/bambu/lanes.h says why.
-    flags += [f"-DBAMBU_LANES={w if w is not None else 1}", "--std=c++14",
-              f"-I{BAMBU_INCLUDE}", f"-I{kdir.resolve() / 'src'}", f"-I{kdir.resolve() / 'vectors' / tag}"]
-    return [str(IN_BAMBU), "bambu", str(copy), f"--top-fname={top}", f"--top-rtldesign-name={top}",
-            "--device-name=nangate45", f"--clock-period={pt['clock']}", "--compiler=I386_CLANG16",
-            "--generate-interface=INFER", "--simulate", "--simulator=VERILATOR", f"--generate-tb={tb}",
-            f"--tb-extra-gcc-options={tb_flags}", f"--tb-param-size={psize}"] + flags
-
-
-def bambu_container(proj: str) -> str:
-    return f"bench-{proj.lower().replace('_', '-')}-{os.getpid()}"
-
-
-def run_bambu_point(pt: dict, args) -> dict | None:
-    kdir, proj = pt["kdir"], pt["proj"]
-    pdir = kdir / proj
-    name, text, added = bambu_source(pt)
-    copy = pdir / name
-    cmd = bambu_args(pt, copy)
-    tb = Path(cmd[cmd.index("--simulate") + 2].split("=", 1)[1])
-    missing = [str(p) for p in (kdir / pt["cfg"]["src"][0], tb) if not p.is_file()]
-    data = kdir / "vectors" / pt["size_tag"] / "data.h"
-    if not data.is_file():
-        missing.append(f"{data} (run bench/gen/gen_data.py in snax-forge's env)")
-    log = kdir / f"run_{proj}.log"
-    if args.dry_run:
-        print(f"\n# {kdir.relative_to(ROOT)} / {proj}  (bambu)")
-        print(f"# {copy.relative_to(ROOT)}: {pt['cfg']['src'][0]} with these lines added:")
-        for a in added:
-            print(f"#   {a}")
-        print(f"cd {pdir} && BAMBU_CONTAINER_NAME={bambu_container(proj)} {shlex.join(cmd)} > {log} 2>&1"
-              f"  # timeout {BAMBU_TIMEOUT_S} s")
-        for m in missing:
-            print(f"# missing: {m}")
-        return None
-    if missing:
-        print(f"skip {proj}: missing\n  " + "\n  ".join(missing))
-        return None
-    if pdir.exists():
-        shutil.rmtree(pdir)
-    pdir.mkdir(parents=True)
-    copy.write_text(text)
-    print(f"run  {kdir.relative_to(ROOT)}/{proj}  (bambu, log: {log.name})", flush=True)
-    cname = bambu_container(proj)
-    env = dict(os.environ, BAMBU_CONTAINER_NAME=cname)
-    start = dt.datetime.now()
-    timed_out, rc = False, None
-    with log.open("w") as fh:
-        p = subprocess.Popen(cmd, cwd=pdir, env=env, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-        try:
-            rc = p.wait(timeout=BAMBU_TIMEOUT_S)
-        except subprocess.TimeoutExpired:
-            # Killing podman's client leaves the container running: remove it by name.
-            timed_out = True
-            subprocess.run(["podman", "rm", "-f", "-t", "0", cname], capture_output=True, check=False)
-            p.kill()
-            p.wait()
-    meta = {
-        "tier": pt["params"]["tier"], "kernel": pt["params"]["kernel"], "case": pt["case"], "tool": "bambu",
-        "dtype": pt["params"].get("dtype", "int64"), "size": pt["size_tag"],
-        "iface": "axis (Bambu, --generate-interface=INFER)" if pt["params"].get("iface") == "axis" else "default",
-        "W": "" if pt["W"] is None else pt["W"], "clock_ns": pt["clock"], "top": pt["cfg"]["top"],
-        "config": config_label(pt["config"]), "rtl_name": pt["rtl_name"],
-        "date": start.isoformat(timespec="seconds"), "git": git_rev(),
-        "runtime_s": round((dt.datetime.now() - start).total_seconds(), 1), "rc": rc, "timed_out": timed_out,
-        "pragmas": added, "cmd": cmd,
-    }
-    (pdir / "point.json").write_text(json.dumps(meta, indent=1) + "\n")
-    row = read_point(kdir, proj)
-    print(f"done {proj}: {row['status']}  cycles {row['cosim_lat_avg'] or '-'}  states {row['fsm_states'] or '-'}"
-          f"  portable {row['portable'] or '-'}", flush=True)
-    return row
-
-
-def bambu_verilog(pdir: Path) -> dict[str, Path]:
-    """The Verilog Bambu wrote into the point's folder (HLS_output/ holds the simulation files)."""
-    return {f.name: f for f in sorted(pdir.iterdir()) if f.is_file() and f.suffix in (".v", ".sv")} if pdir.is_dir() else {}
-
-
-def check_files(files: list[Path]) -> str:
-    hits = set()
-    for f in files:
-        text = f.read_text(errors="replace")
-        for pat, what in NOT_PORTABLE:
-            if pat.search(text):
-                hits.add(f"{what} in {f.name}")
-    return "yes" if not hits else "no: " + "; ".join(sorted(hits))
-
-
-def bambu_fail_reason(status: str, log: str, tb: str, meta: dict, sim_started: bool) -> str:
-    """One short reason for a Bambu point that did not pass, from its log and testbench log
-    (notes/bambu.md, Limitations)."""
-    ports = f"{64 * int(meta['W'])}-bit ports" if str(meta.get("W", "")).isdigit() else "its ports"
-    if status == "failed: compile":
-        m = re.search(r"does not exist a functional unit in the resource library: (\w+).*?prec: (\d+)", log)
-        if m and m.group(1) in ("lshift_expr", "rshift_expr"):
-            return f"no unit for {m.group(2)}-bit variable shift (LANE not unrolled)"
-        if m:
-            return f"no unit for {m.group(2)}-bit {m.group(1)}"
-        errs = [ln.strip() for ln in log.splitlines() if "error" in ln.lower()]
-        return errs[0][:120] if errs else "Bambu stopped before simulation"
-    if status == "failed: timeout":
-        return (f"Bambu co-simulation hangs on {ports}" if sim_started
-                else f"no result within {BAMBU_TIMEOUT_S // 60} min, before co-simulation")
-    if re.search(r"Simulation exceeds \d+ cycles", tb + log):
-        return f"co-simulation hits the cycle limit on {ports}"
-    m = re.search(r"^FAIL .*$", tb, re.M)
-    if m:
-        return f"testbench: {m.group(0)[:100]}"
-    errs = [ln.strip() for ln in log.splitlines() if ln.strip().startswith("error ->")]
-    return errs[0][:120] if errs else "co-simulation did not end with the testbench's PASS line"
-
-
-def read_bambu_point(kdir: Path, proj: str, meta: dict) -> dict:
-    pdir = kdir / proj
-    log = kdir / f"run_{proj}.log"
-    text = log.read_text(errors="replace") if log.is_file() else ""
-    tblog = pdir / "HLS_output" / "simulation" / "testbench.log"
-    tb = tblog.read_text(errors="replace") if tblog.is_file() else ""
-    row = {k: "" for k in COLUMNS}
-    row.update({k: meta[k] for k in ("tier", "kernel", "case", "dtype", "size", "W", "clock_ns", "date", "git")})
-    row.update(config=meta.get("config", ""), iface=meta.get("iface", ""), tool="bambu",
-               proj=f"{kdir.relative_to(ROOT)}/{proj}")
-    m = re.search(r"Version: (PandA \S+) - Revision (\w+)", text)
-    if m:
-        row["vitis"] = f"{m.group(1)} rev {m.group(2)[:8]}"
-    m = re.search(r"Total cycles\s*:\s*(\d+) cycles", text)
-    if m:
-        row["cosim_lat_min"] = row["cosim_lat_avg"] = row["cosim_lat_max"] = m.group(1)
-    row["fsm_states"] = " ".join(re.findall(r"Number of states:\s*(\d+)", text))
-    verdict = re.search(r"^(PASS|FAIL) ", tb, re.M)
-    sim_started = any(pdir.glob("simulate_*.sh"))
-    if sim_started:
-        row["cosim_status"] = "pass" if verdict and verdict.group(1) == "PASS" else "fail"
-    if meta.get("timed_out"):
-        row["status"] = "failed: timeout"
-    elif verdict and verdict.group(1) == "PASS":
-        row["status"] = "ok"
-    elif not sim_started:
-        row["status"] = "failed: compile"
-    else:
-        row["status"] = "failed: sim"
-    if row["status"] != "ok":
-        row["fail_reason"] = bambu_fail_reason(row["status"], text, tb, meta, sim_started)
-    files = list(bambu_verilog(pdir).values())
-    row["portable"] = check_files(files) if files else ""
-    row["_loops"] = []  # no Bambu rows in hls_loops.csv
-    return row
 
 
 # ---------------------------------------------------------------- reports
@@ -630,43 +384,13 @@ def git_rev() -> str:
         return ""
 
 
-def bambu_rams(files: list[Path]) -> list[str]:
-    """The memory modules Bambu instantiated (BAMBU_RAM), from the instances in its Verilog."""
-    found = set()
-    for f in files:
-        for m in re.finditer(r"^\s*(\w+)\s*(?:#\(|\w+\s*\()", f.read_text(errors="replace"), re.M):
-            if BAMBU_RAM.match(m.group(1)):
-                found.add(m.group(1))
-    return sorted(found)
-
-
-def bambu_top_module(files: list[Path]) -> str:
-    """The top module of Bambu's Verilog: the one no other module instantiates. For a C++ top
-    it is the mangled name (e.g. _Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j): Bambu 2024.10 keeps
-    it although the command passes --top-rtldesign-name=<top>."""
-    text = "\n".join(f.read_text(errors="replace") for f in files)
-    mods = re.findall(r"^module\s+(\w+)", text, re.M)
-    used = {m.group(1) for m in re.finditer(r"^\s*(\w+)\s*(?:#\(|\w+\s*\()", text, re.M)}
-    tops = [m for m in mods if m not in used]
-    return tops[-1] if tops else ""
-
-
-def write_filelist(dst: Path, top: str, tool: str = "vitis") -> None:
+def write_filelist(dst: Path, top: str) -> None:
     """rtl/<tier>/<kernel>/<point>/filelist.f: the top module on a '# top:' line, then the
     Verilog files relative to the folder, the top's own file last."""
     files = sorted(f.name for f in dst.iterdir() if f.suffix in (".v", ".sv"))
     if f"{top}.v" in files:
         files.remove(f"{top}.v")
         files.append(f"{top}.v")
-    if tool == "bambu":
-        top = bambu_top_module([dst / f for f in files]) or top
-        rams = bambu_rams([dst / f for f in files])
-        (dst / "filelist.f").write_text(
-            "# Generated by bench/bench.py: one bench point's Bambu Verilog for synthesis (syn/syn.py).\n"
-            "# Paths are relative to this folder. A '# ram:' line names a memory module Bambu\n"
-            "# instantiated; syn.py parks such a point until a RAM macro replaces it.\n"
-            f"# top: {top}\n" + "".join(f"# ram: {r}\n" for r in rams) + "".join(f + "\n" for f in files))
-        return
     rams = [f for f in files if RTL_RAM.search(f)]
     (dst / "filelist.f").write_text(
         "# Generated by bench/bench.py: one bench point's Vitis Verilog for synthesis (syn/syn.py).\n"
@@ -675,9 +399,7 @@ def write_filelist(dst: Path, top: str, tool: str = "vitis") -> None:
         f"# top: {top}\n" + "".join(f"# ram: {f}\n" for f in rams) + "".join(f + "\n" for f in files))
 
 
-# Bambu's header comment carries the date (Code created using PandA ...) and the command with
-# its paths and size flags (Bambu executed with: ...); the comparison skips both lines.
-RTL_IGNORE = re.compile(r"CORE_GENERATION_INFO|Code created using PandA|Bambu executed with")
+RTL_IGNORE = re.compile(r"CORE_GENERATION_INFO")
 # Vitis numbers its nets and instances (add_ln9_fu_126_p2, add_ln9_reg_232, ..._U1). Between
 # runs of the same circuit the numbers can shift, or the base names change at the same numbers
 # (x_1_fu_190 -> add_ln13_1_fu_190) with the assigns reordered by name. The second comparison
@@ -706,25 +428,19 @@ def _normalized(f: Path, mode: int = 0) -> list[str]:
     return lines
 
 
-def _copy_rtl(files: dict[str, Path], dst: Path, top: str, size_tag: str, tool: str = "vitis") -> None:
+def _copy_rtl(files: dict[str, Path], dst: Path, top: str, size_tag: str) -> None:
     if dst.exists():
         shutil.rmtree(dst)
     dst.mkdir(parents=True)
     for name, f in files.items():
         shutil.copy2(f, dst / name)
-    write_filelist(dst, top, tool)
-    if tool == "bambu":
-        (dst / "sizes.txt").write_text("# Sizes whose Bambu run gave this Verilog (bench/bench.py), Bambu's header comment\n"
-                                       "# (date, command) aside.\n"
-                                       f"{size_tag}\n")
-        return
+    write_filelist(dst, top)
     (dst / "sizes.txt").write_text("# Sizes whose Vitis run gave this Verilog (bench/bench.py); '(renamed ids)': the same\n"
                                    "# once Vitis's numbered net names are masked.\n"
                                    f"{size_tag}\n")
 
 
-def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: str,
-             tool: str = "vitis") -> tuple[str, str]:
+def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: str) -> tuple[str, str]:
     """Put a point's Verilog under rtl/<tier>/<kernel>/<name>/ (name: <case>_w<W>[_c<clock>]).
 
     The first size to arrive is the reference ("ref"). A later size whose Verilog is the
@@ -732,18 +448,13 @@ def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: st
     one that is the same once Vitis's numbered ids are masked ("renamed"); one that
     differs gets its own folder, named after its project, and "no: <files>".
     Returns (folder relative to the repo, rtl_same)."""
-    if tool == "bambu":
-        files = bambu_verilog(kdir / proj)  # the point's folder; HLS_output/ is simulation
-        if not files:
-            return "", ""
-    else:
-        vdir = kdir / proj / "sol" / "syn" / "verilog"
-        if not vdir.is_dir():
-            return "", ""
-        files = _rtl_files(vdir)
+    vdir = kdir / proj / "sol" / "syn" / "verilog"
+    if not vdir.is_dir():
+        return "", ""
+    files = _rtl_files(vdir)
     dst = RTL / tier / kdir.name / name
     if not (dst / "filelist.f").is_file():
-        _copy_rtl(files, dst, top, size_tag, tool)
+        _copy_rtl(files, dst, top, size_tag)
         return str(dst.relative_to(ROOT)), "ref"
     ref = _rtl_files(dst)
 
@@ -760,7 +471,7 @@ def dump_rtl(kdir: Path, proj: str, tier: str, top: str, name: str, size_tag: st
             (dst / "sizes.txt").write_text("\n".join(sizes + [entry]) + "\n")
         return str(dst.relative_to(ROOT)), same
     alt = RTL / tier / kdir.name / proj.removesuffix("_proj")
-    _copy_rtl(files, alt, top, size_tag, tool)
+    _copy_rtl(files, alt, top, size_tag)
     return str(alt.relative_to(ROOT)), "no: " + ", ".join(differs[:6]) + (" ..." if len(differs) > 6 else "")
 
 
@@ -779,8 +490,7 @@ def place_rtl(rows: list[dict], metas: dict) -> None:
     for r in sorted(rows, key=lambda r: size_count(r["size"])):
         meta = metas[r["proj"]]
         kdir, proj = ROOT / Path(r["proj"]).parent, Path(r["proj"]).name
-        r["rtl"], r["rtl_same"] = dump_rtl(kdir, proj, meta["tier"], meta["top"], meta["rtl_name"], r["size"],
-                                           meta.get("tool", "vitis"))
+        r["rtl"], r["rtl_same"] = dump_rtl(kdir, proj, meta["tier"], meta["top"], meta["rtl_name"], r["size"])
 
 
 def read_point(kdir: Path, proj: str) -> dict | None:
@@ -789,8 +499,6 @@ def read_point(kdir: Path, proj: str) -> dict | None:
     if not pj.is_file():
         return None
     meta = json.loads(pj.read_text())
-    if meta.get("tool") == "bambu":
-        return read_bambu_point(kdir, proj, meta)
     sol = kdir / proj / "sol"
     row = {k: "" for k in COLUMNS}
     row.update({k: meta[k] for k in ("tier", "kernel", "case", "dtype", "size", "W", "clock_ns", "date", "git")})
@@ -896,8 +604,7 @@ def write_reports(tiers: set[str]) -> None:
                "Generated by hls-exercises' `bench/bench.py` from `hls_cycles.csv` and `hls_loops.csv` in this folder. "
                "Do not edit; rerun `python3 bench/bench.py report`.", "",
                "- **cycles**: cosim latency (RTL simulation, Verilog), or the csynth estimate (marked `est`) "
-               "when cosim did not run. Bambu cases (`bambu_*`): Bambu's `Total cycles` of its Verilator "
-               "co-simulation; they have no csynth estimate, loop table, DSP or BRAM figures.",
+               "when cosim did not run.",
                "- **cyc/elem**: cycles divided by the elements the size names (n, or m x n).",
                "- **overhead**: cycles minus the beats, elements / W: what a run costs beyond one beat per cycle. "
                "Compare it with forge's counter minus its beats.",
@@ -991,8 +698,6 @@ def cmd_list(args) -> int:
 
 
 def run_point(pt: dict, args, vitis: str) -> dict | None:
-    if pt["tool"] == "bambu":
-        return run_bambu_point(pt, args)
     kdir, proj = pt["kdir"], pt["proj"]
     env = point_env(pt, not args.no_csim, not args.no_cosim)
     missing = missing_inputs(pt, env)
@@ -1041,14 +746,8 @@ def cmd_run(args) -> int:
     pts = [pt for kdir, params in load_kernels(args.tier, args.kernel) for pt in points(kdir, params, args)]
     if not pts:
         sys.exit("no run points match (bench.py list shows them)")
-    if not args.dry_run and any(pt["tool"] == "vitis" for pt in pts) and shutil.which(vitis) is None:
+    if not args.dry_run and shutil.which(vitis) is None:
         sys.exit(f"'{vitis}' not found: source Vitis's settings64.sh or set VITIS_HLS")
-    if not args.dry_run and any(pt["tool"] == "bambu" for pt in pts):
-        image = os.environ.get("BAMBU_IMAGE", "localhost/hls-exercises-bambu:4")
-        if subprocess.run(["podman", "image", "exists", image], check=False).returncode != 0:
-            sys.exit(f"podman image {image} not found: build it from container/bambu/ (README.md)")
-        if not (ROOT / "tools" / "bin" / "bambu").is_file():
-            sys.exit("tools/bin/bambu not found: run `pixi run get-bambu`")
     with ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         results = list(pool.map(lambda p: run_point(p, args, vitis), pts))
     if args.dry_run:
@@ -1135,7 +834,7 @@ def main() -> int:
         if name == "run":
             p.add_argument("--no-csim", action="store_true")
             p.add_argument("--no-cosim", action="store_true")
-            p.add_argument("-j", "--jobs", type=int, default=1, help="Vitis or Bambu runs in parallel")
+            p.add_argument("-j", "--jobs", type=int, default=1, help="Vitis runs in parallel")
             p.add_argument("--dry-run", action="store_true", help="print the commands, run nothing")
     args = ap.parse_args()
     return {"list": cmd_list, "run": cmd_run, "collect": cmd_collect, "check": cmd_check,
