@@ -78,3 +78,14 @@ $$\text{beats} = \frac{N}{W}, \qquad \text{overhead} = \text{cycles} - \text{bea
 ## 7. Working rules
 
 Claude writes and checks the code in its sandbox (Icarus Verilog on Verilog already in `rtl/`) and pushes it once Ryan says so; Claude Code runs on the MICAS server for what needs it (the Bambu container, Questa, the recorded results), in this repo only. Every Claude Code prompt starts with `git pull` and a clean (`rm -rf build`), uses `-j$(nproc)` for Bambu and sets `--sim-jobs` from the free Questa licences. Commits are one short line with no co-author trailer, pushed to main. Markdown has no hard wrapping. Failures are kept as rows with a status and a reason.
+
+## 8. BAM3: probes beyond the `bambu` case
+
+The `bambu` case gives 3 to 4 cycles per beat because Bambu 2024.10 cannot pipeline loops: its scheduler has no loop pipelining, only function pipelining (`--pipelining`). Bambu 2026.11 (tagged 4 Nov 2026) pipelines innermost single-basic-block loops by itself, with no pragma (`isPipelinable()`: innermost and one block; the log says `II=<n> solution found for loop (BB<k>)`). BAM3 checks whether the comparison should use more of Bambu than the `bambu` case, before any Bambu synthesis. Probe code goes once the findings are in `notes/bambu_probe.md`.
+
+| Probe | Bambu | What | Points |
+|---|---|---|---|
+| A | 2024.10 (installed) | `bench/bambu_probe.py`: the `bambu` case plus `#pragma HLS unroll factor=U` on BEAT (U = 2, 4, 8), `--speculative-sdc-scheduling`, `--experimental-setup=BAMBU-PERFORMANCE-MP`, and two combinations | vecadd, dot at W = 1, 8, 32, both sizes, both runs |
+| B | 2026.11, built from its tag in its own container | The `bambu` case unchanged, to see which loops pipeline and at what II | Probe A's points plus relu and rowsum |
+
+For BEAT unrolled U times, the W = 1 points suggest about $(U + 2) / U$ cycles per beat (a hypothesis A checks). The reductions write their result under an `if`, so their BEAT is likely more than one basic block and may not pipeline in 2026.11 either. 2026.11 replaces 2024.10 only if every kernel passes both runs.
