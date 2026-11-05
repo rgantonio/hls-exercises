@@ -67,13 +67,13 @@ $$\text{beats} = \frac{N}{W}, \qquad \text{overhead} = \text{cycles} - \text{bea
 | axpy | x, y → y_out | `loop_count`, `alpha` | elementwise |
 | rowsum | A → y | `loop_count` (m·n / W), `len` (n / W) | reduction per row; W must divide n |
 
-| Round | Where | What |
-|---|---|---|
-| R0 | sandbox, then server | `tb/` and `bench/bambu.py`. Sandbox (done): the 48 tier-done points on BAM1's `bambu_opt` Verilog in Icarus, all pass in both runs. Server: Bambu RTL-only build of vecadd W = 8, compared with BAM1's `bambu_opt_w8` Verilog, then both runs in Questa |
-| R1 | server | Tier done (48 points): Bambu builds and Questa runs; W = 32 included |
-| R2 | server | Questa on the W = 32 points' BAM1 co-simulation folder, only if R1 leaves the cause of BAM1's W = 32 failures unclear |
-| R3 | server | Untiered (47 points): matadd, relu, axpy, rowsum |
-| R4 | sandbox | Clean-up: Bambu out of `bench/bench.py` and the `bambu_*` cases out of params.json; `rtl/*/*/bambu_opt*`, `bambu_unopt*` and the Bambu rows of `results_staging/hls_cycles.csv` and `report_done.md` removed (a line in `notes/bambu.md` names the last commit with them); `notes/bambu.md`, `docs/HLS_VS_FORGE.md` section 3B and the README updated |
+| Round | Where | What | Outcome |
+|---|---|---|---|
+| R0 | sandbox, then server | `tb/` and `bench/bambu.py`. Sandbox (done): the 48 tier-done points on BAM1's `bambu_opt` Verilog in Icarus, all pass in both runs. Server: Bambu RTL-only build of vecadd W = 8, compared with BAM1's `bambu_opt_w8` Verilog, then both runs in Questa | Done (97c21ce): passes; Verilog equals BAM1's apart from a `SIMPLEJOIN_FU` operand order |
+| R1 | server | Tier done (48 points): Bambu builds and Questa runs; W = 32 included | Done (3aac8c8): 48 of 48, W = 32 included |
+| R2 | server | Questa on the W = 32 points' BAM1 co-simulation folder, only if R1 leaves the cause of BAM1's W = 32 failures unclear | Skipped: R1 passed W = 32, so the failures were Bambu's co-simulation |
+| R3 | server | Untiered (47 points): matadd, relu, axpy, rowsum | Done (28be6ef): 47 of 47 |
+| R4 | sandbox | Clean-up: Bambu out of `bench/bench.py` and the `bambu_*` cases out of params.json; `rtl/*/*/bambu_opt*`, `bambu_unopt*` and the Bambu rows of `results_staging/hls_cycles.csv` and `report_done.md` removed (a line in `notes/bambu.md` names the last commit with them); `notes/bambu.md`, `docs/HLS_VS_FORGE.md` section 3B and the README updated | Done; `hls_cycles.csv`, `hls_loops.csv` and `report_done.md` in `results_staging/` held only BAM1's Bambu rows, so the files went |
 
 ## 7. Working rules
 

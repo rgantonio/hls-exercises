@@ -61,14 +61,16 @@ python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower 
 
 `make bench ARGS="run --kernel vecadd"` does the same through make.
 
-### 2b. Run the Bambu cases (podman, no licences)
+### 2b. Run Bambu (podman for Bambu, Questa for the testbenches)
 
-The cases `bambu_unopt` and `bambu_opt` (tier done) run Bambu 2024.10 with an ASIC target (nangate45, 10 ns) in a podman container. Setup, the commands (bench and by hand), results and limitations: `notes/bambu.md`. In short:
+`bench/bambu.py` builds every kernel with Bambu 2024.10 (ASIC target, nangate45, 10 ns, case `bambu`) in a podman container, and simulates the Verilog with the testbenches in `tb/` in Questa on the host. Setup, commands, results and differences: `notes/bambu.md`; plan: `docs/BAMBU_PLAN.md`. In short:
 
 ```bash
-pixi install && pixi run get-bambu && podman build -t hls-exercises-bambu:4 container/bambu
-HLS_RESULTS=$PWD/results_staging python3 bench/bench.py run --tier done --case bambu_unopt bambu_opt -j$(nproc)
+pixi install && pixi run get-bambu && podman build -t hls-exercises-bambu:4 container/bambu   # once
+pixi run python bench/bambu.py run -j$(nproc) --sim questa --sim-jobs <free Questa licences>
 ```
+
+It writes `results_staging/bambu_cycles.csv`, `results_staging/report_bambu_<tier>.md` and `rtl/<tier>/<kernel>/bambu_w<W>/`.
 
 ### 3. Read the results
 
