@@ -15,7 +15,6 @@
   "cflags": ["-std=c++14", "-DHLSLIB_SYNTHESIS", "-DAP_INT_MAX_W=4096", "-I{bench}/include", "-I{bench}/gen/dace_include"],
   "tb": "src/tb_axpy.cpp",
   "cases": {
-    "unopt": {"top": "axpy", "src": ["src/axpy.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "opt": {"top": "axpy", "src": ["src/axpy.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "dace": {
       "top": "axpy_dace",

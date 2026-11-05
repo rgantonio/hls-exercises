@@ -68,10 +68,13 @@ CSV_PATH = RESULTS / "hls_cycles.csv"
 LOOPS_PATH = RESULTS / "hls_loops.csv"
 FORGE_PATH = RESULTS / "forge_cycles.csv"
 
-CASES = ("unopt", "opt", "dace")
+# HSYN1 (snax-forge-experiments X38): unopt is retired, and Vitis builds W <= MAX_W only
+# (at most 16 64-bit channels per stream). params.json keeps W = 1 to 32 for bench/bambu.py.
+CASES = ("opt", "dace")
+MAX_W = 16
 CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "int8_t",
           "float32": "float", "float64": "double"}
-DEFAULT_CLOCK = "3.33"
+DEFAULT_CLOCK = "10"   # every HLS tool schedules at 10 ns (HSYN1); 3.33 ns until cbc2541
 
 COLUMNS = [
     "tier", "kernel", "case", "iface", "dtype", "size", "W", "config", "clock_ns",
@@ -175,6 +178,7 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
             continue
         clocks = args.clock or [str(params.get("clock_ns", DEFAULT_CLOCK))]
         ws = cfg.get("W", params.get("W", [1])) if cfg.get("per_w", False) else [None]
+        ws = [w for w in ws if w is None or w <= MAX_W]
         for size, w, clock in itertools.product(params["sizes"], ws, clocks):
             tag = size_tag(size)
             if args.size and tag not in args.size:
@@ -608,7 +612,6 @@ def write_reports(tiers: set[str]) -> None:
                "- **cyc/elem**: cycles divided by the elements the size names (n, or m x n).",
                "- **overhead**: cycles minus the beats, elements / W: what a run costs beyond one beat per cycle. "
                "Compare it with forge's counter minus its beats.",
-               "- **vs unopt**: the unopt cycles at the same size, W and clock divided by this row's.",
                "- **II**: the top's interval from csynth. The loop table below has each loop's II.",
                "- **HLS clock**: the period Vitis scheduled for. It sets how deep the pipelines are; it is not "
                "a timing result. Timing comes from ASIC synthesis (snax-forge-experiments' `syn/`).",
@@ -632,28 +635,25 @@ def write_reports(tiers: set[str]) -> None:
                 e = _int(r.get("lat_max"))
                 return e, (f"{e} est" if e is not None else "-")
 
-            base = {(r["size"], r["W"], r["clock_ns"]): cycles(r)[0] for r in krows if r["case"] == "unopt"}
             table = []
             for r in krows:
                 c, ctext = cycles(r)
-                b = base.get((r["size"], r["W"], r["clock_ns"]))
                 elems = size_count(r["size"])
                 beats = elems // max(1, _int(r["W"]) or 1)
                 per = f"{c / elems:.2f}" if c else "-"
                 over = str(c - beats) if c else "-"
-                vs = f"{b / c:.1f}x" if b and c else "-"
                 ok = r["status"] if r["status"] == "ok" else f"**{r['status']}**"
                 port = r["portable"] if r["portable"] in ("yes", "") else f"**{r['portable']}**"
                 same = (r.get("rtl_same") or "-")
                 same = same if same in ("ref", "yes", "renamed", "-") else f"**{same}**"
                 rtl = Path(r["rtl"]).name if r.get("rtl") else "-"
                 table.append([r["case"], r["size"], r["W"] or "-", r.get("config") or "-", r["clock_ns"], ok, ctext,
-                              per, over, vs, f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["DSP"], r["BRAM_18K"],
+                              per, over, f"{r['lat_min']}-{r['lat_max']}", r["ii_max"], r["DSP"], r["BRAM_18K"],
                               port, f"{rtl} ({same})"])
             ifaces = sorted({r.get("iface") or "ap_memory" for r in krows})
             out += [f"## {kernel}", "", f"Interface: {', '.join(ifaces)}.", ""]
             out += md_table(["case", "size", "W", "config", "HLS clock ns", "status", "cycles", "cyc/elem",
-                             "overhead", "vs unopt", "est. latency", "II", "DSP", "BRAM", "portable", "RTL"], table)
+                             "overhead", "est. latency", "II", "DSP", "BRAM", "portable", "RTL"], table)
             failed = [r for r in krows if r.get("fail_reason")]
             if failed:
                 out += ["Failed points:", ""]
@@ -830,7 +830,7 @@ def main() -> int:
             p.add_argument("--case", nargs="+", choices=CASES)
             p.add_argument("--size", nargs="+", help="size tags, e.g. n64 m38_n42")
             p.add_argument("--w", nargs="+", type=int, help="lane counts (cases with per_w)")
-            p.add_argument("--clock", nargs="+", help="clock periods in ns (default: params or 3.33)")
+            p.add_argument("--clock", nargs="+", help="clock periods in ns (default: params or 10)")
         if name == "run":
             p.add_argument("--no-csim", action="store_true")
             p.add_argument("--no-cosim", action="store_true")

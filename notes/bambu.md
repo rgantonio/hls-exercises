@@ -93,8 +93,8 @@ Each with where it was found.
 
 ## Open
 
-- Synthesis and power of the 85 passing points in snax-forge-experiments, from `rtl/<tier>/<kernel>/bambu_w<W>/filelist.f` (two Verilog files, top from `# top:`, no memories).
+- Synthesis and power in snax-forge-experiments (HSYN1: the 40 points up to W = 16, all passing; W = 32 is outside its comparison), from `rtl/<tier>/<kernel>/bambu_w<W>/filelist.f` (two Verilog files, top from `# top:`, no memories).
 - Merging `results_staging/bambu_cycles.csv` into snax-forge-experiments' `results/hls/` next to Vitis's and XLS's rows.
 - Fault 2 upstream: the reproducer is ready if it is to be reported (ferrandi/PandA-bambu), or rechecked on a later Bambu release.
-- Vitis: the five elementwise sources changed (`= 0` on the output beat); expected to give the same Verilog, to be confirmed in Vitis's next rerun (the planned 10 ns one). Whether Vitis's `unopt` stays in the comparison.
+- Vitis: settled in HSYN1 (snax-forge-experiments, 5 Nov 2026). Its R0 found that the `= 0` change leaves Vitis's `opt` Verilog unchanged (relu: one wire renamed), and Vitis's `unopt` case is retired; the Vitis points are rebuilt at 10 ns, W = 1 to 16.
 - Tier A, if Bambu is kept for it.

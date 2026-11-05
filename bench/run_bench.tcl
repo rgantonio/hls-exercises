@@ -4,7 +4,7 @@
 # in the environment, so this file never changes per kernel.
 #
 # Manual use (from a kernel folder, e.g. bench/tier_done/vecadd):
-#   python3 ../../bench.py run --kernel vecadd --case unopt --dry-run
+#   python3 ../../bench.py run --kernel vecadd --case opt --dry-run
 # prints the exact environment and command for each point.
 #
 # Environment (all set by bench.py):

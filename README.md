@@ -3,7 +3,7 @@
 Two things live here:
 
 - **Exercises** (`exercises/`): self-learning steps on how Vitis HLS works and what its optimizations do. [`exercises/README.md`](exercises/README.md) lists them and says how to run them.
-- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as unoptimized HLS, optimized HLS and DaCe-generated HLS, all with axis (valid-ready) ports as SNAX's units have. Their cycle counts are summarised in `snax-forge-experiments/results/hls/`, and the generated Verilog is kept in `rtl/` for synthesis. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md), the sizes in [`docs/SIZES.md`](docs/SIZES.md) and the lane sweep in [`notes/w_sweep.md`](notes/w_sweep.md).
+- **Bench** (`bench/`): the HLS side of a comparison with [snax-forge](https://github.com/KULeuven-MICAS/snax-forge). The kernels forge builds accelerators for are written here as optimized HLS (`opt`) and DaCe-generated HLS (`dace`) for Vitis, at a 10 ns HLS clock and W = 1 to 16, next to Bambu's points (`bambu`), all with axis (valid-ready) ports as SNAX's units have. Their cycle counts are summarised in `snax-forge-experiments/results/hls/`, and the generated Verilog is kept in `rtl/` for synthesis. The plan and the conventions are in [`docs/HLS_VS_FORGE.md`](docs/HLS_VS_FORGE.md), the sizes in [`docs/SIZES.md`](docs/SIZES.md) and the lane sweep in [`notes/w_sweep.md`](notes/w_sweep.md).
 
 Tool: Vitis HLS 2023.2.2 on `xcku5p-ffvb676-2-e` (`notes/env.md`). Run everything from the repo root unless a section says otherwise.
 
@@ -52,8 +52,8 @@ Both take `--tier T` instead of `--kernel K` for a whole tier.
 
 ```bash
 python3 bench/bench.py list                                          # every kernel and run point
-python3 bench/bench.py run --kernel vecadd --case unopt --dry-run    # print the commands only
-python3 bench/bench.py run --kernel vecadd --case unopt              # one case
+python3 bench/bench.py run --kernel vecadd --case opt --dry-run      # print the commands only
+python3 bench/bench.py run --kernel vecadd --case opt                # one case
 python3 bench/bench.py run --kernel vecadd                           # every case, size and W
 python3 bench/bench.py run --tier done -j$(nproc)                    # a whole tier, one Vitis run per core
 python3 bench/bench.py run --tier done --case opt --w 4 --no-cosim   # narrower and faster
@@ -81,7 +81,7 @@ A run writes three files in `snax-forge-experiments/results/hls/` and puts the g
 |---|---|
 | `hls_cycles.csv` | One row per run point: csynth estimate, cosim (RTL) cycles, csim and cosim status, portability check |
 | `hls_loops.csv` | One row per loop per point: trips, iteration latency, II achieved and target |
-| `report_<tier>.md` | Per kernel, the points side by side with cycles per element, overhead beyond one beat per cycle, timing and the ratio to `unopt`, then the loops |
+| `report_<tier>.md` | Per kernel, the points side by side with cycles per element, overhead beyond one beat per cycle and timing, then the loops |
 | `rtl/.../*.v` | Vitis's Verilog per hardware point, with `filelist.f` and `sizes.txt`, the input to synthesis |
 | `<tech>/synth_dc.csv` | Written by snax-forge-experiments' `syn/syn.py`, one per technology (`nangate45`, `nangate15`): area, timing and power per hardware point; `<tech>/synth_dc_modules.csv` and `<tech>/reports/` next to it |
 | `runs/<date>_<tier>.md` | Claude Code's note of a bench run: commands, versions, failures with their log lines |
