@@ -89,3 +89,9 @@ The `bambu` case gives 3 to 4 cycles per beat because Bambu 2024.10 cannot pipel
 | B | 2026.11, built from its tag in its own container | The `bambu` case unchanged, to see which loops pipeline and at what II | Probe A's points plus relu and rowsum |
 
 For BEAT unrolled U times, the W = 1 points suggest about $(U + 2) / U$ cycles per beat (a hypothesis A checks). The reductions write their result under an `if`, so their BEAT is likely more than one basic block and may not pipeline in 2026.11 either. 2026.11 replaces 2024.10 only if every kernel passes both runs.
+
+### BAM3 outcome and decision (5 Nov 2026)
+
+Probe A (`results_staging/runs/2026-11-05_bambu_probe_a.md`): on 2024.10 only a BEAT unroll factor helps (vecadd to about 1.2 cycles per beat at U = 8, for 1.6 to 6.5 times the register bits; dot stays at 2 to 3); the scheduling flags change nothing. Probe B (`_probe_b.md`, `_probe_b2.md`): 2026.11 pipelines the BEAT loop of every kernel, reductions included, at II = 1 (dot W = 8: II = 2), about 1 cycle per beat with fewer register bits than 2024.10. Two faults in the elementwise kernels' outputs: (1) the output beat was declared uninitialized and `set_lane` (ac_int `set_slc`) reads a slice's end words, so the result was indeterminate; fixed in the five kernel sources (`= 0`), which Vitis shares; (2) a Bambu 2026.11 bug: wrong low words in lanes 26 to 30 when a beat wider than 24 lanes is computed (W = 32), with or without loop pipelining, reproduced in one beat of vecadd at 28 lanes (`_probe_b2.md`). Fault 2 is recorded, not pursued.
+
+Decision: the `bambu` case moves to Bambu 2026.11 (`BAMBU_BIN`, default `bambu-2026.11`, built for generic x86-64), and both tiers are rerun on it (round BAM3 R1). Points hit by fault 2 stay as failed rows with their reason. 2024.10's results remain in git history (up to commit 3a6c189) as the reference for the old flow.

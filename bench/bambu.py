@@ -6,7 +6,8 @@ For every kernel in bench/tier_<tier>/<kernel>/ (its params.json and src/<kernel
   1. build/<tier>/<kernel>/w<W>/<kernel>.cpp   a copy of the source with only #pragma lines added:
      `#pragma HLS interface port=<p> mode=axis` above `void <kernel>(` for every axis port, and
      `#pragma HLS unroll` on the line after the `LANE:` label (case `bambu`)
-  2. Bambu 2024.10 in its container (bench/tools/in_bambu.sh), RTL only, at the largest size
+  2. Bambu (BAMBU_BIN, default bambu-2026.11; `bambu` is 2024.10) in its container
+     (bench/tools/in_bambu.sh), RTL only, at the largest size
      the point runs (the C arrays need a depth; the run's length is the loop_count pin)
   3. rtl/<tier>/<kernel>/bambu_w<W>/            the Verilog, filelist.f (# top:), sizes.txt, cmd.txt
 
@@ -52,13 +53,19 @@ IN_BAMBU = BENCH / "tools" / "in_bambu.sh"
 BAMBU_INCLUDE = BENCH / "include" / "bambu"
 IMAGE = os.environ.get("BAMBU_IMAGE", "localhost/hls-exercises-bambu:4")
 CASE = "bambu"
+# The Bambu command inside the container: bambu-2026.11 (bench/tools/build_bambu_2611.sh, BAM3), or
+# bambu for 2024.10 (bench/tools/get_bambu.sh, BAM1/BAM2).
+BAMBU_BIN = os.environ.get("BAMBU_BIN", "bambu-2026.11")
+# 2026.11's loop pipelining lines: II per loop, "not possible", iteration latency.
+LP = re.compile(r"II=(\d+) solution found for loop \(BB(\d+)\)|Loop pipelining not possible for loop \(BB(\d+)\)"
+                r"|Iteration latency for function \S+:BB(\d+) = (\d+)")
 CLOCK_NS = 10
 DEVICE = "nangate45"
 TIMEOUT_S = 15 * 60
 CTYPES = {"int64": "int64_t", "int32": "int32_t", "int16": "int16_t", "int8": "int8_t"}
 
 COLUMNS = ["tier", "kernel", "case", "size", "W", "clock_ns", "tool", "config", "status", "fail_reason",
-           "cycles", "cycles_done", "beats", "overhead", "latency", "stall_run", "portable", "fsm_states",
+           "cycles", "cycles_done", "beats", "overhead", "latency", "stall_run", "portable", "fsm_states", "loop_ii",
            "device", "bambu_version", "rtl", "git", "date"]
 KEY = ["tier", "kernel", "case", "size", "W", "clock_ns"]
 CSV = RESULTS / "bambu_cycles.csv"
@@ -223,7 +230,7 @@ def bambu_cmd(kdir: Path, params: dict, w: int) -> list[str]:
     # The lanes as BAMBU_LANES, never W: bench/include/bambu/lanes.h says why.
     flags += [f"-DBAMBU_LANES={w}", "--std=c++14", f"-I{BAMBU_INCLUDE}", f"-I{kdir.resolve() / 'src'}",
               f"-I{kdir.resolve() / 'vectors' / size_tag(size)}"]
-    return [str(IN_BAMBU), "bambu", f"{k}.cpp", f"--top-fname={k}", f"--device-name={DEVICE}",
+    return [str(IN_BAMBU), BAMBU_BIN, f"{k}.cpp", f"--top-fname={k}", f"--device-name={DEVICE}",
             f"--clock-period={CLOCK_NS}", "--compiler=I386_CLANG16", "--generate-interface=INFER"] + flags
 
 
@@ -249,6 +256,19 @@ def top_module(files: list[Path]) -> str:
 def portable(files: list[Path]) -> str:
     hits = {f"{what} in {f.name}" for f in files for pat, what in NOT_PORTABLE if pat.search(f.read_text(errors="replace"))}
     return "yes" if not hits else "no: " + "; ".join(sorted(hits))
+
+
+def loop_pipelining(log: str) -> str:
+    """2026.11's loop pipelining, e.g. "BB2 II=1 lat=2" or "BB5 not possible"; "" when the log has none."""
+    bbs: dict[str, str] = {}
+    for m in LP.finditer(log):
+        if m.group(1):
+            bbs[m.group(2)] = f"II={m.group(1)}" + bbs.get(m.group(2), "")
+        elif m.group(3):
+            bbs[m.group(3)] = "not possible"
+        else:
+            bbs[m.group(4)] = bbs.get(m.group(4), "") + f" lat={m.group(5)}"
+    return "; ".join(f"BB{b} {v.strip()}" for b, v in sorted(bbs.items(), key=lambda x: int(x[0])))
 
 
 def fail_reason_compile(log: str, w: int) -> str:
@@ -279,7 +299,7 @@ def build_point(kdir: Path, params: dict, w: int, dry: bool) -> dict:
     cname = container_name(params, w)
     rc = run_cmd(cmd, b, log, TIMEOUT_S, dict(os.environ, BAMBU_CONTAINER_NAME=cname))
     out = log.read_text(errors="replace")
-    meta = {"fsm_states": " ".join(re.findall(r"Number of states:\s*(\d+)", out))}
+    meta = {"fsm_states": " ".join(re.findall(r"Number of states:\s*(\d+)", out)), "loop_ii": loop_pipelining(out)}
     m = re.search(r"Version: (PandA \S+) - Revision (\w+)", out)
     meta["bambu_version"] = f"{m.group(1)} rev {m.group(2)[:8]}" if m else ""
     if rc is None:
@@ -289,6 +309,7 @@ def build_point(kdir: Path, params: dict, w: int, dry: bool) -> dict:
     if rc != 0 or not files:
         return {"status": "failed: compile", "fail_reason": fail_reason_compile(out, w), **meta}
     lines = [f"# Bambu {meta['bambu_version']}; FSM states: {meta['fsm_states']}",
+             f"# loop pipelining: {meta['loop_ii'] or 'none'}",
              f"# built at {size_tag(build_size(params, w))}; {k}.cpp is {kdir.relative_to(ROOT)}/src/{k}.cpp with:"]
     lines += [f"#   {a}" for a in added]
     lines.append(shlex.join(["bench/tools/in_bambu.sh"] + cmd[1:]).replace(str(ROOT) + "/", ""))
@@ -331,6 +352,9 @@ def read_rtl(params: dict, w: int) -> dict:
     m = re.search(r"^# Bambu (.*?); FSM states: (.*)$", cmdtxt, re.M)
     if m:
         out.update(bambu_version=m.group(1), fsm_states=m.group(2))
+    m = re.search(r"^# loop pipelining: (.*)$", cmdtxt, re.M)
+    if m and m.group(1) != "none":
+        out["loop_ii"] = m.group(1)
     return out
 
 
@@ -396,7 +420,7 @@ def make_row(kdir: Path, params: dict, w: int, size: dict, build: dict, cyc: dic
     row = {"tier": params["tier"], "kernel": params["kernel"], "case": CASE, "size": size_tag(size), "W": w,
            "clock_ns": CLOCK_NS, "tool": "bambu", "config": " ".join(f"{n}={v}" for n, v in p.items()),
            "beats": elems(size) // w, "device": DEVICE, **meta}
-    row.update({k: build.get(k, "") for k in ("fsm_states", "bambu_version", "portable", "rtl")})
+    row.update({k: build.get(k, "") for k in ("fsm_states", "loop_ii", "bambu_version", "portable", "rtl")})
     if build["status"] != "ok":
         row.update(status=build["status"], fail_reason=build.get("fail_reason", ""))
         return row
@@ -442,7 +466,7 @@ def write_reports() -> list[Path]:
     for tier in sorted({r["tier"] for r in rows}, key=lambda t: {"done": 0, "untiered": 1}.get(t, 9)):
         trows = [r for r in rows if r["tier"] == tier]
         lines = [f"# Bambu, tier {tier}", "",
-                 f"Written by `bench/bambu.py` from `results_staging/bambu_cycles.csv`. Case `{CASE}`: Bambu's default "
+                 f"Written by `bench/bambu.py` from `results_staging/bambu_cycles.csv`. Case `{CASE}` on `{BAMBU_BIN}`: Bambu's default "
                  f"setup plus `#pragma HLS unroll` on LANE, `--device-name={DEVICE}`, {CLOCK_NS} ns. Cycles from the "
                  "start pulse to the last output beat (or result), every stream without stalls; cycles per beat in "
                  "brackets. `cycles_done` (start to `done_port`) is in the second table. A failed point shows its status.",
@@ -463,15 +487,15 @@ def write_reports() -> list[Path]:
                     else:
                         cells.append(f"{r['cycles']} ({int(r['cycles']) / int(r['beats']):.2f})")
                 lines.append(f"| {s} | " + " | ".join(cells) + " |")
-            lines += ["", f"| W | FSM states | cycles_done ({' / '.join(sizes)}) | latency ({' / '.join(sizes)}) | portable |",
-                      "|---|---|---|---|---|"]
+            lines += ["", f"| W | FSM states | loop pipelining | cycles_done ({' / '.join(sizes)}) | latency ({' / '.join(sizes)}) | portable |",
+                      "|---|---|---|---|---|---|"]
             for w in ws:
                 r = next((r for r in krows if int(r["W"]) == w), None)
                 if r is None:
                     continue
                 pick = lambda f: " / ".join(next((x[f] or "-" for x in krows if x["size"] == s and int(x["W"]) == w), "-")
                                             for s in sizes)
-                lines.append(f"| {w} | {r['fsm_states'] or '-'} | {pick('cycles_done')} | {pick('latency')} | {r['portable'] or '-'} |")
+                lines.append(f"| {w} | {r['fsm_states'] or '-'} | {r['loop_ii'] or '-'} | {pick('cycles_done')} | {pick('latency')} | {r['portable'] or '-'} |")
             lines.append("")
         p = RESULTS / f"report_bambu_{tier}.md"
         p.write_text("\n".join(lines))
@@ -500,8 +524,8 @@ def cmd_run(args) -> None:
                     sim_point(kdir, params, w, s, stall, args.sim, True)
         return
     if not args.sim_only:
-        if not (ROOT / "tools" / "bin" / "bambu").is_file():
-            sys.exit("tools/bin/bambu not found: run `pixi run get-bambu`")
+        if not (ROOT / "tools" / "bin" / BAMBU_BIN).is_file():
+            sys.exit(f"tools/bin/{BAMBU_BIN} not found: run bench/tools/build_bambu_2611.sh (2026.11) or `pixi run get-bambu` (2024.10)")
         if subprocess.run(["podman", "image", "exists", IMAGE]).returncode != 0:
             sys.exit(f"podman image {IMAGE} not found: build it from container/bambu/ (README.md)")
     meta = {"git": git_rev(), "date": datetime.date.today().isoformat()}

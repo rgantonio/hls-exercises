@@ -8,7 +8,7 @@ void axpy(const vec_t x[NB], const vec_t y[NB], vec_t y_out[NB], data_t alpha, c
     const data_t a = alpha;          // likewise
 BEAT:
     for (cfg_t b = 0; b < beats; b++) {
-        vec_t xb = x[b], yb = y[b], o;
+        vec_t xb = x[b], yb = y[b], o = 0;  // every lane is written below; = 0 keeps set_lane from reading an indeterminate value (BAM3)
     LANE:
         for (int l = 0; l < W; l++) {
             set_lane(o, l, (data_t)(lane(yb, l) + a * lane(xb, l)));

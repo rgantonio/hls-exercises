@@ -91,6 +91,10 @@ EOF
           -DTEMPLATE="$SRC/etc/appimage/appimage_compat_cache_init.cmake.in" \
           -DOUT="$BUILD/appimage-compat-cache.cmake" \
           -P "$BUILD/render-cache-init.cmake"
+    # Bambu's default PANDA_OPTIMIZED_FLAGS are "-Ofast -march=native -mtune=native", which ties the
+    # binary to the build machine's CPU; build for a generic x86-64 (SSE4.2) target instead.
+    echo 'set(PANDA_OPTIMIZED_FLAGS "-Ofast -march=x86-64-v2 -mtune=generic" CACHE STRING "" FORCE)' \
+        >> "$BUILD/appimage-compat-cache.cmake"
 
     local t0=$SECONDS
     (

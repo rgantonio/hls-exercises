@@ -7,7 +7,7 @@ void matadd(const vec_t A[NB], const vec_t B[NB], vec_t C[NB], cfg_t loop_count)
     const cfg_t beats = loop_count;  // read once per run (ap_vld, run_bench.tcl)
 BEAT:
     for (cfg_t b = 0; b < beats; b++) {
-        vec_t a = A[b], bb = B[b], c;
+        vec_t a = A[b], bb = B[b], c = 0;  // every lane is written below; = 0 keeps set_lane from reading an indeterminate value (BAM3)
     LANE:
         for (int l = 0; l < W; l++) {
             set_lane(c, l, (data_t)(lane(a, l) + lane(bb, l)));

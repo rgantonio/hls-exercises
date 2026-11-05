@@ -7,7 +7,7 @@ void relu(const vec_t A[NB], vec_t B[NB], cfg_t loop_count) {
     const cfg_t beats = loop_count;  // read once per run (ap_vld, run_bench.tcl)
 BEAT:
     for (cfg_t b = 0; b < beats; b++) {
-        vec_t a = A[b], o;
+        vec_t a = A[b], o = 0;  // every lane is written below; = 0 keeps set_lane from reading an indeterminate value (BAM3)
     LANE:
         for (int l = 0; l < W; l++) {
             data_t v = lane(a, l);
