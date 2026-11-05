@@ -238,7 +238,8 @@ def verilog_files(folder: Path) -> list[Path]:
 def top_module(files: list[Path]) -> str:
     """The module no other one instantiates: for a C++ top, Bambu's mangled name
     (e.g. _Z6vecaddPK6ac_intILi512ELb0EES2_PS0_j), which changes with W."""
-    text = "\n".join(f.read_text(errors="replace") for f in files)
+    # Bambu 2026.11 also writes panda_libtech.v, a library of modules that may go unused: never the top.
+    text = "\n".join(f.read_text(errors="replace") for f in files if f.name != "panda_libtech.v")
     mods = re.findall(r"^module\s+(\w+)", text, re.M)
     used = {m.group(1) for m in INSTANCE.finditer(text)}
     tops = [m for m in mods if m not in used]

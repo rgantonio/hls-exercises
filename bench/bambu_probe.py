@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Probe A of BAM3: what Bambu 2024.10 itself can do beyond the `bambu` case (docs/BAMBU_PLAN.md, BAM3).
+"""Probes A and B of BAM3: what Bambu can do beyond the `bambu` case on 2024.10 (A) and 2026.11 (B) (docs/BAMBU_PLAN.md, BAM3).
 
 Same flow as bench/bambu.py (RTL only in the container, our testbenches on the host), one build per
 (config, kernel, W), at the largest size; both sizes simulated, each with the no-stall and the stall
-run. Nothing goes to rtl/ or bambu_cycles.csv: the rows go to results_staging/probe_bam3a.csv and
-the tables to results_staging/probe_bam3a.md. Scratch in build/probe/ (git-ignored).
+run. Nothing goes to rtl/ or bambu_cycles.csv: the rows go to results_staging/probe_bam3<a|b>.csv and
+the tables to results_staging/probe_bam3<a|b>.md. Scratch in build/probe/ (git-ignored).
 
-Configs, each on top of the `bambu` case (axis pragmas plus `#pragma HLS unroll` on LANE):
+Probe A configs (Bambu 2024.10, `bambu`), each on top of the `bambu` case (axis pragmas plus
+`#pragma HLS unroll` on LANE):
   a0         the `bambu` case itself (the baseline)
   a1_u<U>    plus `#pragma HLS unroll factor=<U>` on BEAT (U = 2, 4, 8)
   a2_sdc     plus --speculative-sdc-scheduling
@@ -14,7 +15,11 @@ Configs, each on top of the `bambu` case (axis pragmas plus `#pragma HLS unroll`
   a4_u4_sdc  a1_u4 and a2_sdc
   a4_u4_perf a1_u4 and a3_perf
 
-  python3 bench/bambu_probe.py run [--config a0 a1_u4 ...] [--kernel vecadd dot] [--w 1 8 32]
+Probe B configs (Bambu 2026.11, `bambu-2026.11` from bench/tools/build_bambu_2611.sh):
+  b0         the `bambu` case unchanged; 2026.11 pipelines innermost single-block loops by itself, and
+             the `lp` column records its log lines (II per loop, or "not possible")
+
+  python3 bench/bambu_probe.py run [--probe a|b] [--config ...] [--kernel ...] [--w 1 8 32]
                                    [-j N] [--sim-jobs M] [--sim questa|icarus] [--sim-only] [--dry-run]
 
 --sim-only simulates the Verilog already in build/probe/. Standard library only, Python 3.11.
@@ -38,9 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bambu as B  # noqa: E402  (bench/bambu.py)
 
 PROBE = B.BUILD / "probe"
-CSV = B.RESULTS / "probe_bam3a.csv"
-MD = B.RESULTS / "probe_bam3a.md"
-CONFIGS = {
+CONFIGS_A = {
     "a0": ([], []),
     "a1_u2": (["unroll factor=2"], []),
     "a1_u4": (["unroll factor=4"], []),
@@ -50,9 +53,17 @@ CONFIGS = {
     "a4_u4_sdc": (["unroll factor=4"], ["--speculative-sdc-scheduling"]),
     "a4_u4_perf": (["unroll factor=4"], ["--experimental-setup=BAMBU-PERFORMANCE-MP"]),
 }
+CONFIGS_B = {"b0": ([], [])}
+BINARY = {"b0": "bambu-2026.11"}  # the Bambu command in the container; default "bambu" (2024.10)
+# probe: (configs, output stem, title, default kernels)
+PROBES = {"a": (CONFIGS_A, "probe_bam3a", "BAM3 probe A: Bambu 2024.10 configs", ["vecadd", "dot"]),
+          "b": (CONFIGS_B, "probe_bam3b", "BAM3 probe B: Bambu 2026.11", ["vecadd", "dot", "relu", "rowsum"])}
+CONFIGS, CSV, MD, TITLE = CONFIGS_A, B.RESULTS / "probe_bam3a.csv", B.RESULTS / "probe_bam3a.md", PROBES["a"][2]
+LP = re.compile(r"II=(\d+) solution found for loop \(BB(\d+)\)|Loop pipelining not possible for loop \(BB(\d+)\)"
+                r"|Iteration latency for function \S+:BB(\d+) = (\d+)")
 COLUMNS = ["config", "tier", "kernel", "W", "size", "status", "fail_reason", "cycles", "cycles_done", "beats",
            "cycles_per_beat", "latency", "stall_run", "fsm_states", "reg_bits", "regs", "verilog_lines",
-           "bambu_s", "pragmas", "flags", "git", "date"]
+           "bambu_s", "lp", "cycles_2410", "pragmas", "flags", "git", "date"]
 REG = re.compile(r"^\s*register_\w+\s*#\(\s*\.BITSIZE_in1\((\d+)\)", re.M)
 
 
@@ -84,6 +95,7 @@ def build(kdir: Path, params: dict, w: int, cfg: str, dry: bool) -> dict:
     k, d = params["kernel"], pdir(cfg, params, w)
     text, added = source(kdir, params, beat)
     cmd = B.bambu_cmd(kdir, params, w) + flags
+    cmd[1] = BINARY.get(cfg, "bambu")
     name = f"bambu-probe-{cfg.replace('_', '-')}-{k}-w{w}-{os.getpid()}"
     if dry:
         print(f"\n# {cfg} {k} W={w}: {d.relative_to(B.ROOT)}; added: " + "; ".join(added))
@@ -98,7 +110,7 @@ def build(kdir: Path, params: dict, w: int, cfg: str, dry: bool) -> dict:
     rc = B.run_cmd(cmd, d, log, B.TIMEOUT_S, dict(os.environ, BAMBU_CONTAINER_NAME=name))
     secs = round(time.time() - t0, 1)
     out = log.read_text(errors="replace")
-    meta = {"pragmas": " | ".join(added), "flags": " ".join(flags), "bambu_s": secs,
+    meta = {"pragmas": " | ".join(added), "flags": " ".join(flags), "bambu_s": secs, "lp": loop_pipelining(out),
             "fsm_states": " ".join(re.findall(r"Number of states:\s*(\d+)", out))}
     (d / "cmd.txt").write_text(shlex.join(cmd) + "\n")
     if rc is None:
@@ -109,13 +121,28 @@ def build(kdir: Path, params: dict, w: int, cfg: str, dry: bool) -> dict:
     return {"status": "ok", **meta}
 
 
+def loop_pipelining(log: str) -> str:
+    """2026.11's loop pipelining lines, e.g. "BB2 II=1 lat=2" or "BB5 not possible"; "" when none."""
+    bbs: dict[str, str] = {}
+    for m in LP.finditer(log):
+        if m.group(1):
+            bbs[m.group(2)] = f"II={m.group(1)}" + bbs.get(m.group(2), "")
+        elif m.group(3):
+            bbs[m.group(3)] = "not possible"
+        else:
+            bbs[m.group(4)] = bbs.get(m.group(4), "") + f" lat={m.group(5)}"
+    return "; ".join(f"BB{b} {v.strip()}" for b, v in sorted(bbs.items(), key=lambda x: int(x[0])))
+
+
 def rtl_facts(d: Path) -> dict:
     files = B.verilog_files(d)
     text = "\n".join(f.read_text(errors="replace") for f in files)
     bits = [int(b) for b in REG.findall(text)]
     log = d / "bambu.log"
-    states = " ".join(re.findall(r"Number of states:\s*(\d+)", log.read_text(errors="replace"))) if log.is_file() else ""
-    return {"reg_bits": sum(bits), "regs": len(bits), "verilog_lines": text.count("\n"), "fsm_states": states}
+    out = log.read_text(errors="replace") if log.is_file() else ""
+    states = " ".join(re.findall(r"Number of states:\s*(\d+)", out))
+    return {"reg_bits": sum(bits), "regs": len(bits), "verilog_lines": text.count("\n"), "fsm_states": states,
+            "lp": loop_pipelining(out)}
 
 
 def sim(kdir: Path, params: dict, w: int, cfg: str, size: dict, stall: int, simulator: str, dry: bool) -> dict:
@@ -156,6 +183,12 @@ def sim(kdir: Path, params: dict, w: int, cfg: str, size: dict, stall: int, simu
 
 
 def write(rows: list[dict]) -> None:
+    base = {}
+    if (B.RESULTS / "bambu_cycles.csv").exists():
+        with open(B.RESULTS / "bambu_cycles.csv", newline="") as f:
+            base = {(r["kernel"], str(r["W"]), r["size"]): r["cycles"] for r in csv.DictReader(f)}
+    for r in rows:
+        r["cycles_2410"] = base.get((r["kernel"], str(r["W"]), r["size"]), "")
     rows = [{c: r.get(c, "") for c in COLUMNS} for r in rows]  # a failed build has no cycles, stall_run, reg_bits
     key = lambda r: (r["config"], r["kernel"], str(r["W"]), r["size"])  # noqa: E731
     new = {key(r) for r in rows}
@@ -172,25 +205,27 @@ def write(rows: list[dict]) -> None:
         wr.writeheader()
         wr.writerows(allrows)
     # Tables: per kernel and W, configs as rows, at the largest size.
-    lines = ["# BAM3 probe A: Bambu 2024.10 configs", "",
-             "Written by `bench/bambu_probe.py` from `probe_bam3a.csv`. Each config is the `bambu` case plus its "
+    lines = [f"# {TITLE}", "",
+             f"Written by `bench/bambu_probe.py` from `{CSV.name}`. Each config is the `bambu` case plus its "
              "change; cycles from our testbench (start pulse to last output, no stalls) at the largest size, with "
              "cycles per beat; `stall` is the random-stall, two-task run at both sizes; `reg bits` sums Bambu's "
-             "register instances.", ""]
+             "register instances; `2024.10` is the `bambu` case's cycles from `bambu_cycles.csv`; `loop pipelining` "
+             "is Bambu's log (2026.11 only).", ""]
     for k in sorted({r["kernel"] for r in allrows}):
         for w in sorted({int(r["W"]) for r in allrows if r["kernel"] == k}):
             rs = [r for r in allrows if r["kernel"] == k and int(r["W"]) == w]
             big = max({r["size"] for r in rs}, key=lambda s: [int(x) for x in re.findall(r"\d+", s)])
             lines += [f"## {k}, W = {w} ({big})", "",
-                      "| config | status | cycles | cycles/beat | stall | FSM states | reg bits | Bambu s |",
-                      "|---|---|---|---|---|---|---|---|"]
+                      "| config | status | cycles | cycles/beat | 2024.10 | stall | FSM states | reg bits | loop pipelining | Bambu s |",
+                      "|---|---|---|---|---|---|---|---|---|---|"]
             for c in order:
                 big_r = next((r for r in rs if r["config"] == c and r["size"] == big), None)
                 if not big_r:
                     continue
                 stall = "/".join(r["stall_run"] or "-" for r in rs if r["config"] == c)
                 lines.append(f"| {c} | {big_r['status']} | {big_r['cycles'] or '-'} | {big_r['cycles_per_beat'] or '-'} "
-                             f"| {stall} | {big_r['fsm_states'] or '-'} | {big_r['reg_bits'] or '-'} | {big_r['bambu_s'] or '-'} |")
+                             f"| {big_r['cycles_2410'] or '-'} | {stall} | {big_r['fsm_states'] or '-'} | {big_r['reg_bits'] or '-'} "
+                             f"| {big_r['lp'] or '-'} | {big_r['bambu_s'] or '-'} |")
             lines.append("")
     MD.write_text("\n".join(lines))
 
@@ -199,8 +234,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
-    r.add_argument("--config", nargs="+", choices=list(CONFIGS), default=list(CONFIGS))
-    r.add_argument("--kernel", nargs="+", default=["vecadd", "dot"])
+    r.add_argument("--probe", choices=list(PROBES), default="a")
+    r.add_argument("--config", nargs="+", choices=list(CONFIGS_A) + list(CONFIGS_B))
+    r.add_argument("--kernel", nargs="+")
     r.add_argument("--w", nargs="+", type=int, default=[1, 8, 32])
     r.add_argument("-j", "--jobs", type=int, default=os.cpu_count() or 1)
     r.add_argument("--sim-jobs", type=int, default=0)
@@ -208,6 +244,13 @@ def main() -> None:
     r.add_argument("--sim-only", action="store_true")
     r.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    global CONFIGS, CSV, MD, TITLE
+    CONFIGS, stem, TITLE, kernels = PROBES[args.probe]
+    CSV, MD = B.RESULTS / f"{stem}.csv", B.RESULTS / f"{stem}.md"
+    args.config = args.config or list(CONFIGS)
+    args.kernel = args.kernel or kernels
+    if set(args.config) - set(CONFIGS):
+        sys.exit(f"probe {args.probe} has configs {', '.join(CONFIGS)}")
 
     pts = []
     for kdir, params in B.load_kernels(None, args.kernel):
@@ -252,6 +295,7 @@ def main() -> None:
             row = {"config": c, "tier": params["tier"], "kernel": params["kernel"], "W": w, "size": tag,
                    "beats": B.elems(s) // w, **meta, **{k: b.get(k, "") for k in ("pragmas", "flags", "bambu_s")},
                    **facts}
+            row["lp"] = facts.get("lp") or b.get("lp", "")
             row["fsm_states"] = facts.get("fsm_states") or b.get("fsm_states", "")
             if b["status"] != "ok":
                 row.update(status=b["status"], fail_reason=b.get("fail_reason", ""))
