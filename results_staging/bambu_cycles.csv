@@ -47,3 +47,50 @@ done,vsum,bambu,n512,4,10,bambu,loop_count=128 len=128,ok,,384,386,128,256,383,P
 done,vsum,bambu,n512,8,10,bambu,loop_count=64 len=64,ok,,192,194,64,128,191,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w8,c8231e0,2026-11-04
 done,vsum,bambu,n512,16,10,bambu,loop_count=32 len=32,ok,,128,130,32,96,127,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w16,c8231e0,2026-11-04
 done,vsum,bambu,n512,32,10,bambu,loop_count=16 len=16,ok,,64,66,16,48,63,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/done/vsum/bambu_w32,c8231e0,2026-11-04
+untiered,axpy,bambu,n64,1,10,bambu,loop_count=64 alpha=3,ok,,127,129,64,63,1,PASS,yes,15,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w1,3aac8c8,2026-11-05
+untiered,axpy,bambu,n64,2,10,bambu,loop_count=32 alpha=3,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w2,3aac8c8,2026-11-05
+untiered,axpy,bambu,n64,4,10,bambu,loop_count=16 alpha=3,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w4,3aac8c8,2026-11-05
+untiered,axpy,bambu,n64,8,10,bambu,loop_count=8 alpha=3,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w8,3aac8c8,2026-11-05
+untiered,axpy,bambu,n64,16,10,bambu,loop_count=4 alpha=3,ok,,11,13,4,7,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w16,3aac8c8,2026-11-05
+untiered,axpy,bambu,n64,32,10,bambu,loop_count=2 alpha=3,ok,,5,7,2,3,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w32,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,1,10,bambu,loop_count=512 alpha=3,ok,,1023,1025,512,511,1,PASS,yes,15,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w1,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,2,10,bambu,loop_count=256 alpha=3,ok,,767,769,256,511,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w2,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,4,10,bambu,loop_count=128 alpha=3,ok,,383,385,128,255,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w4,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,8,10,bambu,loop_count=64 alpha=3,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w8,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,16,10,bambu,loop_count=32 alpha=3,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w16,3aac8c8,2026-11-05
+untiered,axpy,bambu,n512,32,10,bambu,loop_count=16 alpha=3,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/axpy/bambu_w32,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,1,10,bambu,loop_count=128,ok,,191,194,128,63,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w1,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,2,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w2,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,4,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w4,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,8,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w8,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,16,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w16,3aac8c8,2026-11-05
+untiered,matadd,bambu,m8_n16,32,10,bambu,loop_count=4,ok,,11,13,4,7,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w32,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,1,10,bambu,loop_count=512,ok,,767,770,512,255,1,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w1,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,2,10,bambu,loop_count=256,ok,,767,769,256,511,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w2,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,4,10,bambu,loop_count=128,ok,,383,385,128,255,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w4,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w8,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,16,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w16,3aac8c8,2026-11-05
+untiered,matadd,bambu,m16_n32,32,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/matadd/bambu_w32,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,1,10,bambu,loop_count=64,ok,,127,129,64,63,1,PASS,yes,15,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w1,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,2,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w2,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,4,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w4,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,8,10,bambu,loop_count=8,ok,,23,25,8,15,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w8,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,16,10,bambu,loop_count=4,ok,,11,13,4,7,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w16,3aac8c8,2026-11-05
+untiered,relu,bambu,n64,32,10,bambu,loop_count=2,ok,,5,7,2,3,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w32,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,1,10,bambu,loop_count=512,ok,,1023,1025,512,511,1,PASS,yes,15,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w1,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,2,10,bambu,loop_count=256,ok,,767,769,256,511,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w2,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,4,10,bambu,loop_count=128,ok,,383,385,128,255,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w4,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,8,10,bambu,loop_count=64,ok,,191,193,64,127,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w8,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,16,10,bambu,loop_count=32,ok,,95,97,32,63,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w16,3aac8c8,2026-11-05
+untiered,relu,bambu,n512,32,10,bambu,loop_count=16,ok,,47,49,16,31,1,PASS,yes,8,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/relu/bambu_w32,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m4_n16,1,10,bambu,loop_count=64 len=16,ok,,163,165,64,99,39,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w1,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m4_n16,2,10,bambu,loop_count=32 len=8,ok,,99,101,32,67,23,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w2,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m4_n16,4,10,bambu,loop_count=16 len=4,ok,,51,53,16,35,11,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w4,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m4_n16,8,10,bambu,loop_count=8 len=2,ok,,27,29,8,19,5,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w8,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m4_n16,16,10,bambu,loop_count=4 len=1,ok,,19,21,4,15,3,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w16,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,1,10,bambu,loop_count=512 len=64,ok,,1287,1289,512,775,159,PASS,yes,21,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w1,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,2,10,bambu,loop_count=256 len=32,ok,,775,777,256,519,95,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w2,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,4,10,bambu,loop_count=128 len=16,ok,,391,393,128,263,47,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w4,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,8,10,bambu,loop_count=64 len=8,ok,,199,201,64,135,23,PASS,yes,9,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w8,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,16,10,bambu,loop_count=32 len=4,ok,,135,137,32,103,15,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w16,3aac8c8,2026-11-05
+untiered,rowsum,bambu,m8_n64,32,10,bambu,loop_count=16 len=2,ok,,71,73,16,55,7,PASS,yes,10,nangate45,PandA 2024.10 rev c2ba6936,rtl/untiered/rowsum/bambu_w32,3aac8c8,2026-11-05
