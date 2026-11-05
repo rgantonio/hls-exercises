@@ -156,6 +156,7 @@ def sim(kdir: Path, params: dict, w: int, cfg: str, size: dict, stall: int, simu
 
 
 def write(rows: list[dict]) -> None:
+    rows = [{c: r.get(c, "") for c in COLUMNS} for r in rows]  # a failed build has no cycles, stall_run, reg_bits
     key = lambda r: (r["config"], r["kernel"], str(r["W"]), r["size"])  # noqa: E731
     new = {key(r) for r in rows}
     keep = []
