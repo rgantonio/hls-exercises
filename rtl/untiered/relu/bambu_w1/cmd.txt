@@ -1,6 +1,7 @@
-# Bambu PandA 2024.10 rev c2ba6936; FSM states: 15
+# Bambu PandA 2026.11 rev cda4db2e; FSM states: 8
+# loop pipelining: BB2 II=1 lat=2
 # built at n512; relu.cpp is bench/tier_untiered/relu/src/relu.cpp with:
 #   #pragma HLS interface port=A mode=axis
 #   #pragma HLS interface port=B mode=axis
 #   #pragma HLS unroll
-bench/tools/in_bambu.sh bambu relu.cpp --top-fname=relu --device-name=nangate45 --clock-period=10 --compiler=I386_CLANG16 --generate-interface=INFER -DDATA_T=int64_t -DSIZE_N=512 -DBAMBU_LANES=1 --std=c++14 -Ibench/include/bambu -Ibench/tier_untiered/relu/src -Ibench/tier_untiered/relu/vectors/n512
+bench/tools/in_bambu.sh bambu-2026.11 relu.cpp --top-fname=relu --device-name=nangate45 --clock-period=10 --compiler=I386_CLANG16 --generate-interface=INFER -DDATA_T=int64_t -DSIZE_N=512 -DBAMBU_LANES=1 --std=c++14 -Ibench/include/bambu -Ibench/tier_untiered/relu/src -Ibench/tier_untiered/relu/vectors/n512

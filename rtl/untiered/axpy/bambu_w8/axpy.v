@@ -1,28 +1,11 @@
 // 
 // Politecnico di Milano
-// Code created using PandA - Version: PandA 2024.10 - Revision c2ba6936ca2ed63137095fea0b630a1c66e20e63-main - Date 2026-11-05T07:06:18
-// Bambu executed with: /users/micas/rantonio/no_backup/kul_main/hls-exercises/tools/bambu/squashfs-root/usr/bin/bambu --top-fname=axpy --device-name=nangate45 --clock-period=10 --compiler=I386_CLANG16 --generate-interface=INFER -DDATA_T=int64_t -DSIZE_N=512 -DBAMBU_LANES=8 --std=c++14 -I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/include/bambu -I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/tier_untiered/axpy/src -I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/tier_untiered/axpy/vectors/n512 axpy.cpp 
+// Code created using PandA - Version: PandA 2026.11 - Revision cda4db2e724df357f749c0c41b12bdc065462ced-HEAD - Date 2026-11-05T10:05:25
+// Bambu executed with: 'bambu' '--top-fname=axpy' '--device-name=nangate45' '--clock-period=10' '--compiler=I386_CLANG16' '--generate-interface=INFER' '-DDATA_T=int64_t' '-DSIZE_N=512' '-DBAMBU_LANES=8' '--std=c++14' '-I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/include/bambu' '-I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/tier_untiered/axpy/src' '-I/users/micas/rantonio/no_backup/kul_main/hls-exercises/bench/tier_untiered/axpy/vectors/n512' 'axpy.cpp'
 // 
 // Send any bug to: panda-info@polimi.it
-// ************************************************************************
-// The following text holds for all the components tagged with PANDA_LGPLv3.
-// They are all part of the BAMBU/PANDA IP LIBRARY.
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3 of the License, or (at your option) any later version.
-// 
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-// 
-// You should have received a copy of the GNU Lesser General Public
-// License along with the PandA framework; see the files COPYING.LIB
-// If not, see <http://www.gnu.org/licenses/>.
-// ************************************************************************
 
-
+`ifndef _SIM_HAVE_CLOG2
 `ifdef __ICARUS__
   `define _SIM_HAVE_CLOG2
 `endif
@@ -44,347 +27,10 @@
 `ifdef XILINX_ISIM
   `define _SIM_HAVE_CLOG2
 `endif
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>, Christian Pilato <christian.pilato@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module constant_value(out1);
-  parameter BITSIZE_out1=1,
-    value=1'b0;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = value;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module register_SE(clock,
-  reset,
-  in1,
-  wenable,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_out1=1;
-  // IN
-  input clock;
-  input reset;
-  input [BITSIZE_in1-1:0] in1;
-  input wenable;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  
-  reg [BITSIZE_out1-1:0] reg_out1 =0;
-  assign out1 = reg_out1;
-  always @(posedge clock)
-    if (wenable)
-      reg_out1 <= in1;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module UUdata_converter_FU(in1,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  generate
-  if (BITSIZE_out1 <= BITSIZE_in1)
-  begin
-    assign out1 = in1[BITSIZE_out1-1:0];
-  end
-  else
-  begin
-    assign out1 = {{(BITSIZE_out1-BITSIZE_in1){1'b0}},in1};
-  end
-  endgenerate
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module read_cond_FU(in1,
-  out1);
-  parameter BITSIZE_in1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  // OUT
-  output out1;
-  assign out1 = in1 != {BITSIZE_in1{1'b0}};
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_bit_and_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = in1 & in2;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_bit_ior_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = in1 | in2;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_bit_xor_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = in1 ^ in2;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_eq_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = in1 == in2;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_lshift_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1,
-    PRECISION=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  `ifndef _SIM_HAVE_CLOG2
-    function integer log2;
-       input integer value;
-       integer temp_value;
-      begin
-        temp_value = value-1;
-        for (log2=0; temp_value>0; log2=log2+1)
-          temp_value = temp_value>>1;
-      end
-    endfunction
-  `endif
-  `ifdef _SIM_HAVE_CLOG2
-    localparam arg2_bitsize = $clog2(PRECISION);
-  `else
-    localparam arg2_bitsize = log2(PRECISION);
-  `endif
-  generate
-    if(BITSIZE_in2 > arg2_bitsize)
-      assign out1 = in1 << in2[arg2_bitsize-1:0];
-    else
-      assign out1 = in1 << in2;
-  endgenerate
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_mult_expr_FU(clock,
-  in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1,
-    PIPE_PARAMETER=0;
-  // IN
-  input clock;
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  
-  generate
-    if(PIPE_PARAMETER==1)
-    begin
-      reg [BITSIZE_out1-1:0] out1_reg;
-      assign out1 = out1_reg;
-      always @(posedge clock)
-      begin
-        out1_reg <= in1 * in2;
-      end
-    end
-    else if(PIPE_PARAMETER>1)
-    begin
-      reg [BITSIZE_in1-1:0] in1_in;
-      reg [BITSIZE_in2-1:0] in2_in;
-      wire [BITSIZE_out1-1:0] mult_res;
-      reg [BITSIZE_out1-1:0] mul [PIPE_PARAMETER-2:0];
-      integer i;
-      assign mult_res = in1_in * in2_in;
-      always @(posedge clock)
-      begin
-        in1_in <= in1;
-        in2_in <= in2;
-        mul[PIPE_PARAMETER-2] <= mult_res;
-        for (i=0; i<PIPE_PARAMETER-2; i=i+1)
-          mul[i] <= mul[i+1];
-      end
-      assign out1 = mul[0];
-    end
-    else
-    begin
-      assign out1 = in1 * in2;
-    end
-  endgenerate
-
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_plus_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = in1 + in2;
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_pointer_plus_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1,
-    LSB_PARAMETER=-1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  wire [BITSIZE_out1-1:0] in1_tmp;
-  wire [BITSIZE_out1-1:0] in2_tmp;
-  assign in1_tmp = in1;
-  assign in2_tmp = in2;generate if (BITSIZE_out1 > LSB_PARAMETER) assign out1[BITSIZE_out1-1:LSB_PARAMETER] = (in1_tmp[BITSIZE_out1-1:LSB_PARAMETER] + in2_tmp[BITSIZE_out1-1:LSB_PARAMETER]); else assign out1 = 0; endgenerate
-  generate if (LSB_PARAMETER != 0 && BITSIZE_out1 > LSB_PARAMETER) assign out1[LSB_PARAMETER-1:0] = 0; endgenerate
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module ui_rshift_expr_FU(in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1,
-    PRECISION=1;
-  // IN
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  `ifndef _SIM_HAVE_CLOG2
-    function integer log2;
-       input integer value;
-       integer temp_value;
-      begin
-        temp_value = value-1;
-        for (log2=0; temp_value>0; log2=log2+1)
-          temp_value = temp_value>>1;
-      end
-    endfunction
-  `endif
-  `ifdef _SIM_HAVE_CLOG2
-    localparam arg2_bitsize = $clog2(PRECISION);
-  `else
-    localparam arg2_bitsize = log2(PRECISION);
-  `endif
-  generate
-    if(BITSIZE_in2 > arg2_bitsize)
-      assign out1 = in1 >> (in2[arg2_bitsize-1:0]);
-    else
-      assign out1 = in1 >> in2;
-  endgenerate
-
-endmodule
+`endif
 
 // Interface module for function: x_bambu_artificial_ParmMgr_Read_axis
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
@@ -392,26 +38,35 @@ module x_bambu_artificial_ParmMgr_Read_axis_modgen(clock,
   reset,
   start_port,
   in1,
-  _x_TDATA,
-  _x_TVALID,
+  in2,
+  in3,
+  in4,
+  p_x_TDATA,
+  p_x_TVALID,
   done_port,
   out1,
-  _x_TREADY);
-  parameter BITSIZE_in1=32,
+  p_x_TREADY);
+  parameter BITSIZE_in1=1,
+    BITSIZE_in2=10,
+    BITSIZE_in3=512,
+    BITSIZE_in4=32,
     BITSIZE_out1=512;
   // IN
   input clock;
   input reset;
   input [0:0] start_port;
   input [BITSIZE_in1-1:0] in1;
-  input [511:0] _x_TDATA;
-  input _x_TVALID;
+  input [BITSIZE_in2-1:0] in2;
+  input [BITSIZE_in3-1:0] in3;
+  input [BITSIZE_in4-1:0] in4;
+  input [511:0] p_x_TDATA;
+  input p_x_TVALID;
   // OUT
   output [0:0] done_port;
   output [BITSIZE_out1-1:0] out1;
-  output _x_TREADY;
-  reg started, started_0;
-  reg done_0;
+  output p_x_TREADY;
+  reg started;
+  wire started_0, active;
   
   always @(posedge clock )
   begin
@@ -425,20 +80,18 @@ module x_bambu_artificial_ParmMgr_Read_axis_modgen(clock,
     end
   end
   
-  always @(*)
-  begin
-    started_0 = (started || start_port) & ~_x_TVALID;
-    done_0 = (started | start_port) & _x_TVALID;
-  end
+  assign active = (started | start_port);
+  assign started_0 = active & ~p_x_TVALID;
   
-  assign out1 = {_x_TVALID, _x_TDATA};
-  assign done_port = done_0;
-  assign _x_TREADY = done_0;
+  assign out1 = {p_x_TVALID, p_x_TDATA};
+  assign done_port = active & (p_x_TVALID|(|in2));
+  assign p_x_TREADY = (1&in1) & active & p_x_TVALID;
 
 endmodule
 
+
 // Interface module for function: y_bambu_artificial_ParmMgr_Read_axis
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
@@ -446,26 +99,35 @@ module y_bambu_artificial_ParmMgr_Read_axis_modgen(clock,
   reset,
   start_port,
   in1,
-  _y_TDATA,
-  _y_TVALID,
+  in2,
+  in3,
+  in4,
+  p_y_TDATA,
+  p_y_TVALID,
   done_port,
   out1,
-  _y_TREADY);
-  parameter BITSIZE_in1=32,
+  p_y_TREADY);
+  parameter BITSIZE_in1=1,
+    BITSIZE_in2=10,
+    BITSIZE_in3=512,
+    BITSIZE_in4=32,
     BITSIZE_out1=512;
   // IN
   input clock;
   input reset;
   input [0:0] start_port;
   input [BITSIZE_in1-1:0] in1;
-  input [511:0] _y_TDATA;
-  input _y_TVALID;
+  input [BITSIZE_in2-1:0] in2;
+  input [BITSIZE_in3-1:0] in3;
+  input [BITSIZE_in4-1:0] in4;
+  input [511:0] p_y_TDATA;
+  input p_y_TVALID;
   // OUT
   output [0:0] done_port;
   output [BITSIZE_out1-1:0] out1;
-  output _y_TREADY;
-  reg started, started_0;
-  reg done_0;
+  output p_y_TREADY;
+  reg started;
+  wire started_0, active;
   
   always @(posedge clock )
   begin
@@ -479,20 +141,18 @@ module y_bambu_artificial_ParmMgr_Read_axis_modgen(clock,
     end
   end
   
-  always @(*)
-  begin
-    started_0 = (started || start_port) & ~_y_TVALID;
-    done_0 = (started | start_port) & _y_TVALID;
-  end
+  assign active = (started | start_port);
+  assign started_0 = active & ~p_y_TVALID;
   
-  assign out1 = {_y_TVALID, _y_TDATA};
-  assign done_port = done_0;
-  assign _y_TREADY = done_0;
+  assign out1 = {p_y_TVALID, p_y_TDATA};
+  assign done_port = active & (p_y_TVALID|(|in2));
+  assign p_y_TREADY = (1&in1) & active & p_y_TVALID;
 
 endmodule
 
+
 // Interface module for function: y_out_bambu_artificial_ParmMgr_Write_axis
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
@@ -502,14 +162,16 @@ module y_out_bambu_artificial_ParmMgr_Write_axis_modgen(clock,
   in1,
   in2,
   in3,
-  _y_out_TREADY,
+  in4,
+  p_y_out_TREADY,
   done_port,
   out1,
-  _y_out_TDATA,
-  _y_out_TVALID);
-  parameter BITSIZE_in1=10,
-    BITSIZE_in2=512,
-    BITSIZE_in3=32;
+  p_y_out_TDATA,
+  p_y_out_TVALID);
+  parameter BITSIZE_in1=1,
+    BITSIZE_in2=10,
+    BITSIZE_in3=512,
+    BITSIZE_in4=32;
   // IN
   input clock;
   input reset;
@@ -517,13 +179,16 @@ module y_out_bambu_artificial_ParmMgr_Write_axis_modgen(clock,
   input [BITSIZE_in1-1:0] in1;
   input [BITSIZE_in2-1:0] in2;
   input [BITSIZE_in3-1:0] in3;
-  input _y_out_TREADY;
+  input [BITSIZE_in4-1:0] in4;
+  input p_y_out_TREADY;
   // OUT
   output [0:0] done_port;
   output out1;
-  output [511:0] _y_out_TDATA;
-  output _y_out_TVALID;
-  reg started, started_0;
+  output [511:0] p_y_out_TDATA;
+  output p_y_out_TVALID;
+  reg started;
+  wire started_0, active;
+  
   always @(posedge clock )
   begin
     if (reset == 1'b0)
@@ -536,140 +201,49 @@ module y_out_bambu_artificial_ParmMgr_Write_axis_modgen(clock,
     end
   end
   
-  always @(*)
-  begin
-    started_0 = (started | start_port) & ~_y_out_TREADY;
-  end
+  assign active = (started | start_port);
+  assign started_0 = active & ~p_y_out_TREADY;
   
-  assign done_port = (started | start_port) & _y_out_TREADY;
-  assign _y_out_TVALID = started | start_port;
-  assign out1 = _y_out_TREADY;
-  assign _y_out_TDATA = in2;
+  assign done_port = active & (p_y_out_TREADY|(1&in4));
+  assign p_y_out_TVALID = active;
+  assign out1 = p_y_out_TREADY;
+  assign p_y_out_TDATA = in3;
 
 endmodule
 
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2012-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module SIMPLEJOIN_FU(clock,
-  reset,
-  enable,
-  ops,
-  sop);
-  parameter BITSIZE_ops=1, PORTSIZE_ops=2;
-  // IN
-  input clock;
-  input reset;
-  input enable;
-  input [PORTSIZE_ops-1:0] ops;
-  // OUT
-  output sop;
-  
-  // synthesis attribute use_sync_reset of current is no;
-  reg [PORTSIZE_ops-1:0] current =0;
-  reg started =0;
-  wire started0;
-  wire [PORTSIZE_ops-1:0] or_temp;
-  wire sop_temp;
-  function reduce_INs;
-  input [PORTSIZE_ops-1 : 0] instring;
-  integer i;
-  begin
-     reduce_INs = 1'b1;
-     for(i = 0; i < PORTSIZE_ops; i = i + 1)
-     begin
-        reduce_INs = reduce_INs & instring[i];
-     end
-  end
-  endfunction
-  function [PORTSIZE_ops-1:0] NEXT_CURR ;
-  input sop_temp1;
-  input [PORTSIZE_ops-1 : 0] ops1;
-  input [PORTSIZE_ops-1 : 0] current1;
-  input st;
-  integer i;
-  begin
-     for(i = 0; i < PORTSIZE_ops; i = i + 1)
-     begin
-        NEXT_CURR[i] = ~sop_temp1 & ((current1[i]) | (st & ops1[i]));
-     end
-  end
-  endfunction
-  always @(posedge clock )
-    if (reset == 1'b0)
-      started <= 0;
-    else
-      started <= started0;
-  assign started0 = ~sop_temp & (started | enable);
-  assign or_temp = current | ops;
-  assign sop_temp = reduce_INs(or_temp);
-  assign sop = sop_temp;
-  always @ (posedge clock )
-  begin
-  if(reset == 1'b0)
-    begin
-      current <= {PORTSIZE_ops{1'b0}};
-    end
-  else
-    begin
-      current <= NEXT_CURR(sop_temp,ops,current,started0);
-    end
-  end
-
-endmodule
-
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Fabrizio Ferrandi <fabrizio.ferrandi@polimi.it>, Christian Pilato <christian.pilato@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module MUX_GATE(sel,
-  in1,
-  in2,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_in2=1,
-    BITSIZE_out1=1;
-  // IN
-  input sel;
-  input [BITSIZE_in1-1:0] in1;
-  input [BITSIZE_in2-1:0] in2;
-  // OUT
-  output [BITSIZE_out1-1:0] out1;
-  assign out1 = sel ? in1 : in2;
-endmodule
 
 // Datapath RTL description for _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
-module datapath__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
+module datapath_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   reset,
   in_port_x,
   in_port_y,
   in_port_y_out,
   in_port_alpha,
   in_port_loop_count,
-  _x_TDATA,
-  _x_TVALID,
-  _x_TREADY,
-  _y_TDATA,
-  _y_TVALID,
-  _y_TREADY,
-  _y_out_TREADY,
-  _y_out_TDATA,
-  _y_out_TVALID,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212,
-  selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0,
-  selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0,
-  selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0,
-  selector_MUX_37_reg_0_0_0_0,
+  p_x_TDATA,
+  p_x_TVALID,
+  p_x_TREADY,
+  p_y_TDATA,
+  p_y_TVALID,
+  p_y_TREADY,
+  p_y_out_TREADY,
+  p_y_out_TDATA,
+  p_y_out_TVALID,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501,
+  selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0,
+  selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0,
+  selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0,
+  selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0,
+  selector_MUX_35_reg_0_0_0_0,
+  selector_MUX_35_reg_0_0_0_1,
   muenable_mu_S_0,
+  muenable_mu_S_4,
   wrenable_reg_0,
   wrenable_reg_1,
   wrenable_reg_2,
@@ -678,12 +252,13 @@ module datapath__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   wrenable_reg_5,
   wrenable_reg_6,
   wrenable_reg_7,
-  OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725,
-  OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212,
-  OUT_mu_S_0_MULTI_UNBOUNDED_0);
+  OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138,
+  OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501,
+  OUT_mu_S_0_MULTI_UNBOUNDED_0,
+  OUT_mu_S_4_MULTI_UNBOUNDED_0);
   // IN
   input clock;
   input reset;
@@ -692,19 +267,22 @@ module datapath__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   input [31:0] in_port_y_out;
   input [63:0] in_port_alpha;
   input [31:0] in_port_loop_count;
-  input [511:0] _x_TDATA;
-  input _x_TVALID;
-  input [511:0] _y_TDATA;
-  input _y_TVALID;
-  input _y_out_TREADY;
-  input selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  input selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  input selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
-  input selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0;
-  input selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0;
-  input selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0;
-  input selector_MUX_37_reg_0_0_0_0;
+  input [511:0] p_x_TDATA;
+  input p_x_TVALID;
+  input [511:0] p_y_TDATA;
+  input p_y_TVALID;
+  input p_y_out_TREADY;
+  input selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  input selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  input selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
+  input selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0;
+  input selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0;
+  input selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0;
+  input selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0;
+  input selector_MUX_35_reg_0_0_0_0;
+  input selector_MUX_35_reg_0_0_0_1;
   input muenable_mu_S_0;
+  input muenable_mu_S_4;
   input wrenable_reg_0;
   input wrenable_reg_1;
   input wrenable_reg_2;
@@ -714,1416 +292,974 @@ module datapath__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   input wrenable_reg_6;
   input wrenable_reg_7;
   // OUT
-  output _x_TREADY;
-  output _y_TREADY;
-  output [511:0] _y_out_TDATA;
-  output _y_out_TVALID;
-  output OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725;
-  output OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116;
-  output OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  output OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  output OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
+  output p_x_TREADY;
+  output p_y_TREADY;
+  output [511:0] p_y_out_TDATA;
+  output p_y_out_TVALID;
+  output OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138;
+  output OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436;
+  output OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  output OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  output OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
   output OUT_mu_S_0_MULTI_UNBOUNDED_0;
+  output OUT_mu_S_4_MULTI_UNBOUNDED_0;
   // Component and signal declarations
-  wire [31:0] out_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0;
-  wire [31:0] out_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0;
-  wire [511:0] out_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0;
-  wire [31:0] out_MUX_37_reg_0_0_0_0;
-  wire [63:0] out_UUdata_converter_FU_10_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428602;
-  wire [63:0] out_UUdata_converter_FU_11_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428607;
-  wire [31:0] out_UUdata_converter_FU_12_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428614;
-  wire [31:0] out_UUdata_converter_FU_13_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428618;
-  wire [63:0] out_UUdata_converter_FU_14_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428622;
-  wire [63:0] out_UUdata_converter_FU_15_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428627;
-  wire [31:0] out_UUdata_converter_FU_16_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428634;
-  wire [31:0] out_UUdata_converter_FU_17_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428638;
-  wire [63:0] out_UUdata_converter_FU_18_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428642;
-  wire [63:0] out_UUdata_converter_FU_19_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428647;
-  wire [31:0] out_UUdata_converter_FU_20_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428654;
-  wire [31:0] out_UUdata_converter_FU_21_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428658;
-  wire [63:0] out_UUdata_converter_FU_22_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428662;
-  wire [63:0] out_UUdata_converter_FU_23_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428667;
-  wire [31:0] out_UUdata_converter_FU_24_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428674;
-  wire [31:0] out_UUdata_converter_FU_25_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428678;
-  wire [63:0] out_UUdata_converter_FU_26_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428682;
-  wire [63:0] out_UUdata_converter_FU_27_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428687;
-  wire [31:0] out_UUdata_converter_FU_28_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428694;
-  wire [31:0] out_UUdata_converter_FU_29_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428698;
-  wire [63:0] out_UUdata_converter_FU_30_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428702;
-  wire [63:0] out_UUdata_converter_FU_31_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428707;
-  wire [31:0] out_UUdata_converter_FU_32_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428714;
-  wire [31:0] out_UUdata_converter_FU_33_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428718;
-  wire out_UUdata_converter_FU_34_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428724;
-  wire out_UUdata_converter_FU_37_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429115;
-  wire [63:0] out_UUdata_converter_FU_3_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428570;
-  wire [63:0] out_UUdata_converter_FU_4_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428574;
-  wire [63:0] out_UUdata_converter_FU_5_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428580;
-  wire [63:0] out_UUdata_converter_FU_6_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428582;
-  wire [63:0] out_UUdata_converter_FU_7_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428587;
-  wire [31:0] out_UUdata_converter_FU_8_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428594;
-  wire [31:0] out_UUdata_converter_FU_9_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428598;
+  wire null_out_signal_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_out1;
+  wire [31:0] out_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0;
+  wire [31:0] out_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0;
+  wire [511:0] out_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0;
+  wire out_MUX_33_multi_read_cond_FU_34_i0_0_0_0;
+  wire [31:0] out_MUX_35_reg_0_0_0_0;
+  wire [31:0] out_MUX_35_reg_0_0_0_1;
+  wire [63:0] out_UUdata_converter_FU_10_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429051;
+  wire [63:0] out_UUdata_converter_FU_11_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429053;
+  wire [31:0] out_UUdata_converter_FU_12_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429057;
+  wire [31:0] out_UUdata_converter_FU_13_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429061;
+  wire [63:0] out_UUdata_converter_FU_14_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429065;
+  wire [63:0] out_UUdata_converter_FU_15_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429067;
+  wire [31:0] out_UUdata_converter_FU_16_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429070;
+  wire [31:0] out_UUdata_converter_FU_17_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429074;
+  wire [63:0] out_UUdata_converter_FU_18_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429077;
+  wire [63:0] out_UUdata_converter_FU_19_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429079;
+  wire [31:0] out_UUdata_converter_FU_20_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429082;
+  wire [31:0] out_UUdata_converter_FU_21_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429086;
+  wire [63:0] out_UUdata_converter_FU_22_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429089;
+  wire [63:0] out_UUdata_converter_FU_23_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429091;
+  wire [31:0] out_UUdata_converter_FU_24_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429094;
+  wire [31:0] out_UUdata_converter_FU_25_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429098;
+  wire [63:0] out_UUdata_converter_FU_26_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429101;
+  wire [63:0] out_UUdata_converter_FU_27_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429103;
+  wire [31:0] out_UUdata_converter_FU_28_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429106;
+  wire [31:0] out_UUdata_converter_FU_29_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429110;
+  wire [63:0] out_UUdata_converter_FU_30_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429113;
+  wire [63:0] out_UUdata_converter_FU_31_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429115;
+  wire [31:0] out_UUdata_converter_FU_32_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429119;
+  wire [31:0] out_UUdata_converter_FU_33_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429122;
+  wire [63:0] out_UUdata_converter_FU_3_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429031;
+  wire [63:0] out_UUdata_converter_FU_4_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429032;
+  wire [63:0] out_UUdata_converter_FU_5_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429035;
+  wire [63:0] out_UUdata_converter_FU_6_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429037;
+  wire [63:0] out_UUdata_converter_FU_7_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429039;
+  wire [31:0] out_UUdata_converter_FU_8_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429043;
+  wire [31:0] out_UUdata_converter_FU_9_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429047;
   wire out_const_0;
   wire out_const_1;
-  wire [8:0] out_const_10;
-  wire [2:0] out_const_11;
-  wire [6:0] out_const_12;
-  wire [7:0] out_const_13;
+  wire [2:0] out_const_10;
+  wire [6:0] out_const_11;
+  wire [7:0] out_const_12;
+  wire [8:0] out_const_13;
   wire [8:0] out_const_14;
-  wire [8:0] out_const_15;
-  wire [7:0] out_const_16;
+  wire [7:0] out_const_15;
+  wire [8:0] out_const_16;
   wire [8:0] out_const_17;
-  wire [8:0] out_const_18;
-  wire [31:0] out_const_19;
+  wire [31:0] out_const_18;
   wire [5:0] out_const_2;
   wire [6:0] out_const_3;
   wire [7:0] out_const_4;
   wire [8:0] out_const_5;
-  wire [9:0] out_const_6;
-  wire [8:0] out_const_7;
-  wire [7:0] out_const_8;
+  wire [8:0] out_const_6;
+  wire [7:0] out_const_7;
+  wire [8:0] out_const_8;
   wire [8:0] out_const_9;
+  wire [9:0] out_conv_out_const_0_1_10;
   wire [31:0] out_conv_out_const_0_1_32;
-  wire out_read_cond_FU_35_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725;
-  wire out_read_cond_FU_38_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116;
+  wire [511:0] out_conv_out_const_0_1_512;
+  wire out_multi_read_cond_FU_34_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138;
+  wire out_multi_read_cond_FU_36_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436;
   wire [31:0] out_reg_0_reg_0;
   wire [31:0] out_reg_1_reg_1;
-  wire [511:0] out_reg_2_reg_2;
-  wire [31:0] out_reg_3_reg_3;
-  wire [511:0] out_reg_4_reg_4;
-  wire [31:0] out_reg_5_reg_5;
+  wire [31:0] out_reg_2_reg_2;
+  wire [511:0] out_reg_3_reg_3;
+  wire [31:0] out_reg_4_reg_4;
+  wire [511:0] out_reg_5_reg_5;
   wire out_reg_6_reg_6;
   wire [511:0] out_reg_7_reg_7;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428571;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428633;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428643;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428648;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428653;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428663;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428668;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i16_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428673;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i17_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428683;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i18_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428688;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i19_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428693;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428575;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i20_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428703;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i21_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428708;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i22_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428713;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428583;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428588;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428593;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428603;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428608;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428613;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428623;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_39_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428628;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428572;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428664;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428669;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428684;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428689;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428704;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428709;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428576;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428584;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428589;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428604;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428609;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428624;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428629;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428644;
-  wire [31:0] out_ui_bit_and_expr_FU_32_0_32_40_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428649;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_41_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428573;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_42_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428577;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_43_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428585;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_44_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428590;
-  wire [95:0] out_ui_bit_ior_expr_FU_0_64_64_45_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428596;
-  wire [127:0] out_ui_bit_ior_expr_FU_0_64_64_46_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428600;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_47_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428605;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_48_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428610;
-  wire [159:0] out_ui_bit_ior_expr_FU_0_64_64_49_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428616;
-  wire [191:0] out_ui_bit_ior_expr_FU_0_64_64_50_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428620;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_51_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428625;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_52_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428630;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_53_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428645;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_54_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428650;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_55_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428665;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_56_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428670;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_57_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428685;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_58_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428690;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_59_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428705;
-  wire [63:0] out_ui_bit_ior_expr_FU_0_64_64_60_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428710;
-  wire [223:0] out_ui_bit_xor_expr_FU_64_64_64_61_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428636;
-  wire [255:0] out_ui_bit_xor_expr_FU_64_64_64_61_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428640;
-  wire [287:0] out_ui_bit_xor_expr_FU_64_64_64_61_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428656;
-  wire [319:0] out_ui_bit_xor_expr_FU_64_64_64_61_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428660;
-  wire [351:0] out_ui_bit_xor_expr_FU_64_64_64_61_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428676;
-  wire [383:0] out_ui_bit_xor_expr_FU_64_64_64_61_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428680;
-  wire [415:0] out_ui_bit_xor_expr_FU_64_64_64_61_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428696;
-  wire [447:0] out_ui_bit_xor_expr_FU_64_64_64_61_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428700;
-  wire [479:0] out_ui_bit_xor_expr_FU_64_64_64_61_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428716;
-  wire [511:0] out_ui_bit_xor_expr_FU_64_64_64_61_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428720;
-  wire out_ui_eq_expr_FU_32_0_32_62_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429158;
-  wire out_ui_eq_expr_FU_32_32_32_63_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429151;
-  wire [31:0] out_ui_lshift_expr_FU_32_0_32_64_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136;
-  wire [95:0] out_ui_lshift_expr_FU_64_0_64_65_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428595;
-  wire [127:0] out_ui_lshift_expr_FU_64_0_64_66_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428599;
-  wire [159:0] out_ui_lshift_expr_FU_64_0_64_67_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428615;
-  wire [191:0] out_ui_lshift_expr_FU_64_0_64_68_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428619;
-  wire [223:0] out_ui_lshift_expr_FU_64_0_64_69_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428635;
-  wire [255:0] out_ui_lshift_expr_FU_64_0_64_70_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428639;
-  wire [287:0] out_ui_lshift_expr_FU_64_0_64_71_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428655;
-  wire [319:0] out_ui_lshift_expr_FU_64_0_64_72_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428659;
-  wire [351:0] out_ui_lshift_expr_FU_64_0_64_73_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428675;
-  wire [383:0] out_ui_lshift_expr_FU_64_0_64_74_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428679;
-  wire [415:0] out_ui_lshift_expr_FU_64_0_64_75_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428695;
-  wire [447:0] out_ui_lshift_expr_FU_64_0_64_76_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428699;
-  wire [479:0] out_ui_lshift_expr_FU_64_0_64_77_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428715;
-  wire [511:0] out_ui_lshift_expr_FU_64_0_64_78_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428719;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429222;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429292;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429299;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429306;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429313;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429320;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429327;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429229;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429236;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429243;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429250;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429257;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429264;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429271;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429278;
-  wire [63:0] out_ui_lshift_expr_FU_64_0_64_79_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429285;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428578;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428591;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428611;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428631;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428651;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428671;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428691;
-  wire [63:0] out_ui_mult_expr_FU_64_64_64_0_80_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428711;
-  wire [31:0] out_ui_plus_expr_FU_32_0_32_81_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428723;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428579;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428592;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428612;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428632;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428652;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428672;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428692;
-  wire [63:0] out_ui_plus_expr_FU_64_64_64_82_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428712;
-  wire [31:0] out_ui_pointer_plus_expr_FU_32_32_32_83_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428566;
-  wire [31:0] out_ui_pointer_plus_expr_FU_32_32_32_83_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428568;
-  wire [31:0] out_ui_pointer_plus_expr_FU_32_32_32_83_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428721;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_84_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428581;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_84_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428586;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428597;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428617;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428637;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428657;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428677;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428697;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_85_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428717;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_86_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428601;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_86_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428606;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_87_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428621;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_87_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428626;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_88_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428641;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_88_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428646;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_89_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428661;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_89_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428666;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_90_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428681;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_90_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428686;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_91_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428701;
-  wire [63:0] out_ui_rshift_expr_FU_64_0_64_91_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428706;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429216;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429288;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429295;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429302;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429309;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429316;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429323;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429225;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429232;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429239;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429246;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429253;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429260;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429267;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429274;
-  wire [31:0] out_ui_rshift_expr_FU_64_0_64_92_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429281;
-  wire [31:0] out_uu_conv_conn_obj_0_UUdata_converter_FU_uu_conv_0;
-  wire [511:0] out_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  wire [511:0] out_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  wire s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567_P0;
-  wire s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569_P0;
-  wire s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212_P0;
+  wire [31:0] out_ui_add_node_FU_32_0_32_37_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429034;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105;
+  wire [63:0] out_ui_add_node_FU_64_64_64_38_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117;
+  wire [31:0] out_ui_and_node_FU_32_0_32_39_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429042;
+  wire [31:0] out_ui_and_node_FU_32_0_32_39_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429056;
+  wire [31:0] out_ui_and_node_FU_32_0_32_39_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429118;
+  wire [31:0] out_ui_and_node_FU_32_0_32_40_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429072;
+  wire [31:0] out_ui_and_node_FU_32_0_32_40_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429084;
+  wire [31:0] out_ui_and_node_FU_32_0_32_40_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429096;
+  wire [31:0] out_ui_and_node_FU_32_0_32_40_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429108;
+  wire out_ui_eq_node_FU_32_0_32_41_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429435;
+  wire out_ui_eq_node_FU_32_32_32_42_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137;
+  wire [31:0] out_ui_gep_node_FU_32_32_32_43_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429027;
+  wire [31:0] out_ui_gep_node_FU_32_32_32_43_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429029;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429033;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429040;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429054;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429068;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429080;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429092;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429104;
+  wire [63:0] out_ui_mul_node_FU_64_64_64_0_44_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429116;
+  wire [95:0] out_ui_or_node_FU_0_64_64_45_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429045;
+  wire [127:0] out_ui_or_node_FU_0_64_64_46_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429049;
+  wire [159:0] out_ui_or_node_FU_0_64_64_47_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429059;
+  wire [191:0] out_ui_or_node_FU_0_64_64_48_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429063;
+  wire [255:0] out_ui_or_node_FU_0_64_64_49_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429124;
+  wire [287:0] out_ui_or_node_FU_0_64_64_50_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429125;
+  wire [319:0] out_ui_or_node_FU_0_64_64_51_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429126;
+  wire [351:0] out_ui_or_node_FU_0_64_64_52_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429127;
+  wire [31:0] out_ui_shl_node_FU_32_0_32_53_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429450;
+  wire [95:0] out_ui_shl_node_FU_64_0_64_54_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429044;
+  wire [127:0] out_ui_shl_node_FU_64_0_64_55_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429048;
+  wire [159:0] out_ui_shl_node_FU_64_0_64_56_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429058;
+  wire [191:0] out_ui_shl_node_FU_64_0_64_57_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429062;
+  wire [223:0] out_ui_shl_node_FU_64_0_64_58_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429071;
+  wire [255:0] out_ui_shl_node_FU_64_0_64_59_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429075;
+  wire [287:0] out_ui_shl_node_FU_64_0_64_60_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429083;
+  wire [319:0] out_ui_shl_node_FU_64_0_64_61_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429087;
+  wire [351:0] out_ui_shl_node_FU_64_0_64_62_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429095;
+  wire [383:0] out_ui_shl_node_FU_64_0_64_63_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429099;
+  wire [415:0] out_ui_shl_node_FU_64_0_64_64_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429107;
+  wire [447:0] out_ui_shl_node_FU_64_0_64_65_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429111;
+  wire [479:0] out_ui_shl_node_FU_64_0_64_66_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429120;
+  wire [511:0] out_ui_shl_node_FU_64_0_64_67_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429123;
+  wire [223:0] out_ui_shl_node_FU_64_0_64_68_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429513;
+  wire [287:0] out_ui_shl_node_FU_64_0_64_69_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429521;
+  wire [351:0] out_ui_shl_node_FU_64_0_64_70_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429529;
+  wire [415:0] out_ui_shl_node_FU_64_0_64_71_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429537;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_72_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429036;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_72_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429038;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429046;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429060;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429073;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429085;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429097;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429109;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_73_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429121;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_74_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429050;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_74_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429052;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_75_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429064;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_75_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429066;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_76_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429076;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_76_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429078;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_77_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429088;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_77_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429090;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_78_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429100;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_78_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429102;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_79_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429112;
+  wire [63:0] out_ui_shr_node_FU_64_0_64_79_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429114;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_80_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429506;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_81_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429517;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_82_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429525;
+  wire [31:0] out_ui_shr_node_FU_64_0_64_83_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429533;
+  wire [383:0] out_ui_xor_node_FU_64_64_64_84_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429128;
+  wire [415:0] out_ui_xor_node_FU_64_64_64_84_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429129;
+  wire [447:0] out_ui_xor_node_FU_64_64_64_84_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429130;
+  wire [479:0] out_ui_xor_node_FU_64_64_64_84_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429131;
+  wire [511:0] out_ui_xor_node_FU_64_64_64_84_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429132;
+  wire [511:0] out_ui_xor_node_FU_64_64_64_84_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133;
+  wire [511:0] out_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  wire [511:0] out_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  wire s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028_P0;
+  wire s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030_P0;
+  wire s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_P0;
   
-  MUX_GATE #(.BITSIZE_in1(32),
+  MUX2_GATE #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0 (.out1(out_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0),
-    .sel(selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0),
-    .in1(out_reg_1_reg_1),
-    .in2(out_ui_pointer_plus_expr_FU_32_32_32_83_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428566));
-  MUX_GATE #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0 (.out1(out_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0),
+    .sel(selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0),
+    .in1(out_reg_2_reg_2),
+    .in2(out_ui_gep_node_FU_32_32_32_43_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429027));
+  MUX2_GATE #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0 (.out1(out_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0),
-    .sel(selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0),
-    .in1(out_reg_3_reg_3),
-    .in2(out_ui_pointer_plus_expr_FU_32_32_32_83_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428568));
-  MUX_GATE #(.BITSIZE_in1(512),
+    .BITSIZE_out1(32)) MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0 (.out1(out_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0),
+    .sel(selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0),
+    .in1(out_reg_4_reg_4),
+    .in2(out_ui_gep_node_FU_32_32_32_43_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429029));
+  MUX2_GATE #(.BITSIZE_in1(512),
     .BITSIZE_in2(512),
-    .BITSIZE_out1(512)) MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0 (.out1(out_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0),
-    .sel(selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0),
+    .BITSIZE_out1(512)) MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0 (.out1(out_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0),
+    .sel(selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0),
     .in1(out_reg_7_reg_7),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428720));
-  MUX_GATE #(.BITSIZE_in1(32),
+    .in2(out_ui_xor_node_FU_64_64_64_84_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133));
+  MUX2_GATE #(.BITSIZE_in1(1),
+    .BITSIZE_in2(1),
+    .BITSIZE_out1(1)) MUX_33_multi_read_cond_FU_34_i0_0_0_0 (.out1(out_MUX_33_multi_read_cond_FU_34_i0_0_0_0),
+    .sel(selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0),
+    .in1(out_reg_6_reg_6),
+    .in2(out_ui_eq_node_FU_32_32_32_42_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137));
+  MUX2_GATE #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) MUX_37_reg_0_0_0_0 (.out1(out_MUX_37_reg_0_0_0_0),
-    .sel(selector_MUX_37_reg_0_0_0_0),
-    .in1(out_ui_plus_expr_FU_32_0_32_81_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428723),
-    .in2(out_uu_conv_conn_obj_0_UUdata_converter_FU_uu_conv_0));
-  UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) UUdata_converter_FU_uu_conv_0 (.out1(out_uu_conv_conn_obj_0_UUdata_converter_FU_uu_conv_0),
-    .in1(out_conv_out_const_0_1_32));
-  constant_value #(.BITSIZE_out1(1),
-    .value(1'b0)) const_0 (.out1(out_const_0));
-  constant_value #(.BITSIZE_out1(1),
-    .value(1'b1)) const_1 (.out1(out_const_1));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b101100000)) const_10 (.out1(out_const_10));
-  constant_value #(.BITSIZE_out1(3),
-    .value(3'b110)) const_11 (.out1(out_const_11));
-  constant_value #(.BITSIZE_out1(7),
-    .value(7'b1100000)) const_12 (.out1(out_const_12));
-  constant_value #(.BITSIZE_out1(8),
-    .value(8'b11000000)) const_13 (.out1(out_const_13));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b110000000)) const_14 (.out1(out_const_14));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b110100000)) const_15 (.out1(out_const_15));
-  constant_value #(.BITSIZE_out1(8),
-    .value(8'b11100000)) const_16 (.out1(out_const_16));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b111000000)) const_17 (.out1(out_const_17));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b111100000)) const_18 (.out1(out_const_18));
-  constant_value #(.BITSIZE_out1(32),
-    .value(32'b11111111111111111111111111111111)) const_19 (.out1(out_const_19));
-  constant_value #(.BITSIZE_out1(6),
-    .value(6'b100000)) const_2 (.out1(out_const_2));
-  constant_value #(.BITSIZE_out1(7),
-    .value(7'b1000000)) const_3 (.out1(out_const_3));
-  constant_value #(.BITSIZE_out1(8),
-    .value(8'b10000000)) const_4 (.out1(out_const_4));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b100000000)) const_5 (.out1(out_const_5));
-  constant_value #(.BITSIZE_out1(10),
-    .value(10'b1000000000)) const_6 (.out1(out_const_6));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b100100000)) const_7 (.out1(out_const_7));
-  constant_value #(.BITSIZE_out1(8),
-    .value(8'b10100000)) const_8 (.out1(out_const_8));
-  constant_value #(.BITSIZE_out1(9),
-    .value(9'b101000000)) const_9 (.out1(out_const_9));
+    .BITSIZE_out1(32)) MUX_35_reg_0_0_0_0 (.out1(out_MUX_35_reg_0_0_0_0),
+    .sel(selector_MUX_35_reg_0_0_0_0),
+    .in1(out_reg_1_reg_1),
+    .in2(out_conv_out_const_0_1_32));
+  MUX2_GATE #(.BITSIZE_in1(32),
+    .BITSIZE_in2(32),
+    .BITSIZE_out1(32)) MUX_35_reg_0_0_0_1 (.out1(out_MUX_35_reg_0_0_0_1),
+    .sel(selector_MUX_35_reg_0_0_0_1),
+    .in1(out_ui_add_node_FU_32_0_32_37_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136),
+    .in2(out_MUX_35_reg_0_0_0_0));
+  assign out_const_0 = 1'b0;
+  assign out_const_1 = 1'b1;
+  assign out_const_10 = 3'b110;
+  assign out_const_11 = 7'b1100000;
+  assign out_const_12 = 8'b11000000;
+  assign out_const_13 = 9'b110000000;
+  assign out_const_14 = 9'b110100000;
+  assign out_const_15 = 8'b11100000;
+  assign out_const_16 = 9'b111000000;
+  assign out_const_17 = 9'b111100000;
+  assign out_const_18 = 32'b11111111111111111111111111111111;
+  assign out_const_2 = 6'b100000;
+  assign out_const_3 = 7'b1000000;
+  assign out_const_4 = 8'b10000000;
+  assign out_const_5 = 9'b100000000;
+  assign out_const_6 = 9'b100100000;
+  assign out_const_7 = 8'b10100000;
+  assign out_const_8 = 9'b101000000;
+  assign out_const_9 = 9'b101100000;
+  UUdata_converter_FU #(.BITSIZE_in1(1),
+    .BITSIZE_out1(10)) conv_out_const_0_1_10 (.out1(out_conv_out_const_0_1_10),
+    .in1(out_const_0));
   UUdata_converter_FU #(.BITSIZE_in1(1),
     .BITSIZE_out1(32)) conv_out_const_0_1_32 (.out1(out_conv_out_const_0_1_32),
     .in1(out_const_0));
-  ui_pointer_plus_expr_FU #(.BITSIZE_in1(32),
+  UUdata_converter_FU #(.BITSIZE_in1(1),
+    .BITSIZE_out1(512)) conv_out_const_0_1_512 (.out1(out_conv_out_const_0_1_512),
+    .in1(out_const_0));
+  ui_gep_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
     .BITSIZE_out1(32),
-    .LSB_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428566 (.out1(out_ui_pointer_plus_expr_FU_32_32_32_83_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428566),
+    .LSB_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429027 (.out1(out_ui_gep_node_FU_32_32_32_43_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429027),
     .in1(in_port_x),
-    .in2(out_ui_lshift_expr_FU_32_0_32_64_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136));
-  x_bambu_artificial_ParmMgr_Read_axis_modgen #(.BITSIZE_in1(32),
-    .BITSIZE_out1(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567 (.done_port({s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567_P0}),
-    .out1(out_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
-    ._x_TREADY(_x_TREADY),
+    .in2(out_ui_shl_node_FU_32_0_32_53_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429450));
+  x_bambu_artificial_ParmMgr_Read_axis_modgen #(.BITSIZE_in1(1),
+    .BITSIZE_in2(10),
+    .BITSIZE_in3(512),
+    .BITSIZE_in4(32),
+    .BITSIZE_out1(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 (.done_port({s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028_P0}),
+    .out1(out_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .p_x_TREADY(p_x_TREADY),
     .clock(clock),
     .reset(reset),
-    .start_port({selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567}),
-    .in1(out_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0),
-    ._x_TDATA(_x_TDATA),
-    ._x_TVALID(_x_TVALID));
-  ui_pointer_plus_expr_FU #(.BITSIZE_in1(32),
+    .start_port({selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028}),
+    .in1(out_const_1),
+    .in2(out_conv_out_const_0_1_10),
+    .in3(out_conv_out_const_0_1_512),
+    .in4(out_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0),
+    .p_x_TDATA(p_x_TDATA),
+    .p_x_TVALID(p_x_TVALID));
+  ui_gep_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
     .BITSIZE_out1(32),
-    .LSB_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428568 (.out1(out_ui_pointer_plus_expr_FU_32_32_32_83_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428568),
+    .LSB_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429029 (.out1(out_ui_gep_node_FU_32_32_32_43_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429029),
     .in1(in_port_y),
-    .in2(out_ui_lshift_expr_FU_32_0_32_64_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136));
-  y_bambu_artificial_ParmMgr_Read_axis_modgen #(.BITSIZE_in1(32),
-    .BITSIZE_out1(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569 (.done_port({s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569_P0}),
-    .out1(out_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    ._y_TREADY(_y_TREADY),
+    .in2(out_ui_shl_node_FU_32_0_32_53_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429450));
+  y_bambu_artificial_ParmMgr_Read_axis_modgen #(.BITSIZE_in1(1),
+    .BITSIZE_in2(10),
+    .BITSIZE_in3(512),
+    .BITSIZE_in4(32),
+    .BITSIZE_out1(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 (.done_port({s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030_P0}),
+    .out1(out_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
+    .p_y_TREADY(p_y_TREADY),
     .clock(clock),
     .reset(reset),
-    .start_port({selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569}),
-    .in1(out_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0),
-    ._y_TDATA(_y_TDATA),
-    ._y_TVALID(_y_TVALID));
+    .start_port({selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030}),
+    .in1(out_const_1),
+    .in2(out_conv_out_const_0_1_10),
+    .in3(out_conv_out_const_0_1_512),
+    .in4(out_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0),
+    .p_y_TDATA(p_y_TDATA),
+    .p_y_TVALID(p_y_TVALID));
   UUdata_converter_FU #(.BITSIZE_in1(512),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428570 (.out1(out_UUdata_converter_FU_3_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428570),
-    .in1(out_reg_4_reg_4));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428571 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428571),
-    .in1(out_UUdata_converter_FU_3_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428570),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428572 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428572),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429216),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428573 (.out1(out_ui_bit_ior_expr_FU_0_64_64_41_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428573),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429222),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428571));
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429031 (.out1(out_UUdata_converter_FU_3_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429031),
+    .in1(out_reg_5_reg_5));
   UUdata_converter_FU #(.BITSIZE_in1(512),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428574 (.out1(out_UUdata_converter_FU_4_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428574),
-    .in1(out_reg_2_reg_2));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428575 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428575),
-    .in1(out_UUdata_converter_FU_4_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428574),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428576 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428576),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429225),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428577 (.out1(out_ui_bit_ior_expr_FU_0_64_64_42_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428577),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429229),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428575));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429032 (.out1(out_UUdata_converter_FU_4_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429032),
+    .in1(out_reg_3_reg_3));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428578 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428578),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429033 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429033),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_42_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428577),
+    .in1(out_UUdata_converter_FU_4_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429032),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428579 (.out1(out_ui_plus_expr_FU_64_64_64_82_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428579),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_41_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428573),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428578));
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429034 (.out1(out_ui_add_node_FU_64_64_64_38_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429034),
+    .in1(out_UUdata_converter_FU_3_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429031),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429033));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428580 (.out1(out_UUdata_converter_FU_5_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428580),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428579));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429035 (.out1(out_UUdata_converter_FU_5_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429035),
+    .in1(out_ui_add_node_FU_64_64_64_38_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429034));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(7),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428581 (.out1(out_ui_rshift_expr_FU_64_0_64_84_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428581),
-    .in1(out_reg_4_reg_4),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429036 (.out1(out_ui_shr_node_FU_64_0_64_72_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429036),
+    .in1(out_reg_5_reg_5),
     .in2(out_const_3));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428582 (.out1(out_UUdata_converter_FU_6_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428582),
-    .in1(out_ui_rshift_expr_FU_64_0_64_84_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428581));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428583 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428583),
-    .in1(out_UUdata_converter_FU_6_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428582),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428584 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428584),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429232),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428585 (.out1(out_ui_bit_ior_expr_FU_0_64_64_43_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428585),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429236),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428583));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429037 (.out1(out_UUdata_converter_FU_6_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429037),
+    .in1(out_ui_shr_node_FU_64_0_64_72_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429036));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(7),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428586 (.out1(out_ui_rshift_expr_FU_64_0_64_84_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428586),
-    .in1(out_reg_2_reg_2),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429038 (.out1(out_ui_shr_node_FU_64_0_64_72_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429038),
+    .in1(out_reg_3_reg_3),
     .in2(out_const_3));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428587 (.out1(out_UUdata_converter_FU_7_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428587),
-    .in1(out_ui_rshift_expr_FU_64_0_64_84_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428586));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428588 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428588),
-    .in1(out_UUdata_converter_FU_7_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428587),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428589 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428589),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429239),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428590 (.out1(out_ui_bit_ior_expr_FU_0_64_64_44_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428590),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429243),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428588));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429039 (.out1(out_UUdata_converter_FU_7_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429039),
+    .in1(out_ui_shr_node_FU_64_0_64_72_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429038));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428591 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428591),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429040 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429040),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_44_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428590),
+    .in1(out_UUdata_converter_FU_7_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429039),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428592 (.out1(out_ui_plus_expr_FU_64_64_64_82_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428592),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_43_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428585),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428591));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041 (.out1(out_ui_add_node_FU_64_64_64_38_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041),
+    .in1(out_UUdata_converter_FU_6_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429037),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429040));
+  ui_and_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428593 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428593),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428592),
-    .in2(out_const_19));
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429042 (.out1(out_ui_and_node_FU_32_0_32_39_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429042),
+    .in1(out_ui_add_node_FU_64_64_64_38_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041),
+    .in2(out_const_18));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428594 (.out1(out_UUdata_converter_FU_8_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428594),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428593));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429043 (.out1(out_UUdata_converter_FU_8_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429043),
+    .in1(out_ui_and_node_FU_32_0_32_39_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429042));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(7),
     .BITSIZE_out1(96),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428595 (.out1(out_ui_lshift_expr_FU_64_0_64_65_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428595),
-    .in1(out_UUdata_converter_FU_8_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428594),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429044 (.out1(out_ui_shl_node_FU_64_0_64_54_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429044),
+    .in1(out_UUdata_converter_FU_8_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429043),
     .in2(out_const_3));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(96),
+  ui_or_node_FU #(.BITSIZE_in1(96),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(96)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428596 (.out1(out_ui_bit_ior_expr_FU_0_64_64_45_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428596),
-    .in1(out_ui_lshift_expr_FU_64_0_64_65_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428595),
-    .in2(out_UUdata_converter_FU_5_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428580));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(96)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429045 (.out1(out_ui_or_node_FU_0_64_64_45_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429045),
+    .in1(out_ui_shl_node_FU_64_0_64_54_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429044),
+    .in2(out_UUdata_converter_FU_5_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429035));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428597 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428597),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428592),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429046 (.out1(out_ui_shr_node_FU_64_0_64_73_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429046),
+    .in1(out_ui_add_node_FU_64_64_64_38_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429041),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428598 (.out1(out_UUdata_converter_FU_9_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428598),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428597));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429047 (.out1(out_UUdata_converter_FU_9_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429047),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429046));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(7),
     .BITSIZE_out1(128),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428599 (.out1(out_ui_lshift_expr_FU_64_0_64_66_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428599),
-    .in1(out_UUdata_converter_FU_9_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428598),
-    .in2(out_const_12));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(128),
-    .BITSIZE_in2(96),
-    .BITSIZE_out1(128)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428600 (.out1(out_ui_bit_ior_expr_FU_0_64_64_46_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428600),
-    .in1(out_ui_lshift_expr_FU_64_0_64_66_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428599),
-    .in2(out_ui_bit_ior_expr_FU_0_64_64_45_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428596));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429048 (.out1(out_ui_shl_node_FU_64_0_64_55_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429048),
+    .in1(out_UUdata_converter_FU_9_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429047),
+    .in2(out_const_11));
+  ui_or_node_FU #(.BITSIZE_in1(96),
+    .BITSIZE_in2(128),
+    .BITSIZE_out1(128)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429049 (.out1(out_ui_or_node_FU_0_64_64_46_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429049),
+    .in1(out_ui_or_node_FU_0_64_64_45_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429045),
+    .in2(out_ui_shl_node_FU_64_0_64_55_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429048));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(8),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428601 (.out1(out_ui_rshift_expr_FU_64_0_64_86_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428601),
-    .in1(out_reg_4_reg_4),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429050 (.out1(out_ui_shr_node_FU_64_0_64_74_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429050),
+    .in1(out_reg_5_reg_5),
     .in2(out_const_4));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428602 (.out1(out_UUdata_converter_FU_10_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428602),
-    .in1(out_ui_rshift_expr_FU_64_0_64_86_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428601));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428603 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428603),
-    .in1(out_UUdata_converter_FU_10_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428602),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428604 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428604),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429246),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428605 (.out1(out_ui_bit_ior_expr_FU_0_64_64_47_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428605),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429250),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428603));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429051 (.out1(out_UUdata_converter_FU_10_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429051),
+    .in1(out_ui_shr_node_FU_64_0_64_74_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429050));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(8),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428606 (.out1(out_ui_rshift_expr_FU_64_0_64_86_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428606),
-    .in1(out_reg_2_reg_2),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429052 (.out1(out_ui_shr_node_FU_64_0_64_74_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429052),
+    .in1(out_reg_3_reg_3),
     .in2(out_const_4));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428607 (.out1(out_UUdata_converter_FU_11_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428607),
-    .in1(out_ui_rshift_expr_FU_64_0_64_86_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428606));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428608 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428608),
-    .in1(out_UUdata_converter_FU_11_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428607),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428609 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428609),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429253),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428610 (.out1(out_ui_bit_ior_expr_FU_0_64_64_48_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428610),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429257),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428608));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429053 (.out1(out_UUdata_converter_FU_11_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429053),
+    .in1(out_ui_shr_node_FU_64_0_64_74_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429052));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428611 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428611),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429054 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429054),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_48_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428610),
+    .in1(out_UUdata_converter_FU_11_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429053),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428612 (.out1(out_ui_plus_expr_FU_64_64_64_82_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428612),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_47_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428605),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428611));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055 (.out1(out_ui_add_node_FU_64_64_64_38_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055),
+    .in1(out_UUdata_converter_FU_10_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429051),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429054));
+  ui_and_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428613 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428613),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428612),
-    .in2(out_const_19));
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429056 (.out1(out_ui_and_node_FU_32_0_32_39_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429056),
+    .in1(out_ui_add_node_FU_64_64_64_38_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055),
+    .in2(out_const_18));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428614 (.out1(out_UUdata_converter_FU_12_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428614),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428613));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429057 (.out1(out_UUdata_converter_FU_12_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429057),
+    .in1(out_ui_and_node_FU_32_0_32_39_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429056));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(8),
     .BITSIZE_out1(160),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428615 (.out1(out_ui_lshift_expr_FU_64_0_64_67_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428615),
-    .in1(out_UUdata_converter_FU_12_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428614),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429058 (.out1(out_ui_shl_node_FU_64_0_64_56_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429058),
+    .in1(out_UUdata_converter_FU_12_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429057),
     .in2(out_const_4));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(160),
-    .BITSIZE_in2(128),
-    .BITSIZE_out1(160)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428616 (.out1(out_ui_bit_ior_expr_FU_0_64_64_49_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428616),
-    .in1(out_ui_lshift_expr_FU_64_0_64_67_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428615),
-    .in2(out_ui_bit_ior_expr_FU_0_64_64_46_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428600));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+  ui_or_node_FU #(.BITSIZE_in1(128),
+    .BITSIZE_in2(160),
+    .BITSIZE_out1(160)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429059 (.out1(out_ui_or_node_FU_0_64_64_47_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429059),
+    .in1(out_ui_or_node_FU_0_64_64_46_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429049),
+    .in2(out_ui_shl_node_FU_64_0_64_56_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429058));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428617 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428617),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428612),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429060 (.out1(out_ui_shr_node_FU_64_0_64_73_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429060),
+    .in1(out_ui_add_node_FU_64_64_64_38_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429055),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428618 (.out1(out_UUdata_converter_FU_13_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428618),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428617));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429061 (.out1(out_UUdata_converter_FU_13_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429061),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429060));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(8),
     .BITSIZE_out1(192),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428619 (.out1(out_ui_lshift_expr_FU_64_0_64_68_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428619),
-    .in1(out_UUdata_converter_FU_13_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428618),
-    .in2(out_const_8));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(192),
-    .BITSIZE_in2(160),
-    .BITSIZE_out1(192)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428620 (.out1(out_ui_bit_ior_expr_FU_0_64_64_50_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428620),
-    .in1(out_ui_lshift_expr_FU_64_0_64_68_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428619),
-    .in2(out_ui_bit_ior_expr_FU_0_64_64_49_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428616));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429062 (.out1(out_ui_shl_node_FU_64_0_64_57_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429062),
+    .in1(out_UUdata_converter_FU_13_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429061),
+    .in2(out_const_7));
+  ui_or_node_FU #(.BITSIZE_in1(160),
+    .BITSIZE_in2(192),
+    .BITSIZE_out1(192)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429063 (.out1(out_ui_or_node_FU_0_64_64_48_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429063),
+    .in1(out_ui_or_node_FU_0_64_64_47_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429059),
+    .in2(out_ui_shl_node_FU_64_0_64_57_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429062));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(8),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428621 (.out1(out_ui_rshift_expr_FU_64_0_64_87_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428621),
-    .in1(out_reg_4_reg_4),
-    .in2(out_const_13));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429064 (.out1(out_ui_shr_node_FU_64_0_64_75_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429064),
+    .in1(out_reg_5_reg_5),
+    .in2(out_const_12));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428622 (.out1(out_UUdata_converter_FU_14_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428622),
-    .in1(out_ui_rshift_expr_FU_64_0_64_87_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428621));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428623 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428623),
-    .in1(out_UUdata_converter_FU_14_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428622),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428624 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428624),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429260),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428625 (.out1(out_ui_bit_ior_expr_FU_0_64_64_51_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428625),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429264),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428623));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429065 (.out1(out_UUdata_converter_FU_14_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429065),
+    .in1(out_ui_shr_node_FU_64_0_64_75_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429064));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(8),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428626 (.out1(out_ui_rshift_expr_FU_64_0_64_87_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428626),
-    .in1(out_reg_2_reg_2),
-    .in2(out_const_13));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429066 (.out1(out_ui_shr_node_FU_64_0_64_75_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429066),
+    .in1(out_reg_3_reg_3),
+    .in2(out_const_12));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428627 (.out1(out_UUdata_converter_FU_15_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428627),
-    .in1(out_ui_rshift_expr_FU_64_0_64_87_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428626));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428628 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428628),
-    .in1(out_UUdata_converter_FU_15_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428627),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428629 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428629),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429267),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428630 (.out1(out_ui_bit_ior_expr_FU_0_64_64_52_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428630),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429271),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428628));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429067 (.out1(out_UUdata_converter_FU_15_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429067),
+    .in1(out_ui_shr_node_FU_64_0_64_75_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429066));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428631 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428631),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429068 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429068),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_52_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428630),
+    .in1(out_UUdata_converter_FU_15_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429067),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428632 (.out1(out_ui_plus_expr_FU_64_64_64_82_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428632),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_51_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428625),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428631));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428633 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428633),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428632),
-    .in2(out_const_19));
-  UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428634 (.out1(out_UUdata_converter_FU_16_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428634),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428633));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069 (.out1(out_ui_add_node_FU_64_64_64_38_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069),
+    .in1(out_UUdata_converter_FU_14_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429065),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429068));
+  UUdata_converter_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429070 (.out1(out_UUdata_converter_FU_16_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429070),
+    .in1(out_ui_add_node_FU_64_64_64_38_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(8),
     .BITSIZE_out1(224),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428635 (.out1(out_ui_lshift_expr_FU_64_0_64_69_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428635),
-    .in1(out_UUdata_converter_FU_16_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428634),
-    .in2(out_const_13));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(224),
-    .BITSIZE_in2(192),
-    .BITSIZE_out1(224)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428636 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428636),
-    .in1(out_ui_lshift_expr_FU_64_0_64_69_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428635),
-    .in2(out_ui_bit_ior_expr_FU_0_64_64_50_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428620));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429071 (.out1(out_ui_shl_node_FU_64_0_64_58_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429071),
+    .in1(out_UUdata_converter_FU_16_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429070),
+    .in2(out_const_12));
+  ui_and_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429072 (.out1(out_ui_and_node_FU_32_0_32_40_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429072),
+    .in1(out_ui_shr_node_FU_64_0_64_80_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429506),
+    .in2(out_const_18));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428637 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428637),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428632),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429073 (.out1(out_ui_shr_node_FU_64_0_64_73_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429073),
+    .in1(out_ui_add_node_FU_64_64_64_38_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429069),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428638 (.out1(out_UUdata_converter_FU_17_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428638),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428637));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429074 (.out1(out_UUdata_converter_FU_17_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429074),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429073));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(8),
     .BITSIZE_out1(256),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428639 (.out1(out_ui_lshift_expr_FU_64_0_64_70_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428639),
-    .in1(out_UUdata_converter_FU_17_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428638),
-    .in2(out_const_16));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(256),
-    .BITSIZE_in2(224),
-    .BITSIZE_out1(256)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428640 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428640),
-    .in1(out_ui_lshift_expr_FU_64_0_64_70_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428639),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428636));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429075 (.out1(out_ui_shl_node_FU_64_0_64_59_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429075),
+    .in1(out_UUdata_converter_FU_17_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429074),
+    .in2(out_const_15));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428641 (.out1(out_ui_rshift_expr_FU_64_0_64_88_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428641),
-    .in1(out_reg_4_reg_4),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429076 (.out1(out_ui_shr_node_FU_64_0_64_76_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429076),
+    .in1(out_reg_5_reg_5),
     .in2(out_const_5));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428642 (.out1(out_UUdata_converter_FU_18_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428642),
-    .in1(out_ui_rshift_expr_FU_64_0_64_88_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428641));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428643 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428643),
-    .in1(out_UUdata_converter_FU_18_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428642),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428644 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428644),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429274),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428645 (.out1(out_ui_bit_ior_expr_FU_0_64_64_53_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428645),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429278),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428643));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429077 (.out1(out_UUdata_converter_FU_18_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429077),
+    .in1(out_ui_shr_node_FU_64_0_64_76_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429076));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428646 (.out1(out_ui_rshift_expr_FU_64_0_64_88_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428646),
-    .in1(out_reg_2_reg_2),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429078 (.out1(out_ui_shr_node_FU_64_0_64_76_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429078),
+    .in1(out_reg_3_reg_3),
     .in2(out_const_5));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428647 (.out1(out_UUdata_converter_FU_19_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428647),
-    .in1(out_ui_rshift_expr_FU_64_0_64_88_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428646));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428648 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428648),
-    .in1(out_UUdata_converter_FU_19_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428647),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428649 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428649),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429281),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428650 (.out1(out_ui_bit_ior_expr_FU_0_64_64_54_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428650),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429285),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428648));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429079 (.out1(out_UUdata_converter_FU_19_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429079),
+    .in1(out_ui_shr_node_FU_64_0_64_76_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429078));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428651 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428651),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429080 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429080),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_54_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428650),
+    .in1(out_UUdata_converter_FU_19_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429079),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428652 (.out1(out_ui_plus_expr_FU_64_64_64_82_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428652),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_53_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428645),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428651));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428653 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428653),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428652),
-    .in2(out_const_19));
-  UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428654 (.out1(out_UUdata_converter_FU_20_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428654),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428653));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081 (.out1(out_ui_add_node_FU_64_64_64_38_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081),
+    .in1(out_UUdata_converter_FU_18_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429077),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429080));
+  UUdata_converter_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429082 (.out1(out_UUdata_converter_FU_20_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429082),
+    .in1(out_ui_add_node_FU_64_64_64_38_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(288),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428655 (.out1(out_ui_lshift_expr_FU_64_0_64_71_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428655),
-    .in1(out_UUdata_converter_FU_20_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428654),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429083 (.out1(out_ui_shl_node_FU_64_0_64_60_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429083),
+    .in1(out_UUdata_converter_FU_20_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429082),
     .in2(out_const_5));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(288),
-    .BITSIZE_in2(256),
-    .BITSIZE_out1(288)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428656 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428656),
-    .in1(out_ui_lshift_expr_FU_64_0_64_71_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428655),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428640));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+  ui_and_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429084 (.out1(out_ui_and_node_FU_32_0_32_40_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429084),
+    .in1(out_ui_shr_node_FU_64_0_64_81_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429517),
+    .in2(out_const_18));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428657 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428657),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428652),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429085 (.out1(out_ui_shr_node_FU_64_0_64_73_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429085),
+    .in1(out_ui_add_node_FU_64_64_64_38_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429081),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428658 (.out1(out_UUdata_converter_FU_21_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428658),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428657));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429086 (.out1(out_UUdata_converter_FU_21_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429086),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429085));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(320),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428659 (.out1(out_ui_lshift_expr_FU_64_0_64_72_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428659),
-    .in1(out_UUdata_converter_FU_21_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428658),
-    .in2(out_const_7));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(320),
-    .BITSIZE_in2(288),
-    .BITSIZE_out1(320)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428660 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428660),
-    .in1(out_ui_lshift_expr_FU_64_0_64_72_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428659),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428656));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429087 (.out1(out_ui_shl_node_FU_64_0_64_61_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429087),
+    .in1(out_UUdata_converter_FU_21_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429086),
+    .in2(out_const_6));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428661 (.out1(out_ui_rshift_expr_FU_64_0_64_89_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428661),
-    .in1(out_reg_4_reg_4),
-    .in2(out_const_9));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429088 (.out1(out_ui_shr_node_FU_64_0_64_77_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429088),
+    .in1(out_reg_5_reg_5),
+    .in2(out_const_8));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428662 (.out1(out_UUdata_converter_FU_22_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428662),
-    .in1(out_ui_rshift_expr_FU_64_0_64_89_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428661));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428663 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428663),
-    .in1(out_UUdata_converter_FU_22_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428662),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428664 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428664),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429288),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428665 (.out1(out_ui_bit_ior_expr_FU_0_64_64_55_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428665),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429292),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428663));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429089 (.out1(out_UUdata_converter_FU_22_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429089),
+    .in1(out_ui_shr_node_FU_64_0_64_77_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429088));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428666 (.out1(out_ui_rshift_expr_FU_64_0_64_89_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428666),
-    .in1(out_reg_2_reg_2),
-    .in2(out_const_9));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429090 (.out1(out_ui_shr_node_FU_64_0_64_77_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429090),
+    .in1(out_reg_3_reg_3),
+    .in2(out_const_8));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428667 (.out1(out_UUdata_converter_FU_23_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428667),
-    .in1(out_ui_rshift_expr_FU_64_0_64_89_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428666));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428668 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428668),
-    .in1(out_UUdata_converter_FU_23_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428667),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428669 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428669),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429295),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428670 (.out1(out_ui_bit_ior_expr_FU_0_64_64_56_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428670),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429299),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428668));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429091 (.out1(out_UUdata_converter_FU_23_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429091),
+    .in1(out_ui_shr_node_FU_64_0_64_77_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429090));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428671 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428671),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429092 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429092),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_56_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428670),
+    .in1(out_UUdata_converter_FU_23_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429091),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428672 (.out1(out_ui_plus_expr_FU_64_64_64_82_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428672),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_55_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428665),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428671));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428673 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i16_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428673),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428672),
-    .in2(out_const_19));
-  UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428674 (.out1(out_UUdata_converter_FU_24_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428674),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i16_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428673));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093 (.out1(out_ui_add_node_FU_64_64_64_38_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093),
+    .in1(out_UUdata_converter_FU_22_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429089),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429092));
+  UUdata_converter_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429094 (.out1(out_UUdata_converter_FU_24_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429094),
+    .in1(out_ui_add_node_FU_64_64_64_38_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(352),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428675 (.out1(out_ui_lshift_expr_FU_64_0_64_73_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428675),
-    .in1(out_UUdata_converter_FU_24_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428674),
-    .in2(out_const_9));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(352),
-    .BITSIZE_in2(320),
-    .BITSIZE_out1(352)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428676 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428676),
-    .in1(out_ui_lshift_expr_FU_64_0_64_73_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428675),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428660));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429095 (.out1(out_ui_shl_node_FU_64_0_64_62_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429095),
+    .in1(out_UUdata_converter_FU_24_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429094),
+    .in2(out_const_8));
+  ui_and_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429096 (.out1(out_ui_and_node_FU_32_0_32_40_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429096),
+    .in1(out_ui_shr_node_FU_64_0_64_82_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429525),
+    .in2(out_const_18));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428677 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428677),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428672),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429097 (.out1(out_ui_shr_node_FU_64_0_64_73_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429097),
+    .in1(out_ui_add_node_FU_64_64_64_38_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429093),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428678 (.out1(out_UUdata_converter_FU_25_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428678),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428677));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429098 (.out1(out_UUdata_converter_FU_25_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429098),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429097));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(384),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428679 (.out1(out_ui_lshift_expr_FU_64_0_64_74_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428679),
-    .in1(out_UUdata_converter_FU_25_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428678),
-    .in2(out_const_10));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(384),
-    .BITSIZE_in2(352),
-    .BITSIZE_out1(384)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428680 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428680),
-    .in1(out_ui_lshift_expr_FU_64_0_64_74_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428679),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428676));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429099 (.out1(out_ui_shl_node_FU_64_0_64_63_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429099),
+    .in1(out_UUdata_converter_FU_25_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429098),
+    .in2(out_const_9));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428681 (.out1(out_ui_rshift_expr_FU_64_0_64_90_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428681),
-    .in1(out_reg_4_reg_4),
-    .in2(out_const_14));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429100 (.out1(out_ui_shr_node_FU_64_0_64_78_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429100),
+    .in1(out_reg_5_reg_5),
+    .in2(out_const_13));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428682 (.out1(out_UUdata_converter_FU_26_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428682),
-    .in1(out_ui_rshift_expr_FU_64_0_64_90_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428681));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428683 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i17_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428683),
-    .in1(out_UUdata_converter_FU_26_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428682),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428684 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428684),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429302),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428685 (.out1(out_ui_bit_ior_expr_FU_0_64_64_57_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428685),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429306),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i17_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428683));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429101 (.out1(out_UUdata_converter_FU_26_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429101),
+    .in1(out_ui_shr_node_FU_64_0_64_78_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429100));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428686 (.out1(out_ui_rshift_expr_FU_64_0_64_90_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428686),
-    .in1(out_reg_2_reg_2),
-    .in2(out_const_14));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429102 (.out1(out_ui_shr_node_FU_64_0_64_78_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429102),
+    .in1(out_reg_3_reg_3),
+    .in2(out_const_13));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428687 (.out1(out_UUdata_converter_FU_27_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428687),
-    .in1(out_ui_rshift_expr_FU_64_0_64_90_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428686));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428688 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i18_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428688),
-    .in1(out_UUdata_converter_FU_27_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428687),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428689 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428689),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429309),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428690 (.out1(out_ui_bit_ior_expr_FU_0_64_64_58_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428690),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429313),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i18_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428688));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429103 (.out1(out_UUdata_converter_FU_27_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429103),
+    .in1(out_ui_shr_node_FU_64_0_64_78_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429102));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428691 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428691),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429104 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429104),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_58_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428690),
+    .in1(out_UUdata_converter_FU_27_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429103),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428692 (.out1(out_ui_plus_expr_FU_64_64_64_82_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428692),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_57_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428685),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428691));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428693 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i19_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428693),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428692),
-    .in2(out_const_19));
-  UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428694 (.out1(out_UUdata_converter_FU_28_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428694),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i19_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428693));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105 (.out1(out_ui_add_node_FU_64_64_64_38_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105),
+    .in1(out_UUdata_converter_FU_26_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429101),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429104));
+  UUdata_converter_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429106 (.out1(out_UUdata_converter_FU_28_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429106),
+    .in1(out_ui_add_node_FU_64_64_64_38_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(416),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428695 (.out1(out_ui_lshift_expr_FU_64_0_64_75_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428695),
-    .in1(out_UUdata_converter_FU_28_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428694),
-    .in2(out_const_14));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(416),
-    .BITSIZE_in2(384),
-    .BITSIZE_out1(416)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428696 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428696),
-    .in1(out_ui_lshift_expr_FU_64_0_64_75_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428695),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428680));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429107 (.out1(out_ui_shl_node_FU_64_0_64_64_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429107),
+    .in1(out_UUdata_converter_FU_28_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429106),
+    .in2(out_const_13));
+  ui_and_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429108 (.out1(out_ui_and_node_FU_32_0_32_40_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429108),
+    .in1(out_ui_shr_node_FU_64_0_64_83_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429533),
+    .in2(out_const_18));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428697 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428697),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428692),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429109 (.out1(out_ui_shr_node_FU_64_0_64_73_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429109),
+    .in1(out_ui_add_node_FU_64_64_64_38_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429105),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428698 (.out1(out_UUdata_converter_FU_29_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428698),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428697));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429110 (.out1(out_UUdata_converter_FU_29_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429110),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429109));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(448),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428699 (.out1(out_ui_lshift_expr_FU_64_0_64_76_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428699),
-    .in1(out_UUdata_converter_FU_29_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428698),
-    .in2(out_const_15));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(448),
-    .BITSIZE_in2(416),
-    .BITSIZE_out1(448)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428700 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428700),
-    .in1(out_ui_lshift_expr_FU_64_0_64_76_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428699),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428696));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429111 (.out1(out_ui_shl_node_FU_64_0_64_65_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429111),
+    .in1(out_UUdata_converter_FU_29_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429110),
+    .in2(out_const_14));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428701 (.out1(out_ui_rshift_expr_FU_64_0_64_91_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428701),
-    .in1(out_reg_4_reg_4),
-    .in2(out_const_17));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429112 (.out1(out_ui_shr_node_FU_64_0_64_79_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429112),
+    .in1(out_reg_5_reg_5),
+    .in2(out_const_16));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428702 (.out1(out_UUdata_converter_FU_30_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428702),
-    .in1(out_ui_rshift_expr_FU_64_0_64_91_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428701));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428703 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i20_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428703),
-    .in1(out_UUdata_converter_FU_30_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428702),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428704 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428704),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429316),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428705 (.out1(out_ui_bit_ior_expr_FU_0_64_64_59_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428705),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429320),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i20_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428703));
-  ui_rshift_expr_FU #(.BITSIZE_in1(512),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429113 (.out1(out_UUdata_converter_FU_30_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429113),
+    .in1(out_ui_shr_node_FU_64_0_64_79_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429112));
+  ui_shr_node_FU #(.BITSIZE_in1(512),
     .BITSIZE_in2(9),
     .BITSIZE_out1(64),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428706 (.out1(out_ui_rshift_expr_FU_64_0_64_91_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428706),
-    .in1(out_reg_2_reg_2),
-    .in2(out_const_17));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429114 (.out1(out_ui_shr_node_FU_64_0_64_79_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429114),
+    .in1(out_reg_3_reg_3),
+    .in2(out_const_16));
   UUdata_converter_FU #(.BITSIZE_in1(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428707 (.out1(out_UUdata_converter_FU_31_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428707),
-    .in1(out_ui_rshift_expr_FU_64_0_64_91_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428706));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428708 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i21_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428708),
-    .in1(out_UUdata_converter_FU_31_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428707),
-    .in2(out_const_19));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428709 (.out1(out_ui_bit_and_expr_FU_32_0_32_40_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428709),
-    .in1(out_ui_rshift_expr_FU_64_0_64_92_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429323),
-    .in2(out_const_19));
-  ui_bit_ior_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428710 (.out1(out_ui_bit_ior_expr_FU_0_64_64_60_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428710),
-    .in1(out_ui_lshift_expr_FU_64_0_64_79_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429327),
-    .in2(out_ui_bit_and_expr_FU_32_0_32_39_i21_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428708));
-  ui_mult_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429115 (.out1(out_UUdata_converter_FU_31_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429115),
+    .in1(out_ui_shr_node_FU_64_0_64_79_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429114));
+  ui_mul_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
     .BITSIZE_out1(64),
-    .PIPE_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428711 (.out1(out_ui_mult_expr_FU_64_64_64_0_80_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428711),
+    .PIPE_PARAMETER(0)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429116 (.out1(out_ui_mul_node_FU_64_64_64_0_44_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429116),
     .clock(clock),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_60_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428710),
+    .in1(out_UUdata_converter_FU_31_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429115),
     .in2(in_port_alpha));
-  ui_plus_expr_FU #(.BITSIZE_in1(64),
+  ui_add_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(64),
-    .BITSIZE_out1(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428712 (.out1(out_ui_plus_expr_FU_64_64_64_82_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428712),
-    .in1(out_ui_bit_ior_expr_FU_0_64_64_59_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428705),
-    .in2(out_ui_mult_expr_FU_64_64_64_0_80_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428711));
-  ui_bit_and_expr_FU #(.BITSIZE_in1(64),
+    .BITSIZE_out1(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117 (.out1(out_ui_add_node_FU_64_64_64_38_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117),
+    .in1(out_UUdata_converter_FU_30_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429113),
+    .in2(out_ui_mul_node_FU_64_64_64_0_44_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429116));
+  ui_and_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428713 (.out1(out_ui_bit_and_expr_FU_32_0_32_39_i22_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428713),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428712),
-    .in2(out_const_19));
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429118 (.out1(out_ui_and_node_FU_32_0_32_39_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429118),
+    .in1(out_ui_add_node_FU_64_64_64_38_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117),
+    .in2(out_const_18));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428714 (.out1(out_UUdata_converter_FU_32_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428714),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_39_i22_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428713));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429119 (.out1(out_UUdata_converter_FU_32_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429119),
+    .in1(out_ui_and_node_FU_32_0_32_39_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429118));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(480),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428715 (.out1(out_ui_lshift_expr_FU_64_0_64_77_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428715),
-    .in1(out_UUdata_converter_FU_32_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428714),
-    .in2(out_const_17));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(480),
-    .BITSIZE_in2(448),
-    .BITSIZE_out1(480)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428716 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428716),
-    .in1(out_ui_lshift_expr_FU_64_0_64_77_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428715),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428700));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429120 (.out1(out_ui_shl_node_FU_64_0_64_66_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429120),
+    .in1(out_UUdata_converter_FU_32_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429119),
+    .in2(out_const_16));
+  ui_shr_node_FU #(.BITSIZE_in1(64),
     .BITSIZE_in2(6),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428717 (.out1(out_ui_rshift_expr_FU_64_0_64_85_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428717),
-    .in1(out_ui_plus_expr_FU_64_64_64_82_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428712),
+    .PRECISION(64)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429121 (.out1(out_ui_shr_node_FU_64_0_64_73_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429121),
+    .in1(out_ui_add_node_FU_64_64_64_38_i7_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429117),
     .in2(out_const_2));
   UUdata_converter_FU #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428718 (.out1(out_UUdata_converter_FU_33_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428718),
-    .in1(out_ui_rshift_expr_FU_64_0_64_85_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428717));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429122 (.out1(out_UUdata_converter_FU_33_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429122),
+    .in1(out_ui_shr_node_FU_64_0_64_73_i6_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429121));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(9),
     .BITSIZE_out1(512),
-    .PRECISION(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428719 (.out1(out_ui_lshift_expr_FU_64_0_64_78_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428719),
-    .in1(out_UUdata_converter_FU_33_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428718),
-    .in2(out_const_18));
-  ui_bit_xor_expr_FU #(.BITSIZE_in1(512),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429123 (.out1(out_ui_shl_node_FU_64_0_64_67_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429123),
+    .in1(out_UUdata_converter_FU_33_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429122),
+    .in2(out_const_17));
+  ui_or_node_FU #(.BITSIZE_in1(256),
+    .BITSIZE_in2(224),
+    .BITSIZE_out1(256)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429124 (.out1(out_ui_or_node_FU_0_64_64_49_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429124),
+    .in1(out_ui_shl_node_FU_64_0_64_59_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429075),
+    .in2(out_ui_shl_node_FU_64_0_64_68_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429513));
+  ui_or_node_FU #(.BITSIZE_in1(256),
+    .BITSIZE_in2(288),
+    .BITSIZE_out1(288)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429125 (.out1(out_ui_or_node_FU_0_64_64_50_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429125),
+    .in1(out_ui_or_node_FU_0_64_64_49_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429124),
+    .in2(out_ui_shl_node_FU_64_0_64_69_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429521));
+  ui_or_node_FU #(.BITSIZE_in1(288),
+    .BITSIZE_in2(320),
+    .BITSIZE_out1(320)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429126 (.out1(out_ui_or_node_FU_0_64_64_51_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429126),
+    .in1(out_ui_or_node_FU_0_64_64_50_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429125),
+    .in2(out_ui_shl_node_FU_64_0_64_61_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429087));
+  ui_or_node_FU #(.BITSIZE_in1(320),
+    .BITSIZE_in2(352),
+    .BITSIZE_out1(352)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429127 (.out1(out_ui_or_node_FU_0_64_64_52_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429127),
+    .in1(out_ui_or_node_FU_0_64_64_51_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429126),
+    .in2(out_ui_shl_node_FU_64_0_64_70_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429529));
+  ui_xor_node_FU #(.BITSIZE_in1(352),
+    .BITSIZE_in2(384),
+    .BITSIZE_out1(384)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429128 (.out1(out_ui_xor_node_FU_64_64_64_84_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429128),
+    .in1(out_ui_or_node_FU_0_64_64_52_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429127),
+    .in2(out_ui_shl_node_FU_64_0_64_63_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429099));
+  ui_xor_node_FU #(.BITSIZE_in1(384),
+    .BITSIZE_in2(416),
+    .BITSIZE_out1(416)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429129 (.out1(out_ui_xor_node_FU_64_64_64_84_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429129),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429128),
+    .in2(out_ui_shl_node_FU_64_0_64_71_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429537));
+  ui_xor_node_FU #(.BITSIZE_in1(416),
+    .BITSIZE_in2(448),
+    .BITSIZE_out1(448)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429130 (.out1(out_ui_xor_node_FU_64_64_64_84_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429130),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429129),
+    .in2(out_ui_shl_node_FU_64_0_64_65_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429111));
+  ui_xor_node_FU #(.BITSIZE_in1(448),
     .BITSIZE_in2(480),
-    .BITSIZE_out1(512)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428720 (.out1(out_ui_bit_xor_expr_FU_64_64_64_61_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428720),
-    .in1(out_ui_lshift_expr_FU_64_0_64_78_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428719),
-    .in2(out_ui_bit_xor_expr_FU_64_64_64_61_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428716));
-  ui_pointer_plus_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(32),
-    .BITSIZE_out1(32),
-    .LSB_PARAMETER(0)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428721 (.out1(out_ui_pointer_plus_expr_FU_32_32_32_83_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428721),
-    .in1(in_port_y_out),
-    .in2(out_ui_lshift_expr_FU_32_0_32_64_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136));
-  ui_plus_expr_FU #(.BITSIZE_in1(32),
+    .BITSIZE_out1(480)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429131 (.out1(out_ui_xor_node_FU_64_64_64_84_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429131),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429130),
+    .in2(out_ui_shl_node_FU_64_0_64_66_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429120));
+  ui_xor_node_FU #(.BITSIZE_in1(480),
+    .BITSIZE_in2(512),
+    .BITSIZE_out1(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429132 (.out1(out_ui_xor_node_FU_64_64_64_84_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429132),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429131),
+    .in2(out_ui_shl_node_FU_64_0_64_67_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429123));
+  ui_xor_node_FU #(.BITSIZE_in1(512),
+    .BITSIZE_in2(192),
+    .BITSIZE_out1(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133 (.out1(out_ui_xor_node_FU_64_64_64_84_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i4_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429132),
+    .in2(out_ui_or_node_FU_0_64_64_48_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429063));
+  ui_add_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(1),
-    .BITSIZE_out1(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428723 (.out1(out_ui_plus_expr_FU_32_0_32_81_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428723),
+    .BITSIZE_out1(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136 (.out1(out_ui_add_node_FU_32_0_32_37_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136),
     .in1(out_reg_0_reg_0),
     .in2(out_const_1));
-  UUdata_converter_FU #(.BITSIZE_in1(1),
-    .BITSIZE_out1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428724 (.out1(out_UUdata_converter_FU_34_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428724),
-    .in1(out_ui_eq_expr_FU_32_32_32_63_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429151));
-  read_cond_FU #(.BITSIZE_in1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725 (.out1(out_read_cond_FU_35_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725),
-    .in1(out_reg_6_reg_6));
-  UUdata_converter_FU #(.BITSIZE_in1(1),
-    .BITSIZE_out1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429115 (.out1(out_UUdata_converter_FU_37_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429115),
-    .in1(out_ui_eq_expr_FU_32_0_32_62_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429158));
-  read_cond_FU #(.BITSIZE_in1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116 (.out1(out_read_cond_FU_38_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116),
-    .in1(out_UUdata_converter_FU_37_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429115));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(3),
-    .BITSIZE_out1(32),
-    .PRECISION(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136 (.out1(out_ui_lshift_expr_FU_32_0_32_64_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429136),
-    .in1(out_reg_0_reg_0),
-    .in2(out_const_11));
-  ui_eq_expr_FU #(.BITSIZE_in1(32),
+  ui_eq_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(32),
-    .BITSIZE_out1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429151 (.out1(out_ui_eq_expr_FU_32_32_32_63_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429151),
-    .in1(out_ui_plus_expr_FU_32_0_32_81_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428723),
+    .BITSIZE_out1(1)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137 (.out1(out_ui_eq_node_FU_32_32_32_42_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137),
+    .in1(out_ui_add_node_FU_32_0_32_37_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136),
     .in2(in_port_loop_count));
-  ui_eq_expr_FU #(.BITSIZE_in1(32),
+  multi_read_cond_FU #(.BITSIZE_in1(1),
+    .PORTSIZE_in1(1),
+    .BITSIZE_out1(1)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 (.out1(out_multi_read_cond_FU_34_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138),
+    .in1({out_MUX_33_multi_read_cond_FU_34_i0_0_0_0}));
+  ui_eq_node_FU #(.BITSIZE_in1(32),
     .BITSIZE_in2(1),
-    .BITSIZE_out1(1)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429158 (.out1(out_ui_eq_expr_FU_32_0_32_62_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429158),
+    .BITSIZE_out1(1)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429435 (.out1(out_ui_eq_node_FU_32_0_32_41_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429435),
     .in1(in_port_loop_count),
     .in2(out_const_0));
-  y_out_bambu_artificial_ParmMgr_Write_axis_modgen #(.BITSIZE_in1(10),
-    .BITSIZE_in2(512),
-    .BITSIZE_in3(32)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 (.done_port({s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212_P0}),
-    ._y_out_TDATA(_y_out_TDATA),
-    ._y_out_TVALID(_y_out_TVALID),
+  multi_read_cond_FU #(.BITSIZE_in1(1),
+    .PORTSIZE_in1(1),
+    .BITSIZE_out1(1)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436 (.out1(out_multi_read_cond_FU_36_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436),
+    .in1({out_ui_eq_node_FU_32_0_32_41_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429435}));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(3),
+    .BITSIZE_out1(32),
+    .PRECISION(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429450 (.out1(out_ui_shl_node_FU_32_0_32_53_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429450),
+    .in1(out_reg_0_reg_0),
+    .in2(out_const_10));
+  y_out_bambu_artificial_ParmMgr_Write_axis_modgen #(.BITSIZE_in1(1),
+    .BITSIZE_in2(10),
+    .BITSIZE_in3(512),
+    .BITSIZE_in4(32)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 (.done_port({s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_P0}),
+    .out1(null_out_signal_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_out1),
+    .p_y_out_TDATA(p_y_out_TDATA),
+    .p_y_out_TVALID(p_y_out_TVALID),
     .clock(clock),
     .reset(reset),
-    .start_port({selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212}),
-    .in1(out_const_6),
-    .in2(out_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0),
-    .in3(out_reg_5_reg_5),
-    ._y_out_TREADY(_y_out_TREADY));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
+    .start_port({selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501}),
+    .in1(out_const_1),
+    .in2(out_conv_out_const_0_1_10),
+    .in3(out_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0),
+    .in4(out_conv_out_const_0_1_32),
+    .p_y_out_TREADY(p_y_out_TREADY));
+  ui_shr_node_FU #(.BITSIZE_in1(224),
+    .BITSIZE_in2(8),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429216 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429216),
-    .in1(out_UUdata_converter_FU_3_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428570),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429222 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429222),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428572),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429506 (.out1(out_ui_shr_node_FU_64_0_64_80_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429506),
+    .in1(out_ui_shl_node_FU_64_0_64_58_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429071),
+    .in2(out_const_12));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(8),
+    .BITSIZE_out1(224),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429513 (.out1(out_ui_shl_node_FU_64_0_64_68_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429513),
+    .in1(out_ui_and_node_FU_32_0_32_40_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429072),
+    .in2(out_const_12));
+  ui_shr_node_FU #(.BITSIZE_in1(288),
+    .BITSIZE_in2(9),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429225 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429225),
-    .in1(out_UUdata_converter_FU_4_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428574),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429229 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429229),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428576),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429517 (.out1(out_ui_shr_node_FU_64_0_64_81_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429517),
+    .in1(out_ui_shl_node_FU_64_0_64_60_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429083),
+    .in2(out_const_5));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(9),
+    .BITSIZE_out1(288),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429521 (.out1(out_ui_shl_node_FU_64_0_64_69_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429521),
+    .in1(out_ui_and_node_FU_32_0_32_40_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429084),
+    .in2(out_const_5));
+  ui_shr_node_FU #(.BITSIZE_in1(352),
+    .BITSIZE_in2(9),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429232 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429232),
-    .in1(out_UUdata_converter_FU_6_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428582),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429236 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429236),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428584),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429525 (.out1(out_ui_shr_node_FU_64_0_64_82_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429525),
+    .in1(out_ui_shl_node_FU_64_0_64_62_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429095),
+    .in2(out_const_8));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(9),
+    .BITSIZE_out1(352),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429529 (.out1(out_ui_shl_node_FU_64_0_64_70_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429529),
+    .in1(out_ui_and_node_FU_32_0_32_40_i2_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429096),
+    .in2(out_const_8));
+  ui_shr_node_FU #(.BITSIZE_in1(416),
+    .BITSIZE_in2(9),
     .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429239 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429239),
-    .in1(out_UUdata_converter_FU_7_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428587),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429243 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429243),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i3_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428589),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429246 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429246),
-    .in1(out_UUdata_converter_FU_10_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428602),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429250 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429250),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i4_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428604),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429253 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429253),
-    .in1(out_UUdata_converter_FU_11_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428607),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429257 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429257),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i5_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428609),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429260 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429260),
-    .in1(out_UUdata_converter_FU_14_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428622),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429264 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429264),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i6_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428624),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429267 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429267),
-    .in1(out_UUdata_converter_FU_15_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428627),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429271 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429271),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i7_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428629),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429274 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429274),
-    .in1(out_UUdata_converter_FU_18_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428642),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429278 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429278),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i8_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428644),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429281 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429281),
-    .in1(out_UUdata_converter_FU_19_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428647),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429285 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429285),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428649),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429288 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429288),
-    .in1(out_UUdata_converter_FU_22_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428662),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429292 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429292),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i10_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428664),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429295 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429295),
-    .in1(out_UUdata_converter_FU_23_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428667),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429299 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429299),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i11_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428669),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429302 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429302),
-    .in1(out_UUdata_converter_FU_26_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428682),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429306 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429306),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i12_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428684),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429309 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429309),
-    .in1(out_UUdata_converter_FU_27_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428687),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429313 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429313),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i13_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428689),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429316 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429316),
-    .in1(out_UUdata_converter_FU_30_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428702),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429320 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429320),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i14_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428704),
-    .in2(out_const_2));
-  ui_rshift_expr_FU #(.BITSIZE_in1(64),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(32),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429323 (.out1(out_ui_rshift_expr_FU_64_0_64_92_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429323),
-    .in1(out_UUdata_converter_FU_31_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428707),
-    .in2(out_const_2));
-  ui_lshift_expr_FU #(.BITSIZE_in1(32),
-    .BITSIZE_in2(6),
-    .BITSIZE_out1(64),
-    .PRECISION(64)) fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429327 (.out1(out_ui_lshift_expr_FU_64_0_64_79_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429327),
-    .in1(out_ui_bit_and_expr_FU_32_0_32_40_i15_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428709),
-    .in2(out_const_2));
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429533 (.out1(out_ui_shr_node_FU_64_0_64_83_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429533),
+    .in1(out_ui_shl_node_FU_64_0_64_64_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429107),
+    .in2(out_const_13));
+  ui_shl_node_FU #(.BITSIZE_in1(32),
+    .BITSIZE_in2(9),
+    .BITSIZE_out1(416),
+    .PRECISION(512)) fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429537 (.out1(out_ui_shl_node_FU_64_0_64_71_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429537),
+    .in1(out_ui_and_node_FU_32_0_32_40_i3_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429108),
+    .in2(out_const_13));
   SIMPLEJOIN_FU #(.BITSIZE_ops(1),
     .PORTSIZE_ops(2)) mu_S_0 (.sop(OUT_mu_S_0_MULTI_UNBOUNDED_0),
     .clock(clock),
     .reset(reset),
     .enable(muenable_mu_S_0),
-    .ops({s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567_P0,
-      s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569_P0}));
+    .ops({s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030_P0,
+      s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028_P0}));
+  SIMPLEJOIN_FU #(.BITSIZE_ops(1),
+    .PORTSIZE_ops(3)) mu_S_4 (.sop(OUT_mu_S_4_MULTI_UNBOUNDED_0),
+    .clock(clock),
+    .reset(reset),
+    .enable(muenable_mu_S_4),
+    .ops({s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_P0,
+      s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030_P0,
+      s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028_P0}));
   register_SE #(.BITSIZE_in1(32),
     .BITSIZE_out1(32)) reg_0 (.out1(out_reg_0_reg_0),
     .clock(clock),
     .reset(reset),
-    .in1(out_MUX_37_reg_0_0_0_0),
+    .in1(out_MUX_35_reg_0_0_0_1),
     .wenable(wrenable_reg_0));
   register_SE #(.BITSIZE_in1(32),
     .BITSIZE_out1(32)) reg_1 (.out1(out_reg_1_reg_1),
     .clock(clock),
     .reset(reset),
-    .in1(out_ui_pointer_plus_expr_FU_32_32_32_83_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428566),
+    .in1(out_ui_add_node_FU_32_0_32_37_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429136),
     .wenable(wrenable_reg_1));
-  register_SE #(.BITSIZE_in1(512),
-    .BITSIZE_out1(512)) reg_2 (.out1(out_reg_2_reg_2),
+  register_SE #(.BITSIZE_in1(32),
+    .BITSIZE_out1(32)) reg_2 (.out1(out_reg_2_reg_2),
     .clock(clock),
     .reset(reset),
-    .in1(out_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
+    .in1(out_ui_gep_node_FU_32_32_32_43_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429027),
     .wenable(wrenable_reg_2));
-  register_SE #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) reg_3 (.out1(out_reg_3_reg_3),
-    .clock(clock),
-    .reset(reset),
-    .in1(out_ui_pointer_plus_expr_FU_32_32_32_83_i1_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428568),
-    .wenable(wrenable_reg_3));
   register_SE #(.BITSIZE_in1(512),
-    .BITSIZE_out1(512)) reg_4 (.out1(out_reg_4_reg_4),
+    .BITSIZE_out1(512)) reg_3 (.out1(out_reg_3_reg_3),
     .clock(clock),
     .reset(reset),
-    .in1(out_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    .wenable(wrenable_reg_4));
+    .in1(out_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .wenable(wrenable_reg_3));
   register_SE #(.BITSIZE_in1(32),
-    .BITSIZE_out1(32)) reg_5 (.out1(out_reg_5_reg_5),
+    .BITSIZE_out1(32)) reg_4 (.out1(out_reg_4_reg_4),
     .clock(clock),
     .reset(reset),
-    .in1(out_ui_pointer_plus_expr_FU_32_32_32_83_i2_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428721),
+    .in1(out_ui_gep_node_FU_32_32_32_43_i1_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429029),
+    .wenable(wrenable_reg_4));
+  register_SE #(.BITSIZE_in1(512),
+    .BITSIZE_out1(512)) reg_5 (.out1(out_reg_5_reg_5),
+    .clock(clock),
+    .reset(reset),
+    .in1(out_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
     .wenable(wrenable_reg_5));
   register_SE #(.BITSIZE_in1(1),
     .BITSIZE_out1(1)) reg_6 (.out1(out_reg_6_reg_6),
     .clock(clock),
     .reset(reset),
-    .in1(out_UUdata_converter_FU_34_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428724),
+    .in1(out_ui_eq_node_FU_32_32_32_42_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429137),
     .wenable(wrenable_reg_6));
   register_SE #(.BITSIZE_in1(512),
     .BITSIZE_out1(512)) reg_7 (.out1(out_reg_7_reg_7),
     .clock(clock),
     .reset(reset),
-    .in1(out_ui_bit_xor_expr_FU_64_64_64_61_i9_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428720),
+    .in1(out_ui_xor_node_FU_64_64_64_84_i5_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429133),
     .wenable(wrenable_reg_7));
   // io-signal post fix
-  assign OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725 = out_read_cond_FU_35_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725;
-  assign OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116 = out_read_cond_FU_38_i0_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116;
-  assign OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567 = s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567_P0;
-  assign OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569 = s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569_P0;
-  assign OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 = s_done_fu__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212_P0;
+  assign OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 = out_multi_read_cond_FU_34_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138;
+  assign OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436 = out_multi_read_cond_FU_36_i0_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436;
+  assign OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 = s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028_P0;
+  assign OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 = s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030_P0;
+  assign OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 = s_done_fu_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501_P0;
 
 endmodule
 
+
 // FSM based controller description for _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
-module controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569,
-  selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212,
-  selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0,
-  selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0,
-  selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0,
-  selector_MUX_37_reg_0_0_0_0,
+module controller_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030,
+  selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501,
+  selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0,
+  selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0,
+  selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0,
+  selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0,
+  selector_MUX_35_reg_0_0_0_0,
+  selector_MUX_35_reg_0_0_0_1,
   muenable_mu_S_0,
+  muenable_mu_S_4,
   wrenable_reg_0,
   wrenable_reg_1,
   wrenable_reg_2,
@@ -2132,35 +1268,41 @@ module controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
   wrenable_reg_5,
   wrenable_reg_6,
   wrenable_reg_7,
-  OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725,
-  OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569,
-  OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212,
+  OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138,
+  OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030,
+  OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501,
   OUT_mu_S_0_MULTI_UNBOUNDED_0,
+  OUT_mu_S_4_MULTI_UNBOUNDED_0,
   clock,
   reset,
-  start_port);
+  start_port,
+  idle_port);
   // IN
-  input OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725;
-  input OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116;
-  input OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  input OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  input OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
+  input OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138;
+  input OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436;
+  input OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  input OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  input OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
   input OUT_mu_S_0_MULTI_UNBOUNDED_0;
+  input OUT_mu_S_4_MULTI_UNBOUNDED_0;
   input clock;
   input reset;
   input start_port;
   // OUT
   output done_port;
-  output selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  output selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  output selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
-  output selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0;
-  output selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0;
-  output selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0;
-  output selector_MUX_37_reg_0_0_0_0;
+  output selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  output selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  output selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
+  output selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0;
+  output selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0;
+  output selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0;
+  output selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0;
+  output selector_MUX_35_reg_0_0_0_0;
+  output selector_MUX_35_reg_0_0_0_1;
   output muenable_mu_S_0;
+  output muenable_mu_S_4;
   output wrenable_reg_0;
   output wrenable_reg_1;
   output wrenable_reg_2;
@@ -2169,24 +1311,28 @@ module controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
   output wrenable_reg_5;
   output wrenable_reg_6;
   output wrenable_reg_7;
-  parameter [2:0] S_5 = 3'd5,
-    S_7 = 3'd7,
+  output idle_port;
+  parameter [2:0] S_6 = 3'd6,
     S_0 = 3'd0,
     S_1 = 3'd1,
+    S_4 = 3'd4,
+    S_5 = 3'd5,
     S_2 = 3'd2,
     S_3 = 3'd3,
-    S_4 = 3'd4,
-    S_6 = 3'd6;
-  reg [2:0] _present_state=S_5, _next_state;
+    S_7 = 3'd7;
+  reg [2:0] present_state=S_6, next_state;
   reg done_port;
-  reg selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  reg selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  reg selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
-  reg selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0;
-  reg selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0;
-  reg selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0;
-  reg selector_MUX_37_reg_0_0_0_0;
+  reg selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  reg selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  reg selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
+  reg selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0;
+  reg selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0;
+  reg selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0;
+  reg selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0;
+  reg selector_MUX_35_reg_0_0_0_0;
+  reg selector_MUX_35_reg_0_0_0_1;
   reg muenable_mu_S_0;
+  reg muenable_mu_S_4;
   reg wrenable_reg_0;
   reg wrenable_reg_1;
   reg wrenable_reg_2;
@@ -2195,22 +1341,26 @@ module controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
   reg wrenable_reg_5;
   reg wrenable_reg_6;
   reg wrenable_reg_7;
+  reg idle_port;
   
   always @(posedge clock)
-    if (reset == 1'b0) _present_state <= S_5;
-    else _present_state <= _next_state;
+    if(reset == 1'b0) present_state <= S_6;
+    else present_state <= next_state;
   
   always @(*)
   begin
     done_port = 1'b0;
-    selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567 = 1'b0;
-    selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569 = 1'b0;
-    selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 = 1'b0;
-    selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0 = 1'b0;
-    selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0 = 1'b0;
-    selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0 = 1'b0;
-    selector_MUX_37_reg_0_0_0_0 = 1'b0;
+    selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 = 1'b0;
+    selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 = 1'b0;
+    selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 = 1'b0;
+    selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0 = 1'b0;
+    selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0 = 1'b0;
+    selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0 = 1'b0;
+    selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0 = 1'b0;
+    selector_MUX_35_reg_0_0_0_0 = 1'b0;
+    selector_MUX_35_reg_0_0_0_1 = 1'b0;
     muenable_mu_S_0 = 1'b0;
+    muenable_mu_S_4 = 1'b0;
     wrenable_reg_0 = 1'b0;
     wrenable_reg_1 = 1'b0;
     wrenable_reg_2 = 1'b0;
@@ -2219,167 +1369,237 @@ module controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(done_port,
     wrenable_reg_5 = 1'b0;
     wrenable_reg_6 = 1'b0;
     wrenable_reg_7 = 1'b0;
-    case (_present_state)
-      S_5 :
+    idle_port = 1'b1;
+    case (present_state)
+      S_6 :
         if(start_port == 1'b1)
         begin
           wrenable_reg_0 = 1'b1;
-          if (OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116 == 1'b0)
-            begin
-              _next_state = S_0;
-            end
-          else
-            begin
-              _next_state = S_7;
-              done_port = 1'b1;
-              wrenable_reg_0 = 1'b0;
-            end
+          idle_port = 1'b0;
+          casez (OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436)
+            1'b1 :
+              begin
+                next_state = S_7;
+                done_port = 1'b1;
+                wrenable_reg_0 = 1'b0;
+              end
+            default:
+              begin
+                next_state = S_0;
+              end
+          endcase
         end
         else
         begin
-          _next_state = S_5;
-        end
-      S_7 :
-        begin
-          _next_state = S_5;
+          next_state = S_6;
         end
       S_0 :
         begin
-          selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567 = 1'b1;
-          selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569 = 1'b1;
-          selector_MUX_37_reg_0_0_0_0 = 1'b1;
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 = 1'b1;
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 = 1'b1;
+          selector_MUX_35_reg_0_0_0_1 = 1'b1;
           wrenable_reg_0 = 1'b1;
           wrenable_reg_1 = 1'b1;
-          wrenable_reg_2 = OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
+          wrenable_reg_2 = 1'b1;
           wrenable_reg_3 = 1'b1;
-          wrenable_reg_4 = OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
+          wrenable_reg_4 = 1'b1;
           wrenable_reg_5 = 1'b1;
           wrenable_reg_6 = 1'b1;
-          if (OUT_mu_S_0_MULTI_UNBOUNDED_0 == 1'b0)
+          idle_port = 1'b0;
+          if(OUT_mu_S_0_MULTI_UNBOUNDED_0 == 1'b0)
             begin
-              _next_state = S_1;
+              next_state = S_1;
+              selector_MUX_35_reg_0_0_0_1 = 1'b0;
               muenable_mu_S_0 = 1'b1;
+              wrenable_reg_0 = 1'b0;
+            end
+          else if(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 == 1'b1)
+            begin
+              next_state = S_2;
+              selector_MUX_35_reg_0_0_0_1 = 1'b0;
+              muenable_mu_S_0 = 1'b1;
+              wrenable_reg_0 = 1'b0;
             end
           else
             begin
-              _next_state = S_2;
+              next_state = S_4;
               muenable_mu_S_0 = 1'b1;
             end
         end
       S_1 :
         begin
-          selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0 = 1'b1;
-          selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0 = 1'b1;
-          wrenable_reg_2 = OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-          wrenable_reg_4 = OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-          if (OUT_mu_S_0_MULTI_UNBOUNDED_0 == 1'b0)
+          selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0 = 1'b1;
+          selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0 = 1'b1;
+          selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0 = 1'b1;
+          selector_MUX_35_reg_0_0_0_0 = 1'b1;
+          wrenable_reg_0 = 1'b1;
+          wrenable_reg_3 = 1'b1;
+          wrenable_reg_5 = 1'b1;
+          idle_port = 1'b0;
+          if(OUT_mu_S_0_MULTI_UNBOUNDED_0 == 1'b0)
             begin
-              _next_state = S_1;
+              next_state = S_1;
+              selector_MUX_35_reg_0_0_0_0 = 1'b0;
+              wrenable_reg_0 = 1'b0;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+            end
+          else if(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 == 1'b1)
+            begin
+              next_state = S_2;
+              selector_MUX_35_reg_0_0_0_0 = 1'b0;
+              wrenable_reg_0 = 1'b0;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
             end
           else
             begin
-              _next_state = S_2;
-            end
-        end
-      S_2 :
-        begin
-          selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 = 1'b1;
-          wrenable_reg_7 = 1'b1;
-          if (OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 == 1'b0)
-            begin
-              _next_state = S_3;
-            end
-          else
-            begin
-              _next_state = S_4;
-            end
-        end
-      S_3 :
-        begin
-          selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0 = 1'b1;
-          if (OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212 == 1'b0)
-            begin
-              _next_state = S_3;
-            end
-          else
-            begin
-              _next_state = S_4;
+              next_state = S_4;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
             end
         end
       S_4 :
         begin
-          if (OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725 == 1'b0)
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028 = 1'b1;
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030 = 1'b1;
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 = 1'b1;
+          selector_MUX_35_reg_0_0_0_1 = 1'b1;
+          wrenable_reg_0 = 1'b1;
+          wrenable_reg_1 = 1'b1;
+          wrenable_reg_2 = 1'b1;
+          wrenable_reg_3 = 1'b1;
+          wrenable_reg_4 = 1'b1;
+          wrenable_reg_5 = 1'b1;
+          wrenable_reg_6 = 1'b1;
+          wrenable_reg_7 = 1'b1;
+          idle_port = 1'b0;
+          if(OUT_mu_S_4_MULTI_UNBOUNDED_0 == 1'b0)
             begin
-              _next_state = S_0;
+              next_state = S_5;
+              selector_MUX_35_reg_0_0_0_1 = 1'b0;
+              muenable_mu_S_4 = 1'b1;
+              wrenable_reg_0 = 1'b0;
+            end
+          else if(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 == 1'b1)
+            begin
+              next_state = S_2;
+              selector_MUX_35_reg_0_0_0_1 = 1'b0;
+              muenable_mu_S_4 = 1'b1;
+              wrenable_reg_0 = 1'b0;
             end
           else
             begin
-              _next_state = S_6;
+              next_state = S_4;
+              muenable_mu_S_4 = 1'b1;
+            end
+        end
+      S_5 :
+        begin
+          selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0 = 1'b1;
+          selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0 = 1'b1;
+          selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0 = 1'b1;
+          selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0 = 1'b1;
+          selector_MUX_35_reg_0_0_0_0 = 1'b1;
+          wrenable_reg_0 = 1'b1;
+          wrenable_reg_3 = 1'b1;
+          wrenable_reg_5 = 1'b1;
+          idle_port = 1'b0;
+          if(OUT_mu_S_4_MULTI_UNBOUNDED_0 == 1'b0)
+            begin
+              next_state = S_5;
+              selector_MUX_35_reg_0_0_0_0 = 1'b0;
+              wrenable_reg_0 = 1'b0;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+            end
+          else if(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138 == 1'b1)
+            begin
+              next_state = S_2;
+              selector_MUX_35_reg_0_0_0_0 = 1'b0;
+              wrenable_reg_0 = 1'b0;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+            end
+          else
+            begin
+              next_state = S_4;
+              wrenable_reg_3 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+              wrenable_reg_5 = OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+            end
+        end
+      S_2 :
+        begin
+          selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 = 1'b1;
+          selector_MUX_35_reg_0_0_0_0 = 1'b1;
+          wrenable_reg_0 = 1'b1;
+          wrenable_reg_7 = 1'b1;
+          idle_port = 1'b0;
+          if(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 == 1'b0)
+            begin
+              next_state = S_3;
+            end
+          else
+            begin
+              next_state = S_7;
+              done_port = 1'b1;
+              selector_MUX_35_reg_0_0_0_0 = 1'b0;
+              wrenable_reg_0 = 1'b0;
+              wrenable_reg_7 = 1'b0;
+            end
+        end
+      S_3 :
+        begin
+          selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0 = 1'b1;
+          idle_port = 1'b0;
+          if(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501 == 1'b0)
+            begin
+              next_state = S_3;
+            end
+          else
+            begin
+              next_state = S_7;
               done_port = 1'b1;
             end
         end
-      S_6 :
+      S_7 :
         begin
-          _next_state = S_5;
+          idle_port = 1'b0;
+          next_state = S_6;
         end
       default :
         begin
-          _next_state = S_5;
+          next_state = S_6;
         end
     endcase
   end
 endmodule
 
-// This component is part of the BAMBU/PANDA IP LIBRARY
-// Copyright (C) 2004-2024 Politecnico di Milano
-// Author(s): Marco Lattuada <marco.lattuada@polimi.it>
-// License: PANDA_LGPLv3
-`timescale 1ns / 1ps
-module flipflop_AR(clock,
-  reset,
-  in1,
-  out1);
-  parameter BITSIZE_in1=1,
-    BITSIZE_out1=1;
-  // IN
-  input clock;
-  input reset;
-  input in1;
-  // OUT
-  output out1;
-  
-  reg reg_out1 =0;
-  assign out1 = reg_out1;
-  always @(posedge clock or negedge reset)
-    if (reset == 1'b0)
-      reg_out1 <= {BITSIZE_out1{1'b0}};
-    else
-      reg_out1 <= in1;
-endmodule
 
 // Top component for _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
-module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
+module PBI_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   reset,
   start_port,
   done_port,
+  idle_port,
   x,
   y,
   y_out,
   alpha,
   loop_count,
-  _x_TDATA,
-  _x_TVALID,
-  _y_TDATA,
-  _y_TVALID,
-  _y_out_TREADY,
-  _x_TREADY,
-  _y_TREADY,
-  _y_out_TDATA,
-  _y_out_TVALID);
+  p_x_TDATA,
+  p_x_TVALID,
+  p_y_TDATA,
+  p_y_TVALID,
+  p_y_out_TREADY,
+  p_x_TREADY,
+  p_y_TREADY,
+  p_y_out_TDATA,
+  p_y_out_TVALID);
   // IN
   input clock;
   input reset;
@@ -2389,34 +1609,39 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   input [31:0] y_out;
   input [63:0] alpha;
   input [31:0] loop_count;
-  input [511:0] _x_TDATA;
-  input _x_TVALID;
-  input [511:0] _y_TDATA;
-  input _y_TVALID;
-  input _y_out_TREADY;
+  input [511:0] p_x_TDATA;
+  input p_x_TVALID;
+  input [511:0] p_y_TDATA;
+  input p_y_TVALID;
+  input p_y_out_TREADY;
   // OUT
   output done_port;
-  output _x_TREADY;
-  output _y_TREADY;
-  output [511:0] _y_out_TDATA;
-  output _y_out_TVALID;
+  output idle_port;
+  output p_x_TREADY;
+  output p_y_TREADY;
+  output [511:0] p_y_out_TDATA;
+  output p_y_out_TVALID;
   // Component and signal declarations
-  wire OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725;
-  wire OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116;
-  wire OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  wire OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  wire OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
+  wire OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138;
+  wire OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436;
+  wire OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  wire OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  wire OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
   wire OUT_mu_S_0_MULTI_UNBOUNDED_0;
+  wire OUT_mu_S_4_MULTI_UNBOUNDED_0;
   wire done_delayed_REG_signal_in;
   wire done_delayed_REG_signal_out;
   wire muenable_mu_S_0;
-  wire selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567;
-  wire selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569;
-  wire selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212;
-  wire selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0;
-  wire selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0;
-  wire selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0;
-  wire selector_MUX_37_reg_0_0_0_0;
+  wire muenable_mu_S_4;
+  wire selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028;
+  wire selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030;
+  wire selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501;
+  wire selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0;
+  wire selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0;
+  wire selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0;
+  wire selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0;
+  wire selector_MUX_35_reg_0_0_0_0;
+  wire selector_MUX_35_reg_0_0_0_1;
   wire wrenable_reg_0;
   wire wrenable_reg_1;
   wire wrenable_reg_2;
@@ -2426,15 +1651,18 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   wire wrenable_reg_6;
   wire wrenable_reg_7;
   
-  controller__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj Controller_i (.done_port(done_delayed_REG_signal_in),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212),
-    .selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0(selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0),
-    .selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0(selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0),
-    .selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0(selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0),
-    .selector_MUX_37_reg_0_0_0_0(selector_MUX_37_reg_0_0_0_0),
+  controller_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj Controller_i (.done_port(done_delayed_REG_signal_in),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501),
+    .selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0(selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0),
+    .selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0(selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0),
+    .selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0(selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0),
+    .selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0(selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0),
+    .selector_MUX_35_reg_0_0_0_0(selector_MUX_35_reg_0_0_0_0),
+    .selector_MUX_35_reg_0_0_0_1(selector_MUX_35_reg_0_0_0_1),
     .muenable_mu_S_0(muenable_mu_S_0),
+    .muenable_mu_S_4(muenable_mu_S_4),
     .wrenable_reg_0(wrenable_reg_0),
     .wrenable_reg_1(wrenable_reg_1),
     .wrenable_reg_2(wrenable_reg_2),
@@ -2443,25 +1671,28 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
     .wrenable_reg_5(wrenable_reg_5),
     .wrenable_reg_6(wrenable_reg_6),
     .wrenable_reg_7(wrenable_reg_7),
-    .OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725(OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725),
-    .OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116(OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212),
+    .idle_port(idle_port),
+    .OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138),
+    .OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501),
     .OUT_mu_S_0_MULTI_UNBOUNDED_0(OUT_mu_S_0_MULTI_UNBOUNDED_0),
+    .OUT_mu_S_4_MULTI_UNBOUNDED_0(OUT_mu_S_4_MULTI_UNBOUNDED_0),
     .clock(clock),
     .reset(reset),
     .start_port(start_port));
-  datapath__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj Datapath_i (._x_TREADY(_x_TREADY),
-    ._y_TREADY(_y_TREADY),
-    ._y_out_TDATA(_y_out_TDATA),
-    ._y_out_TVALID(_y_out_TVALID),
-    .OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725(OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428725),
-    .OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116(OUT_CONDITION__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429116),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    .OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212(OUT_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212),
+  datapath_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj Datapath_i (.p_x_TREADY(p_x_TREADY),
+    .p_y_TREADY(p_y_TREADY),
+    .p_y_out_TDATA(p_y_out_TDATA),
+    .p_y_out_TVALID(p_y_out_TVALID),
+    .OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429138),
+    .OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436(OUT_MULTIIF_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429436),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
+    .OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501(OUT_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501),
     .OUT_mu_S_0_MULTI_UNBOUNDED_0(OUT_mu_S_0_MULTI_UNBOUNDED_0),
+    .OUT_mu_S_4_MULTI_UNBOUNDED_0(OUT_mu_S_4_MULTI_UNBOUNDED_0),
     .clock(clock),
     .reset(reset),
     .in_port_x(x),
@@ -2469,19 +1700,22 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
     .in_port_y_out(y_out),
     .in_port_alpha(alpha),
     .in_port_loop_count(loop_count),
-    ._x_TDATA(_x_TDATA),
-    ._x_TVALID(_x_TVALID),
-    ._y_TDATA(_y_TDATA),
-    ._y_TVALID(_y_TVALID),
-    ._y_out_TREADY(_y_out_TREADY),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428567),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_428569),
-    .selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212(selector_IN_UNBOUNDED__Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_428532_429212),
-    .selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0(selector_MUX_364_x_bambu_artificial_ParmMgr_Read_axis_modgen_93_i0_0_0_0),
-    .selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0(selector_MUX_365_y_bambu_artificial_ParmMgr_Read_axis_modgen_94_i0_0_0_0),
-    .selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0(selector_MUX_367_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_95_i0_1_0_0),
-    .selector_MUX_37_reg_0_0_0_0(selector_MUX_37_reg_0_0_0_0),
+    .p_x_TDATA(p_x_TDATA),
+    .p_x_TVALID(p_x_TVALID),
+    .p_y_TDATA(p_y_TDATA),
+    .p_y_TVALID(p_y_TVALID),
+    .p_y_out_TREADY(p_y_out_TREADY),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429028),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429030),
+    .selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501(selector_IN_UNBOUNDED_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_429003_429501),
+    .selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0(selector_MUX_218_x_bambu_artificial_ParmMgr_Read_axis_modgen_85_i0_3_0_0),
+    .selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0(selector_MUX_222_y_bambu_artificial_ParmMgr_Read_axis_modgen_86_i0_3_0_0),
+    .selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0(selector_MUX_225_y_out_bambu_artificial_ParmMgr_Write_axis_modgen_87_i0_2_0_0),
+    .selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0(selector_MUX_33_multi_read_cond_FU_34_i0_0_0_0),
+    .selector_MUX_35_reg_0_0_0_0(selector_MUX_35_reg_0_0_0_0),
+    .selector_MUX_35_reg_0_0_0_1(selector_MUX_35_reg_0_0_0_1),
     .muenable_mu_S_0(muenable_mu_S_0),
+    .muenable_mu_S_4(muenable_mu_S_4),
     .wrenable_reg_0(wrenable_reg_0),
     .wrenable_reg_1(wrenable_reg_1),
     .wrenable_reg_2(wrenable_reg_2),
@@ -2490,7 +1724,7 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
     .wrenable_reg_5(wrenable_reg_5),
     .wrenable_reg_6(wrenable_reg_6),
     .wrenable_reg_7(wrenable_reg_7));
-  flipflop_AR #(.BITSIZE_in1(1),
+  register_AR #(.BITSIZE_in1(1),
     .BITSIZE_out1(1)) done_delayed_REG (.out1(done_delayed_REG_signal_out),
     .clock(clock),
     .reset(reset),
@@ -2500,12 +1734,13 @@ module __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
 
 endmodule
 
+
 // Minimal interface for function: _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj
-// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and may be aggregated with components of the BAMBU/PANDA IP LIBRARY.
+// This component has been derived from the input source code and so it does not fall under the copyright of PandA framework, but it follows the input source code copyright, and constitutes a Combined Work that is statically linked with the PANDA/BAMBU SYNTHESIZABLE IP LIBRARY, and may be aggregated with components of the PANDA/BAMBU IP LIBRARY. 
 // Author(s): Component automatically generated by bambu
 // License: THIS COMPONENT IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 `timescale 1ns / 1ps
-module _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
+module p_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   reset,
   start_port,
   x_TDATA,
@@ -2516,6 +1751,7 @@ module _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   y_TVALID,
   y_out_TREADY,
   done_port,
+  idle_port,
   x_TREADY,
   y_TREADY,
   y_out_TDATA,
@@ -2533,17 +1769,19 @@ module _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
   input y_out_TREADY;
   // OUT
   output done_port;
+  output idle_port;
   output x_TREADY;
   output y_TREADY;
   output [511:0] y_out_TDATA;
   output y_out_TVALID;
   // Component and signal declarations
   
-  __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj __Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_i0 (.done_port(done_port),
-    ._x_TREADY(x_TREADY),
-    ._y_TREADY(y_TREADY),
-    ._y_out_TDATA(y_out_TDATA),
-    ._y_out_TVALID(y_out_TVALID),
+  PBI_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj PBI_Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj_i0 (.done_port(done_port),
+    .idle_port(idle_port),
+    .p_x_TREADY(x_TREADY),
+    .p_y_TREADY(y_TREADY),
+    .p_y_out_TDATA(y_out_TDATA),
+    .p_y_out_TVALID(y_out_TVALID),
     .clock(clock),
     .reset(reset),
     .start_port(start_port),
@@ -2552,12 +1790,13 @@ module _Z4axpyPK6ac_intILi512ELb0EES2_PS0_xj(clock,
     .y_out(32'b00000000000000000000000000000000),
     .alpha(alpha),
     .loop_count(loop_count),
-    ._x_TDATA(x_TDATA),
-    ._x_TVALID(x_TVALID),
-    ._y_TDATA(y_TDATA),
-    ._y_TVALID(y_TVALID),
-    ._y_out_TREADY(y_out_TREADY));
+    .p_x_TDATA(x_TDATA),
+    .p_x_TVALID(x_TVALID),
+    .p_y_TDATA(y_TDATA),
+    .p_y_TVALID(y_TVALID),
+    .p_y_out_TREADY(y_out_TREADY));
 
 endmodule
+
 
 

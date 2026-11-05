@@ -1,67 +1,67 @@
 # Bambu, tier done
 
-Written by `bench/bambu.py` from `results_staging/bambu_cycles.csv`. Case `bambu`: Bambu's default setup plus `#pragma HLS unroll` on LANE, `--device-name=nangate45`, 10 ns. Cycles from the start pulse to the last output beat (or result), every stream without stalls; cycles per beat in brackets. `cycles_done` (start to `done_port`) is in the second table. A failed point shows its status.
+Written by `bench/bambu.py` from `results_staging/bambu_cycles.csv`. Case `bambu` on `bambu-2026.11`: Bambu's default setup plus `#pragma HLS unroll` on LANE, `--device-name=nangate45`, 10 ns. Cycles from the start pulse to the last output beat (or result), every stream without stalls; cycles per beat in brackets. `cycles_done` (start to `done_port`) is in the second table. A failed point shows its status.
 
 ## dot
 
 | size | W = 1 | W = 2 | W = 4 | W = 8 | W = 16 | W = 32 |
 |---|---|---|---|---|---|---|
-| n64 | 192 (3.00) | 96 (3.00) | 48 (3.00) | 32 (4.00) | 16 (4.00) | 8 (4.00) |
-| n512 | 1536 (3.00) | 768 (3.00) | 384 (3.00) | 256 (4.00) | 128 (4.00) | 64 (4.00) |
+| n64 | 65 (1.02) | 33 (1.03) | 32 (2.00) | 16 (2.00) | 6 (1.50) | 4 (2.00) |
+| n512 | 513 (1.00) | 257 (1.00) | 256 (2.00) | 128 (2.00) | 34 (1.06) | 18 (1.12) |
 
-| W | FSM states | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
-|---|---|---|---|---|
-| 1 | 9 | 194 / 1538 | 191 / 1535 | yes |
-| 2 | 9 | 98 / 770 | 95 / 767 | yes |
-| 4 | 9 | 50 / 386 | 47 / 383 | yes |
-| 8 | 10 | 34 / 258 | 31 / 255 | yes |
-| 16 | 10 | 18 / 130 | 15 / 127 | yes |
-| 32 | 10 | 10 / 66 | 7 / 63 | yes |
+| W | FSM states | loop pipelining | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
+|---|---|---|---|---|---|
+| 1 | 8 | BB2 II=1 lat=2 | 66 / 514 | 64 / 512 | yes |
+| 2 | 8 | BB2 II=1 lat=2 | 34 / 258 | 32 / 256 | yes |
+| 4 | 11 | BB2 II=2 lat=3 | 34 / 258 | 31 / 255 | yes |
+| 8 | 11 | BB2 II=2 lat=3 | 18 / 130 | 15 / 127 | yes |
+| 16 | 15 | BB2 II=1 lat=3 | 7 / 35 | 5 / 33 | yes |
+| 32 | 15 | BB2 II=1 lat=3 | 5 / 19 | 3 / 17 | yes |
 
 ## vecadd
 
 | size | W = 1 | W = 2 | W = 4 | W = 8 | W = 16 | W = 32 |
 |---|---|---|---|---|---|---|
-| n64 | 95 (1.48) | 95 (2.97) | 47 (2.94) | 23 (2.88) | 11 (2.75) | 5 (2.50) |
-| n512 | 767 (1.50) | 767 (3.00) | 383 (2.99) | 191 (2.98) | 95 (2.97) | 47 (2.94) |
+| n64 | 65 (1.02) | 33 (1.03) | 17 (1.06) | 9 (1.12) | 5 (1.25) | failed: sim |
+| n512 | 513 (1.00) | 257 (1.00) | 129 (1.01) | 65 (1.02) | 33 (1.03) | failed: sim |
 
-| W | FSM states | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
-|---|---|---|---|---|
-| 1 | 21 | 98 / 770 | 1 / 1 | yes |
-| 2 | 8 | 97 / 769 | 1 / 1 | yes |
-| 4 | 8 | 49 / 385 | 1 / 1 | yes |
-| 8 | 8 | 25 / 193 | 1 / 1 | yes |
-| 16 | 8 | 13 / 97 | 1 / 1 | yes |
-| 32 | 8 | 7 / 49 | 1 / 1 | yes |
+| W | FSM states | loop pipelining | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
+|---|---|---|---|---|---|
+| 1 | 8 | BB2 II=1 lat=2 | 66 / 514 | 1 / 1 | yes |
+| 2 | 8 | BB2 II=1 lat=2 | 34 / 258 | 1 / 1 | yes |
+| 4 | 8 | BB2 II=1 lat=2 | 18 / 130 | 1 / 1 | yes |
+| 8 | 8 | BB2 II=1 lat=2 | 10 / 66 | 1 / 1 | yes |
+| 16 | 8 | BB2 II=1 lat=2 | 6 / 34 | 1 / 1 | yes |
+| 32 | 8 | BB2 II=1 lat=2 | - / - | - / - | yes |
 
 ## vecmul
 
 | size | W = 1 | W = 2 | W = 4 | W = 8 | W = 16 | W = 32 |
 |---|---|---|---|---|---|---|
-| n64 | 95 (1.48) | 95 (2.97) | 47 (2.94) | 23 (2.88) | 11 (2.75) | 5 (2.50) |
-| n512 | 767 (1.50) | 767 (3.00) | 383 (2.99) | 191 (2.98) | 95 (2.97) | 47 (2.94) |
+| n64 | 65 (1.02) | 33 (1.03) | 17 (1.06) | 9 (1.12) | 5 (1.25) | failed: sim |
+| n512 | 513 (1.00) | 257 (1.00) | 129 (1.01) | 65 (1.02) | 33 (1.03) | failed: sim |
 
-| W | FSM states | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
-|---|---|---|---|---|
-| 1 | 21 | 98 / 770 | 1 / 1 | yes |
-| 2 | 8 | 97 / 769 | 1 / 1 | yes |
-| 4 | 8 | 49 / 385 | 1 / 1 | yes |
-| 8 | 8 | 25 / 193 | 1 / 1 | yes |
-| 16 | 8 | 13 / 97 | 1 / 1 | yes |
-| 32 | 8 | 7 / 49 | 1 / 1 | yes |
+| W | FSM states | loop pipelining | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
+|---|---|---|---|---|---|
+| 1 | 8 | BB2 II=1 lat=2 | 66 / 514 | 1 / 1 | yes |
+| 2 | 8 | BB2 II=1 lat=2 | 34 / 258 | 1 / 1 | yes |
+| 4 | 8 | BB2 II=1 lat=2 | 18 / 130 | 1 / 1 | yes |
+| 8 | 8 | BB2 II=1 lat=2 | 10 / 66 | 1 / 1 | yes |
+| 16 | 8 | BB2 II=1 lat=2 | 6 / 34 | 1 / 1 | yes |
+| 32 | 8 | BB2 II=1 lat=2 | - / - | - / - | yes |
 
 ## vsum
 
 | size | W = 1 | W = 2 | W = 4 | W = 8 | W = 16 | W = 32 |
 |---|---|---|---|---|---|---|
-| n64 | 160 (2.50) | 96 (3.00) | 48 (3.00) | 24 (3.00) | 16 (4.00) | 8 (4.00) |
-| n512 | 1280 (2.50) | 768 (3.00) | 384 (3.00) | 192 (3.00) | 128 (4.00) | 64 (4.00) |
+| n64 | 65 (1.02) | 33 (1.03) | 17 (1.06) | 9 (1.12) | 6 (1.50) | 4 (2.00) |
+| n512 | 513 (1.00) | 257 (1.00) | 129 (1.01) | 65 (1.02) | 34 (1.06) | 18 (1.12) |
 
-| W | FSM states | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
-|---|---|---|---|---|
-| 1 | 21 | 162 / 1282 | 159 / 1279 | yes |
-| 2 | 9 | 98 / 770 | 95 / 767 | yes |
-| 4 | 9 | 50 / 386 | 47 / 383 | yes |
-| 8 | 9 | 26 / 194 | 23 / 191 | yes |
-| 16 | 10 | 18 / 130 | 15 / 127 | yes |
-| 32 | 10 | 10 / 66 | 7 / 63 | yes |
+| W | FSM states | loop pipelining | cycles_done (n64 / n512) | latency (n64 / n512) | portable |
+|---|---|---|---|---|---|
+| 1 | 8 | BB2 II=1 lat=2 | 66 / 514 | 64 / 512 | yes |
+| 2 | 8 | BB2 II=1 lat=2 | 34 / 258 | 32 / 256 | yes |
+| 4 | 8 | BB2 II=1 lat=2 | 18 / 130 | 16 / 128 | yes |
+| 8 | 8 | BB2 II=1 lat=2 | 10 / 66 | 8 / 64 | yes |
+| 16 | 15 | BB2 II=1 lat=3 | 7 / 35 | 5 / 33 | yes |
+| 32 | 15 | BB2 II=1 lat=3 | 5 / 19 | 3 / 17 | yes |
