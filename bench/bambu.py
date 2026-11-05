@@ -254,6 +254,9 @@ def fail_reason_compile(log: str, w: int) -> str:
     m = re.search(r"does not exist a functional unit in the resource library: (\w+).*?prec: (\d+)", log, re.S)
     if m:
         return f"no unit for {m.group(2)}-bit {m.group(1)}"
+    crash = next((l.strip() for l in log.splitlines() if re.search(r"Segmentation fault|core dumped|Aborted", l)), "")
+    if crash:
+        return f"Bambu crashed: {crash[-160:]}"
     errs = [l.strip() for l in log.splitlines() if "error" in l.lower() and not l.startswith("$ ")]
     return errs[0][:200] if errs else "Bambu wrote no Verilog"
 
