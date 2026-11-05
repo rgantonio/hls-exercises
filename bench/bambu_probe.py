@@ -18,6 +18,10 @@ Probe A configs (Bambu 2024.10, `bambu`), each on top of the `bambu` case (axis 
 Probe B configs (Bambu 2026.11, `bambu-2026.11` from bench/tools/build_bambu_2611.sh):
   b0         the `bambu` case unchanged; 2026.11 pipelines innermost single-block loops by itself, and
              the `lp` column records its log lines (II per loop, or "not possible")
+  b1_init    b0 with the output beat declared with an initial value (`vec_t ..., c = 0;`): the source
+             otherwise leaves it uninitialized, and ac_int's set_slc reads the old value of a slice's
+             end words, so the result depends on an indeterminate value
+  b2_nolp    b0 with loop pipelining turned off (--panda-parameter=LP-BB-list=0: no loop is eligible)
 
   python3 bench/bambu_probe.py run [--probe a|b] [--config ...] [--kernel ...] [--w 1 8 32]
                                    [-j N] [--sim-jobs M] [--sim questa|icarus] [--sim-only] [--dry-run]
@@ -53,8 +57,11 @@ CONFIGS_A = {
     "a4_u4_sdc": (["unroll factor=4"], ["--speculative-sdc-scheduling"]),
     "a4_u4_perf": (["unroll factor=4"], ["--experimental-setup=BAMBU-PERFORMANCE-MP"]),
 }
-CONFIGS_B = {"b0": ([], [])}
-BINARY = {"b0": "bambu-2026.11"}  # the Bambu command in the container; default "bambu" (2024.10)
+CONFIGS_B = {"b0": ([], []), "b1_init": ([], []), "b2_nolp": ([], ["--panda-parameter=LP-BB-list=0"])}
+BINARY = {"b0": "bambu-2026.11", "b1_init": "bambu-2026.11", "b2_nolp": "bambu-2026.11"}
+# Source changes beyond pragmas, per config: b1_init gives the output beat an initial value.
+INIT_OUT = re.compile(r"^(\s*vec_t\s.*,\s*)([A-Za-z_]\w*)\s*;\s*$", re.M)
+SOURCE_FIX = {"b1_init": "init_out"}  # the Bambu command in the container; default "bambu" (2024.10)
 # probe: (configs, output stem, title, default kernels)
 PROBES = {"a": (CONFIGS_A, "probe_bam3a", "BAM3 probe A: Bambu 2024.10 configs", ["vecadd", "dot"]),
           "b": (CONFIGS_B, "probe_bam3b", "BAM3 probe B: Bambu 2026.11", ["vecadd", "dot", "relu", "rowsum"])}
@@ -94,6 +101,11 @@ def build(kdir: Path, params: dict, w: int, cfg: str, dry: bool) -> dict:
     beat, flags = CONFIGS[cfg]
     k, d = params["kernel"], pdir(cfg, params, w)
     text, added = source(kdir, params, beat)
+    if SOURCE_FIX.get(cfg) == "init_out":
+        text, n = INIT_OUT.subn(r"\1\2 = 0;", text)
+        if n != 1:
+            sys.exit(f"{k}: b1_init expects one `vec_t ..., <out>;` declaration, found {n}")
+        added = added + ["output beat initialized to 0"]
     cmd = B.bambu_cmd(kdir, params, w) + flags
     cmd[1] = BINARY.get(cfg, "bambu")
     name = f"bambu-probe-{cfg.replace('_', '-')}-{k}-w{w}-{os.getpid()}"
