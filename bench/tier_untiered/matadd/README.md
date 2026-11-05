@@ -27,3 +27,22 @@ Sizes m8_n16 (the recipe) and m16_n32 (512 elements), W = 1, 2, 4, 8 and 16.
 ## Results
 
 Rebuilt in HSYN1 (snax-forge-experiments, 5 Nov 2026): `opt` and `dace` at a 10 ns HLS clock, W = 1 to 16. The cycles below are filled by HSYN1 R2 from `snax-forge-experiments/results/hls/hls_cycles.csv`; area, timing and energy per point are in `snax-forge-experiments/results/compare_<tier>.csv`. The earlier results (3.33 ns, `unopt`, W up to 32) are in git history up to cbc2541.
+
+Cycles are cosim's (RTL simulation) from `ap_start` to `ap_done`; beats = elements / W at m16_n32. Loop II and iteration latency are csynth's, per loop in the order named below the table.
+
+| case | W | cycles m8_n16 | cycles m16_n32 | cycles / beats (m16_n32) | loop II | iteration latency |
+|---|---|---|---|---|---|---|
+| opt | 1 | 130 | 514 | 1.00 | 1 | 2 |
+| opt | 2 | 66 | 258 | 1.01 | 1 | 2 |
+| opt | 4 | 34 | 130 | 1.02 | 1 | 2 |
+| opt | 8 | 18 | 66 | 1.03 | 1 | 2 |
+| opt | 16 | 10 | 34 | 1.06 | 1 | 2 |
+| dace | 1 | 130 | 514 | 1.00 | 1 | 2 |
+| dace | 2 | 66 | 258 | 1.01 | 1 | 2 |
+| dace | 4 | 35 | 131 | 1.02 | 1 | 2 |
+| dace | 8 | 19 | 67 | 1.05 | 1 | 2 |
+| dace | 16 | 11 | 35 | 1.09 | 1 | 2 |
+
+Loops: `opt` `BEAT`; `dace` `VITIS_LOOP_20_2`.
+
+- Cycles, loop II and iteration latency are the same as at 3.33 ns for both cases at every W.

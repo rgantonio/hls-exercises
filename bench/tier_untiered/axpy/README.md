@@ -28,3 +28,20 @@ Sizes n64 and n512, W = 1, 2, 4, 8 and 16 (`dace` W = 1).
 ## Results
 
 Rebuilt in HSYN1 (snax-forge-experiments, 5 Nov 2026): `opt` and `dace` at a 10 ns HLS clock, W = 1 to 16. The cycles below are filled by HSYN1 R2 from `snax-forge-experiments/results/hls/hls_cycles.csv`; area, timing and energy per point are in `snax-forge-experiments/results/compare_<tier>.csv`. The earlier results (3.33 ns, `unopt`, W up to 32) are in git history up to cbc2541.
+
+Cycles are cosim's (RTL simulation) from `ap_start` to `ap_done`; beats = elements / W at n512. Loop II and iteration latency are csynth's, per loop in the order named below the table.
+
+| case | W | cycles n64 | cycles n512 | cycles / beats (n512) | loop II | iteration latency |
+|---|---|---|---|---|---|---|
+| opt | 1 | 66 | 514 | 1.00 | 1 | 2 |
+| opt | 2 | 34 | 258 | 1.01 | 1 | 2 |
+| opt | 4 | 18 | 130 | 1.02 | 1 | 2 |
+| opt | 8 | 10 | 66 | 1.03 | 1 | 2 |
+| opt | 16 | 6 | 34 | 1.06 | 1 | 2 |
+| dace | 1 | 133 | 1029 | 2.01 | 1 / 1 | 1 / 2 |
+
+Loops: `opt` `BEAT`; `dace` `VITIS_LOOP_19_1`, `VITIS_LOOP_37_2`.
+
+- `opt`: `BEAT`'s iteration latency is 2 at every W, against 3 at 3.33 ns, one fewer cycle per run.
+- `dace`: `VITIS_LOOP_19_1`'s iteration latency 3 to 1, one fewer cycle per run.
+- Loop II is 1 at both clocks.
