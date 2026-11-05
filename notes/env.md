@@ -94,3 +94,31 @@ bench/tools/in_bambu.sh bambu --version        # every Bambu call goes through t
 - Bambu spells the C++ standard `--std=c++14` (not `-std=`) and has no `-isystem`.
 - (BAM1, Bambu's co-simulation) Co-simulation of array arguments needs `--tb-param-size=<param>:<bytes>`: for statically allocated arrays Bambu maps 1 byte per parameter, extended to 4, and its driver then segfaults (`MDPI driver: Abrupt exception: Segmentation fault`, `Sim: Read operation on uninitialized interface 2`).
 - (BAM1, Bambu's co-simulation) Bambu does not pass the C testbench's exit code through: with a failing `main()` it still logs `Sim: Testbench returned: 0` and exits 0, adding only `Warning: Returned error code!`. Pass or fail is the testbench's own `PASS`/`FAIL` line in `HLS_output/simulation/testbench.log`.
+
+# Bambu 2026.11 (BAM3)
+
+Bambu 2026.11 pipelines innermost single-block loops (2024.10 cannot), so BAM3 builds it from its git tag and keeps it next to 2024.10. It runs in the same container (`localhost/hls-exercises-bambu:4`) through `bench/tools/in_bambu.sh bambu-2026.11 ...`.
+
+| Item | Value |
+|---|---|
+| Bambu | PandA 2026.11, tag `2026.11`, commit cda4db2e724df357f749c0c41b12bdc065462ced (2026-11-04) |
+| Build route | Bambu's containerized AppImage build (README "AppImage (Docker) quick commands"): `etc/scripts/appimage_build_in_container.sh`, run by `bench/tools/build_bambu_2611.sh` |
+| Build image | `docker.io/bambuhls/dev:xenial-24.08` (digest sha256:5480449bfeb5826b57ab562780297f989da5dab424ec93078855589c19a35d0f), Ubuntu 16.04, gcc 13.3.0, cmake 3.26.6, appimagetool in /opt |
+| Bundled compiler | clang 16.0.6 (`PANDA_DIST_COMPILERS=clang-16`, downloaded inside the container); `--compiler=I386_CLANG16` is the only choice in `--help`; libbambu falls back from I386_CLANG13 to I386_CLANG16 |
+| AppImage | `tools/bambu-2026.11/bambu-2026.11.AppImage`, 341906624 bytes, sha256 `1fdc0ea0b11c0bbdc0c137ee6a8516154a82137de53a57450c36a62a934a48a0`; GLIBC audit max GLIBC_2.17 |
+| Installed | `tools/bambu-2026.11/squashfs-root/` (1.1 GB) and the wrapper `tools/bin/bambu-2026.11` (APPDIR, ARGV0=bambu, OWD, as for 2024.10) |
+| Disk | sources with submodules 396 MB; build tree `tools/src/build-2026.11/` 4.3 GB (clang bundles 2.1 GB, AppDir 1.4 GB, cmake build 583 MB, ccache 289 MB); 1.4 TB free on the volume |
+| Build time | 743 s for the container step (configure, 2383 ninja steps, install, audit, appimagetool) on 32 cores, empty ccache, clang-16 already downloaded by the first attempt |
+
+Rebuild: `pixi run bash bench/tools/build_bambu_2611.sh` (stages `sources`, `bundle`, `install`; log `tools/src/build-2026.11.log`). `pixi run` provides cmake 4.4.5 (the host has 3.3.2).
+
+What had to be fixed against the README's two commands (no Bambu source changed):
+- The README's host `cmake -S . -B build -DPANDA_APPIMAGE_BUILD_ENV=container ...` runs the whole project configure on the host before the container starts. It stops on GCC < 13 (host 8.5.0), then wants Boost, zlib, flex/bison and a host clang with headers for the plugin probe. That configure only renders `etc/appimage/appimage_compat_cache_init.cmake.in` and calls the container script, so the build script renders the template with `cmake -P` (`configure_file @ONLY`, the values of a default configure plus `PANDA_APPIMAGE_NAME=bambu-2026.11`, `PANDA_DIST_COMPILERS=clang-16`; the template forces `PANDA_SYNC_PARAMETER_METADATA=OFF`) and calls `appimage_build_in_container.sh` with the arguments the `appimage_bundle` target passes. The configure, build and install that matter run inside the container, as in the README.
+- The container script runs `podman run --user $(id -u):$(id -g)` with no user namespace option. Rootless podman maps that uid to a subuid, which can neither read `/src` nor write `/build` on the mode-700 NFS tree (`Permission denied`). `PODMAN_USERNS=keep-id` in the script's environment fixes it.
+- The top `CMakeLists.txt` stops when `git submodule status --recursive` shows any uninitialized submodule, so the four `examples/` submodules (CHStone, MachSuite, GAPBS, PolyBenchC) are checked out too (`--depth 1`), though the build does not use them.
+
+Notes:
+- `PANDA_ENABLE_OPT=ON` (the default) builds with `-Ofast -march=native`: this binary is tuned to the build server's CPU (Skylake). Rebuild it on a machine with an older CPU if it stops with an illegal instruction there.
+- appimagetool writes the AppImage inside the AppDir it packs, so the extracted tree holds a 0-byte `bambu-2026.11.AppImage`; it is harmless.
+- 2026.11 writes `panda_libtech.v` (library modules) next to `<kernel>.v`; 2024.10 wrote one file.
+- Smoke test (not recorded), vecadd W = 8 with the `bambu` case's source copy and command, binary `bambu-2026.11`: builds in 13 s, 8 FSM states (2024.10: 8), and the LANE-unrolled loop is pipelined: `II=1 solution found for loop (BB2)`, iteration latency 2, `Initiation Interval (II) ... BB2 = 1`.
