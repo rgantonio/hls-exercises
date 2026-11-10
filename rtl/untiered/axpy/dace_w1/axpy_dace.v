@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="axpy_dace_axpy_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=6.317813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=2,HLS_SYN_DSP=0,HLS_SYN_FF=226,HLS_SYN_LUT=4709,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="axpy_dace_axpy_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=6.317813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=8,HLS_SYN_DSP=0,HLS_SYN_FF=230,HLS_SYN_LUT=4713,HLS_VERSION=2023_2_2}" *)
 
 module axpy_dace (
         ap_clk,
@@ -74,7 +74,7 @@ reg   [31:0] loop_count_preg;
 reg   [31:0] loop_count_in_sig;
 reg    loop_count_ap_vld_preg;
 reg    loop_count_ap_vld_in_sig;
-reg   [8:0] p_tmp0_address0;
+reg   [10:0] p_tmp0_address0;
 reg    p_tmp0_ce0;
 reg    p_tmp0_we0;
 wire   [63:0] p_tmp0_q0;
@@ -87,7 +87,7 @@ wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_ap_done;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_ap_idle;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_ap_ready;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_x_TREADY;
-wire   [8:0] grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_p_tmp0_address0;
+wire   [10:0] grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_p_tmp0_address0;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_p_tmp0_ce0;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_p_tmp0_we0;
 wire   [63:0] grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_p_tmp0_d0;
@@ -99,7 +99,7 @@ wire    grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_y_out_TREADY;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_y_TREADY;
 wire   [63:0] grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_y_out_TDATA;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_y_out_TVALID;
-wire   [8:0] grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_p_tmp0_address0;
+wire   [10:0] grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_p_tmp0_address0;
 wire    grp_axpy_dace_Pipeline_VITIS_LOOP_37_2_fu_62_p_tmp0_ce0;
 reg    grp_axpy_dace_Pipeline_VITIS_LOOP_19_1_fu_52_ap_start_reg;
 wire    ap_CS_fsm_state2;
@@ -130,8 +130,8 @@ end
 
 axpy_dace_p_tmp0_RAM_AUTO_1R1W #(
     .DataWidth( 64 ),
-    .AddressRange( 512 ),
-    .AddressWidth( 9 ))
+    .AddressRange( 2048 ),
+    .AddressWidth( 11 ))
 p_tmp0_U(
     .clk(ap_clk),
     .reset(ap_rst_n_inv),

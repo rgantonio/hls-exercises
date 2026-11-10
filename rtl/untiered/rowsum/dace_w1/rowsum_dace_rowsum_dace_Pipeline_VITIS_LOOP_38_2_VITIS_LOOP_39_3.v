@@ -40,11 +40,11 @@ input  [61:0] mul_ln38;
 input  [30:0] empty;
 input  [63:0] A_TDATA;
 output   A_TREADY;
-output  [2:0] y_buf_address0;
+output  [3:0] y_buf_address0;
 output   y_buf_ce0;
 output   y_buf_we0;
 output  [63:0] y_buf_d0;
-output  [2:0] y_buf_address1;
+output  [3:0] y_buf_address1;
 output   y_buf_ce1;
 input  [63:0] y_buf_q1;
 
@@ -69,7 +69,7 @@ reg    ap_ready_int;
 reg    A_TDATA_blk_n;
 wire    ap_block_pp0_stage0;
 reg    ap_block_pp0_stage0_11001;
-reg   [2:0] y_buf_addr_reg_284;
+reg   [3:0] y_buf_addr_reg_284;
 reg   [63:0] p_inp_reg_290;
 wire   [0:0] addr_cmp_fu_175_p2;
 reg   [0:0] addr_cmp_reg_295;
@@ -80,12 +80,12 @@ reg   [63:0] reuse_reg_fu_52;
 wire   [63:0] res_fu_225_p2;
 reg   [30:0] p_i0_fu_56;
 wire   [30:0] select_ln39_fu_192_p3;
-reg   [3:0] p_o0_fu_60;
-wire   [3:0] select_ln38_fu_159_p3;
+reg   [4:0] p_o0_fu_60;
+wire   [4:0] select_ln38_fu_159_p3;
 reg   [61:0] indvar_flatten_fu_64;
 wire   [61:0] add_ln38_fu_136_p2;
 wire   [0:0] icmp_ln39_fu_154_p2;
-wire   [3:0] add_ln38_1_fu_148_p2;
+wire   [4:0] add_ln38_1_fu_148_p2;
 wire   [30:0] add_ln39_fu_186_p2;
 wire   [63:0] old_val_fu_218_p3;
 reg    ap_done_reg;
@@ -104,7 +104,7 @@ initial begin
 #0 reuse_addr_reg_fu_48 = 64'd0;
 #0 reuse_reg_fu_52 = 64'd0;
 #0 p_i0_fu_56 = 31'd0;
-#0 p_o0_fu_60 = 4'd0;
+#0 p_o0_fu_60 = 5'd0;
 #0 indvar_flatten_fu_64 = 62'd0;
 #0 ap_done_reg = 1'b0;
 end
@@ -191,7 +191,7 @@ end
 always @ (posedge ap_clk) begin
     if (((1'b0 == ap_block_pp0_stage0_11001) & (1'b1 == ap_CS_fsm_pp0_stage0))) begin
         if ((ap_loop_init == 1'b1)) begin
-            p_o0_fu_60 <= 4'd0;
+            p_o0_fu_60 <= 5'd0;
         end else if (((icmp_ln38_fu_131_p2 == 1'd0) & (ap_enable_reg_pp0_iter1 == 1'b1))) begin
             p_o0_fu_60 <= select_ln38_fu_159_p3;
         end
@@ -317,7 +317,7 @@ always @ (*) begin
     endcase
 end
 
-assign add_ln38_1_fu_148_p2 = (p_o0_fu_60 + 4'd1);
+assign add_ln38_1_fu_148_p2 = (p_o0_fu_60 + 5'd1);
 
 assign add_ln38_fu_136_p2 = (indvar_flatten_fu_64 + 62'd1);
 

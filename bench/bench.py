@@ -159,6 +159,12 @@ def point_valid(params: dict, size: dict, w) -> bool:
     return bool(evaluate({"valid": params["valid"]}, names)["valid"]) if "valid" in params else True
 
 
+def case_sizes(params: dict, cfg: dict) -> list[dict]:
+    """A case's sizes: its own "sizes" list when it has one (the dace case of dot, axpy and rowsum runs
+    snax-forge-experiments' n2048 task only, so DaCe sizes its buffer for it, CSYN1 R3), else params.json's."""
+    return cfg.get("sizes", params["sizes"])
+
+
 def config_label(config: dict) -> str:
     return " ".join(f"{k}={v}" for k, v in config.items())
 
@@ -179,7 +185,7 @@ def points(kdir: Path, params: dict, args) -> list[dict]:
         clocks = args.clock or [str(params.get("clock_ns", DEFAULT_CLOCK))]
         ws = cfg.get("W", params.get("W", [1])) if cfg.get("per_w", False) else [None]
         ws = [w for w in ws if w is None or w <= MAX_W]
-        for size, w, clock in itertools.product(params["sizes"], ws, clocks):
+        for size, w, clock in itertools.product(case_sizes(params, cfg), ws, clocks):
             tag = size_tag(size)
             if args.size and tag not in args.size:
                 continue
@@ -761,7 +767,7 @@ def cmd_run(args) -> int:
     for (kdir, _, _, _), gpts in groups.items():
         # every size this hardware point can run (rowsum m4_n16 has no W = 32 point)
         prm = gpts[0]["params"]
-        all_sizes = {size_tag(s) for s in prm["sizes"] if point_valid(prm, s, gpts[0]["W"])}
+        all_sizes = {size_tag(s) for s in case_sizes(prm, gpts[0]["cfg"]) if point_valid(prm, s, gpts[0]["W"])}
         if {pt["size_tag"] for pt in gpts} >= all_sizes:
             reset_rtl(kdir, gpts[0]["params"]["tier"], gpts[0]["rtl_name"], [pt["proj"] for pt in gpts])
     place_rtl(rows, {r["proj"]: point_meta(r["proj"]) for r in rows})

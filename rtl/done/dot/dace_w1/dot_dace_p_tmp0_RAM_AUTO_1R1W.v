@@ -13,8 +13,8 @@ module dot_dace_p_tmp0_RAM_AUTO_1R1W (
     reset, clk);
 
 parameter DataWidth = 64;
-parameter AddressWidth = 9;
-parameter AddressRange = 512;
+parameter AddressWidth = 11;
+parameter AddressRange = 2048;
  
 input[AddressWidth-1:0] address0;
 input ce0;

@@ -29,7 +29,7 @@ output   ap_done;
 output   ap_idle;
 output   ap_ready;
 input  [30:0] empty;
-output  [2:0] y_buf_address0;
+output  [3:0] y_buf_address0;
 output   y_buf_ce0;
 output   y_buf_we0;
 output  [63:0] y_buf_d0;
@@ -46,10 +46,10 @@ reg    ap_condition_exit_pp0_iter0_stage0;
 wire    ap_loop_exit_ready;
 reg    ap_ready_int;
 wire   [63:0] zext_ln19_fu_78_p1;
-reg   [3:0] p_o0_fu_30;
-wire   [3:0] add_ln19_fu_72_p2;
+reg   [4:0] p_o0_fu_30;
+wire   [4:0] add_ln19_fu_72_p2;
 wire    ap_loop_init;
-reg   [3:0] ap_sig_allocacmp_p_o0_1;
+reg   [4:0] ap_sig_allocacmp_p_o0_1;
 wire   [30:0] zext_ln19_1_fu_62_p1;
 reg    ap_done_reg;
 wire    ap_continue_int;
@@ -62,7 +62,7 @@ wire    ap_ce_reg;
 // power-on initialization
 initial begin
 #0 ap_CS_fsm = 1'd1;
-#0 p_o0_fu_30 = 4'd0;
+#0 p_o0_fu_30 = 5'd0;
 #0 ap_done_reg = 1'b0;
 end
 
@@ -106,7 +106,7 @@ always @ (posedge ap_clk) begin
         if ((icmp_ln19_fu_66_p2 == 1'd0)) begin
             p_o0_fu_30 <= add_ln19_fu_72_p2;
         end else if ((ap_loop_init == 1'b1)) begin
-            p_o0_fu_30 <= 4'd0;
+            p_o0_fu_30 <= 5'd0;
         end
     end
 end
@@ -153,7 +153,7 @@ end
 
 always @ (*) begin
     if (((ap_loop_init == 1'b1) & (1'b1 == ap_CS_fsm_state1))) begin
-        ap_sig_allocacmp_p_o0_1 = 4'd0;
+        ap_sig_allocacmp_p_o0_1 = 5'd0;
     end else begin
         ap_sig_allocacmp_p_o0_1 = p_o0_fu_30;
     end
@@ -186,7 +186,7 @@ always @ (*) begin
     endcase
 end
 
-assign add_ln19_fu_72_p2 = (ap_sig_allocacmp_p_o0_1 + 4'd1);
+assign add_ln19_fu_72_p2 = (ap_sig_allocacmp_p_o0_1 + 5'd1);
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
 

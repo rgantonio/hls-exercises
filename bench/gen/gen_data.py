@@ -66,7 +66,10 @@ def c_array(name: str, arr: np.ndarray) -> str:
 def write_data(kdir: Path, params: dict, forge: Path) -> None:
     spec = load_spec(forge, params["forge_kernel"])
     seed = int(params.get("seed", 0))
-    for size in params["sizes"]:
+    sizes = list(params["sizes"])
+    for cfg in params.get("cases", {}).values():      # a case's own sizes (the dace case's n2048 task)
+        sizes += [s for s in cfg.get("sizes", []) if s not in sizes]
+    for size in sizes:
         tag = size_tag(size)
         rng = np.random.default_rng(seed)
         inputs = spec.make_inputs(rng, **size)

@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="rowsum_dace_rowsum_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.416562,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=0,HLS_SYN_DSP=0,HLS_SYN_FF=1063,HLS_SYN_LUT=2303,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="rowsum_dace_rowsum_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=3.718813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=4,HLS_SYN_DSP=0,HLS_SYN_FF=939,HLS_SYN_LUT=2296,HLS_VERSION=2023_2_2}" *)
 
 module rowsum_dace (
         ap_clk,
@@ -104,7 +104,7 @@ reg   [31:0] len_preg;
 reg   [31:0] len_in_sig;
 reg    len_ap_vld_preg;
 reg    len_ap_vld_in_sig;
-reg   [2:0] y_buf_address0;
+reg   [3:0] y_buf_address0;
 reg    y_buf_ce0;
 reg    y_buf_we0;
 reg   [63:0] y_buf_d0;
@@ -128,7 +128,7 @@ wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_start;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_done;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_idle;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_ready;
-wire   [2:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_y_buf_address0;
+wire   [3:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_y_buf_address0;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_y_buf_ce0;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_y_buf_we0;
 wire   [63:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_y_buf_d0;
@@ -137,11 +137,11 @@ wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_ap_done;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_ap_idle;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_ap_ready;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_A_TREADY;
-wire   [2:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_address0;
+wire   [3:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_address0;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_ce0;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_we0;
 wire   [63:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_d0;
-wire   [2:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_address1;
+wire   [3:0] grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_address1;
 wire    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_y_buf_ce1;
 reg    grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_start_reg;
 wire    ap_CS_fsm_state37;
@@ -149,8 +149,8 @@ reg    grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_ap_start_
 wire    ap_CS_fsm_state39;
 wire   [63:0] zext_ln18_1_fu_161_p1;
 wire   [0:0] icmp_ln18_fu_150_p2;
-reg   [3:0] i_fu_56;
-wire   [3:0] add_ln18_fu_155_p2;
+reg   [4:0] i_fu_56;
+wire   [4:0] add_ln18_fu_155_p2;
 reg    ap_block_state1;
 wire   [30:0] grp_fu_110_p2;
 wire   [30:0] mul_ln38_fu_136_p0;
@@ -216,13 +216,13 @@ initial begin
 #0 len_ap_vld_preg = 1'b0;
 #0 grp_rowsum_dace_Pipeline_VITIS_LOOP_19_1_fu_93_ap_start_reg = 1'b0;
 #0 grp_rowsum_dace_Pipeline_VITIS_LOOP_38_2_VITIS_LOOP_39_3_fu_100_ap_start_reg = 1'b0;
-#0 i_fu_56 = 4'd0;
+#0 i_fu_56 = 5'd0;
 end
 
 rowsum_dace_y_buf_RAM_AUTO_1R1W #(
     .DataWidth( 64 ),
-    .AddressRange( 8 ),
-    .AddressWidth( 3 ))
+    .AddressRange( 16 ),
+    .AddressWidth( 4 ))
 y_buf_U(
     .clk(ap_clk),
     .reset(ap_rst_n_inv),
@@ -378,7 +378,7 @@ end
 
 always @ (posedge ap_clk) begin
     if (((1'b1 == ap_CS_fsm_state1) & (1'b0 == ap_block_state1))) begin
-        i_fu_56 <= 4'd0;
+        i_fu_56 <= 5'd0;
     end else if (((1'b1 == ap_CS_fsm_state41) & (icmp_ln18_fu_150_p2 == 1'd0))) begin
         i_fu_56 <= add_ln18_fu_155_p2;
     end
@@ -828,7 +828,7 @@ always @ (*) begin
     endcase
 end
 
-assign add_ln18_fu_155_p2 = (i_fu_56 + 4'd1);
+assign add_ln18_fu_155_p2 = (i_fu_56 + 5'd1);
 
 assign ap_CS_fsm_state1 = ap_CS_fsm[32'd0];
 

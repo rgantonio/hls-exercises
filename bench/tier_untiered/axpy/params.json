@@ -17,6 +17,7 @@
   "cases": {
     "opt": {"top": "axpy", "src": ["src/axpy.cpp"], "per_w": true, "tripcount": {"BEAT": "loop_count"}},
     "dace": {
+      "sizes": [{"n": 2048}],
       "top": "axpy_dace",
       "per_w": true,
       "W": [1],

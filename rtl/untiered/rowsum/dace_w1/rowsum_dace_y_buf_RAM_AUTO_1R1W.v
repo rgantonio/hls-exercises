@@ -17,8 +17,8 @@ module rowsum_dace_y_buf_RAM_AUTO_1R1W (
     reset, clk);
 
 parameter DataWidth = 64;
-parameter AddressWidth = 3;
-parameter AddressRange = 8;
+parameter AddressWidth = 4;
+parameter AddressRange = 16;
  
 input[AddressWidth-1:0] address0;
 input ce0;

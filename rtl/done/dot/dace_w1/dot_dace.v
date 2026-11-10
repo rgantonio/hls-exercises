@@ -6,7 +6,7 @@
 
 `timescale 1 ns / 1 ps 
 
-(* CORE_GENERATION_INFO="dot_dace_dot_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=6.317813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=2,HLS_SYN_DSP=0,HLS_SYN_FF=161,HLS_SYN_LUT=4674,HLS_VERSION=2023_2_2}" *)
+(* CORE_GENERATION_INFO="dot_dace_dot_dace,hls_ip_2023_2_2,{HLS_INPUT_TYPE=cxx,HLS_INPUT_FLOAT=0,HLS_INPUT_FIXED=0,HLS_INPUT_PART=xcku5p-ffvb676-2-e,HLS_INPUT_CLOCK=10.000000,HLS_INPUT_ARCH=others,HLS_SYN_CLOCK=6.317813,HLS_SYN_LAT=-1,HLS_SYN_TPT=none,HLS_SYN_MEM=8,HLS_SYN_DSP=0,HLS_SYN_FF=165,HLS_SYN_LUT=4678,HLS_VERSION=2023_2_2}" *)
 
 module dot_dace (
         ap_clk,
@@ -71,7 +71,7 @@ reg   [31:0] loop_count_preg;
 reg   [31:0] loop_count_in_sig;
 reg    loop_count_ap_vld_preg;
 reg    loop_count_ap_vld_in_sig;
-reg   [8:0] p_tmp0_address0;
+reg   [10:0] p_tmp0_address0;
 reg    p_tmp0_ce0;
 reg    p_tmp0_we0;
 wire   [63:0] p_tmp0_q0;
@@ -86,7 +86,7 @@ wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_ap_idle;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_ap_ready;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_A_TREADY;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_B_TREADY;
-wire   [8:0] grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_p_tmp0_address0;
+wire   [10:0] grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_p_tmp0_address0;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_p_tmp0_ce0;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_p_tmp0_we0;
 wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_p_tmp0_d0;
@@ -96,7 +96,7 @@ wire    grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_ap_idle;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_ap_ready;
 wire   [63:0] grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_old_val_out;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_old_val_out_ap_vld;
-wire   [8:0] grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_p_tmp0_address0;
+wire   [10:0] grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_p_tmp0_address0;
 wire    grp_dot_dace_Pipeline_VITIS_LOOP_37_1_fu_70_p_tmp0_ce0;
 reg    grp_dot_dace_Pipeline_VITIS_LOOP_62_1_fu_59_ap_start_reg;
 wire    ap_CS_fsm_state2;
@@ -125,8 +125,8 @@ end
 
 dot_dace_p_tmp0_RAM_AUTO_1R1W #(
     .DataWidth( 64 ),
-    .AddressRange( 512 ),
-    .AddressWidth( 9 ))
+    .AddressRange( 2048 ),
+    .AddressWidth( 11 ))
 p_tmp0_U(
     .clk(ap_clk),
     .reset(ap_rst_n_inv),
